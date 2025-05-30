@@ -3,6 +3,39 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { generateTasksFromPRDHandler } from './routes/generate-tasks.js';
+import { 
+  listTasksHandler, 
+  getTaskHandler, 
+  createTaskHandler, 
+  updateTaskHandler, 
+  deleteTaskHandler,
+  updateTaskStatusHandler 
+} from './routes/tasks.js';
+import { 
+  expandTaskHandler, 
+  clearSubtasksHandler,
+  expandAllTasksHandler
+} from './routes/task-expansion.js';
+import {
+  addDependencyHandler,
+  removeDependencyHandler,
+  validateDependenciesHandler,
+  fixDependenciesHandler
+} from './routes/dependencies.js';
+import {
+  initializeProjectHandler,
+  generateTaskFilesHandler
+} from './routes/projects.js';
+import {
+  getNextTaskHandler,
+  analyzeTaskComplexityHandler,
+  getComplexityReportHandler
+} from './routes/analysis.js';
+import {
+  addSubtaskHandler,
+  updateSubtaskHandler,
+  removeSubtaskHandler
+} from './routes/subtasks.js';
 
 dotenv.config();
 
@@ -19,8 +52,43 @@ app.use((req, res, next) => {
   next();
 });
 
+// PRD parsing endpoint
 app.post('/api/v1/generate-tasks-from-prd', generateTasksFromPRDHandler);
 
+// Task management endpoints
+app.get('/api/v1/tasks', listTasksHandler);
+app.get('/api/v1/tasks/next', getNextTaskHandler);  // Must come before :id
+app.get('/api/v1/tasks/complexity-report', getComplexityReportHandler);  // Must come before :id
+app.get('/api/v1/tasks/:id', getTaskHandler);
+app.post('/api/v1/tasks', createTaskHandler);
+app.put('/api/v1/tasks/:id', updateTaskHandler);
+app.delete('/api/v1/tasks/:id', deleteTaskHandler);
+app.patch('/api/v1/tasks/:id/status', updateTaskStatusHandler);
+
+// Task expansion endpoints
+app.post('/api/v1/tasks/:id/expand', expandTaskHandler);
+app.delete('/api/v1/tasks/:id/subtasks', clearSubtasksHandler);
+app.post('/api/v1/tasks/expand-all', expandAllTasksHandler);
+
+// Subtask management endpoints
+app.post('/api/v1/tasks/:id/subtasks', addSubtaskHandler);
+app.put('/api/v1/tasks/:id/subtasks/:subtaskId', updateSubtaskHandler);
+app.delete('/api/v1/tasks/:id/subtasks/:subtaskId', removeSubtaskHandler);
+
+// Dependency management endpoints
+app.post('/api/v1/tasks/:id/dependencies', addDependencyHandler);
+app.delete('/api/v1/tasks/:id/dependencies/:depId', removeDependencyHandler);
+app.post('/api/v1/tasks/validate-dependencies', validateDependenciesHandler);
+app.post('/api/v1/tasks/fix-dependencies', fixDependenciesHandler);
+
+// Project management endpoints
+app.post('/api/v1/projects/initialize', initializeProjectHandler);
+app.post('/api/v1/projects/generate-task-files', generateTaskFilesHandler);
+
+// Analysis endpoints
+app.post('/api/v1/tasks/analyze-complexity', analyzeTaskComplexityHandler);
+
+// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });

@@ -1,6 +1,6 @@
-# Task Master API
+# Task Master REST API
 
-This API provides programmatic access to Task Master's PRD parsing and task generation capabilities.
+A comprehensive REST API for Task Master, providing programmatic access to all task management features including AI-powered PRD analysis, task CRUD operations, dependency management, and more.
 
 ## Getting Started
 

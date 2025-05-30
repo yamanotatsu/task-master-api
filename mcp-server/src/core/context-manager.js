@@ -4,7 +4,7 @@
  */
 
 import { FastMCP } from 'fastmcp';
-import { LRUCache } from 'lru-cache';
+import LRUCache from 'lru-cache';
 
 /**
  * Configuration options for the ContextManager
