@@ -64,7 +64,6 @@ export async function initializeProjectHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error initializing project:', error);
     res.status(500).json({
       success: false,
       error: {
@@ -101,7 +100,6 @@ export async function generateTaskFilesHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error generating task files:', error);
     res.status(500).json({
       success: false,
       error: {

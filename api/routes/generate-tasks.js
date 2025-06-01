@@ -24,8 +24,6 @@ export async function generateTasksFromPRDHandler(req, res) {
     
     const { prd_content, target_task_count, use_research_mode } = validation.data;
     
-    console.log(`Generating ${target_task_count} tasks from PRD (research mode: ${use_research_mode})`);
-    
     const result = await generateTasksFromPRD({
       prdContent: prd_content,
       numTasks: target_task_count,
@@ -34,7 +32,6 @@ export async function generateTasksFromPRDHandler(req, res) {
     });
     
     const responseTime = Date.now() - req.startTime;
-    console.log(`Request completed in ${responseTime}ms`);
     
     res.status(200).json({
       success: true,
@@ -46,8 +43,6 @@ export async function generateTasksFromPRDHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error generating tasks:', error);
-    
     let errorCode = 'TASK_GENERATION_ERROR';
     let statusCode = 500;
     let errorMessage = error.message || 'Failed to generate tasks from PRD';
