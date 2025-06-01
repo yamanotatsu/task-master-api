@@ -4,6 +4,23 @@ import { useState } from 'react';
 import { api, Task } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import { 
+  ArrowLeft,
+  Save,
+  Loader2,
+  AlertTriangle,
+  Clock,
+  User,
+  GitBranch,
+  FileText,
+  TestTube
+} from 'lucide-react';
 
 export default function NewTaskPage() {
   const router = useRouter();
@@ -18,12 +35,10 @@ export default function NewTaskPage() {
     estimatedEffort: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError(null);
 
     try {
       const dependencies = formData.dependencies
@@ -42,9 +57,10 @@ export default function NewTaskPage() {
         estimatedEffort: formData.estimatedEffort,
       });
 
+      toast.success('Task created successfully');
       router.push('/tasks');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create task');
+      toast.error(err instanceof Error ? err.message : 'Failed to create task');
     } finally {
       setIsSubmitting(false);
     }
@@ -58,158 +74,197 @@ export default function NewTaskPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="mb-6">
-        <Link href="/tasks" className="text-blue-600 hover:text-blue-800">
-          ← Back to Tasks
-        </Link>
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="flex items-center space-x-4">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/tasks">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Tasks
+          </Link>
+        </Button>
       </div>
 
-      <h1 className="text-3xl font-bold mb-6">Create New Task</h1>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Create New Task</CardTitle>
+          <CardDescription>
+            Fill in the details below to create a new task. Required fields are marked with an asterisk.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Title */}
+            <div className="space-y-2">
+              <label htmlFor="title" className="text-sm font-medium flex items-center gap-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                Title *
+              </label>
+              <Input
+                type="text"
+                id="title"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                placeholder="Enter task title"
+                required
+                autoFocus
+              />
+            </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium mb-2">
-            Title *
-          </label>
-          <input
-            type="text"
-            id="title"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
+            {/* Description */}
+            <div className="space-y-2">
+              <label htmlFor="description" className="text-sm font-medium">
+                Description
+              </label>
+              <Textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={3}
+                placeholder="Provide a brief description of the task"
+                className="resize-none"
+              />
+            </div>
 
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium mb-2">
-            Description
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Priority */}
+              <div className="space-y-2">
+                <label htmlFor="priority" className="text-sm font-medium flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                  Priority
+                </label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(value) => setFormData({ ...formData, priority: value as Task['priority'] })}
+                >
+                  <SelectTrigger id="priority">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="priority" className="block text-sm font-medium mb-2">
-              Priority
-            </label>
-            <select
-              id="priority"
-              name="priority"
-              value={formData.priority}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-          </div>
+              {/* Assignee */}
+              <div className="space-y-2">
+                <label htmlFor="assignee" className="text-sm font-medium flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  Assignee
+                </label>
+                <Input
+                  type="text"
+                  id="assignee"
+                  name="assignee"
+                  value={formData.assignee}
+                  onChange={handleChange}
+                  placeholder="Enter assignee name"
+                />
+              </div>
+            </div>
 
-          <div>
-            <label htmlFor="assignee" className="block text-sm font-medium mb-2">
-              Assignee
-            </label>
-            <input
-              type="text"
-              id="assignee"
-              name="assignee"
-              value={formData.assignee}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
+            {/* Estimated Effort */}
+            <div className="space-y-2">
+              <label htmlFor="estimatedEffort" className="text-sm font-medium flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                Estimated Effort
+              </label>
+              <Input
+                type="text"
+                id="estimatedEffort"
+                name="estimatedEffort"
+                value={formData.estimatedEffort}
+                onChange={handleChange}
+                placeholder="e.g., 2 hours, 1 day, 1 week"
+              />
+            </div>
 
-        <div>
-          <label htmlFor="estimatedEffort" className="block text-sm font-medium mb-2">
-            Estimated Effort
-          </label>
-          <input
-            type="text"
-            id="estimatedEffort"
-            name="estimatedEffort"
-            value={formData.estimatedEffort}
-            onChange={handleChange}
-            placeholder="e.g., 2 hours, 1 day"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+            {/* Dependencies */}
+            <div className="space-y-2">
+              <label htmlFor="dependencies" className="text-sm font-medium flex items-center gap-2">
+                <GitBranch className="h-4 w-4 text-muted-foreground" />
+                Dependencies
+              </label>
+              <Input
+                type="text"
+                id="dependencies"
+                name="dependencies"
+                value={formData.dependencies}
+                onChange={handleChange}
+                placeholder="Comma-separated task IDs (e.g., 1, 2, 3)"
+              />
+              <p className="text-sm text-muted-foreground">
+                Enter the IDs of tasks that must be completed before this task.
+              </p>
+            </div>
 
-        <div>
-          <label htmlFor="dependencies" className="block text-sm font-medium mb-2">
-            Dependencies
-          </label>
-          <input
-            type="text"
-            id="dependencies"
-            name="dependencies"
-            value={formData.dependencies}
-            onChange={handleChange}
-            placeholder="Comma-separated task IDs (e.g., 1, 2, 3)"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+            {/* Additional Details */}
+            <div className="space-y-2">
+              <label htmlFor="details" className="text-sm font-medium">
+                Additional Details
+              </label>
+              <Textarea
+                id="details"
+                name="details"
+                value={formData.details}
+                onChange={handleChange}
+                rows={3}
+                placeholder="Any additional information or context"
+                className="resize-none"
+              />
+            </div>
 
-        <div>
-          <label htmlFor="details" className="block text-sm font-medium mb-2">
-            Additional Details
-          </label>
-          <textarea
-            id="details"
-            name="details"
-            value={formData.details}
-            onChange={handleChange}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+            {/* Testing Strategy */}
+            <div className="space-y-2">
+              <label htmlFor="testingStrategy" className="text-sm font-medium flex items-center gap-2">
+                <TestTube className="h-4 w-4 text-muted-foreground" />
+                Testing Strategy
+              </label>
+              <Textarea
+                id="testingStrategy"
+                name="testingStrategy"
+                value={formData.testingStrategy}
+                onChange={handleChange}
+                rows={2}
+                placeholder="Describe how this task should be tested"
+                className="resize-none"
+              />
+            </div>
 
-        <div>
-          <label htmlFor="testingStrategy" className="block text-sm font-medium mb-2">
-            Testing Strategy
-          </label>
-          <textarea
-            id="testingStrategy"
-            name="testingStrategy"
-            value={formData.testingStrategy}
-            onChange={handleChange}
-            rows={2}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded">
-            {error}
-          </div>
-        )}
-
-        <div className="flex justify-end space-x-4">
-          <Link
-            href="/tasks"
-            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={isSubmitting || !formData.title.trim()}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? 'Creating...' : 'Create Task'}
-          </button>
-        </div>
-      </form>
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-4 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                asChild
+              >
+                <Link href="/tasks">
+                  Cancel
+                </Link>
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting || !formData.title.trim()}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Create Task
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
