@@ -31,6 +31,10 @@ export async function generateTasksFromPRDHandler(req, res) {
       apiKeys: extractApiKeysFromEnv()
     });
     
+    // Save tasks to projects/default/tasks.json
+    const { updateTasksInProject } = await import('../services/task-updater.js');
+    await updateTasksInProject(result.tasks);
+    
     const responseTime = Date.now() - req.startTime;
     
     res.status(200).json({

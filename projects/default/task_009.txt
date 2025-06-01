@@ -1,0 +1,11 @@
+# Task ID: 9
+# Title: メインアプリケーションコンポーネントの統合
+# Status: pending
+# Dependencies: 4, 6, 7, 8
+# Priority: high
+# Description: 全てのコンポーネントを統合してメインのTodoアプリケーションを完成させる
+# Details:
+src/App.tsxで全コンポーネントを統合。useTodosフックを使用してstate管理、フィルター機能の実装、残りタスク数の表示、全選択/全解除機能を追加。レスポンシブデザインを適用。
+
+# Test Strategy:
+アプリケーション全体が統合されて正しく動作することを確認

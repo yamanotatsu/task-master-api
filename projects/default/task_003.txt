@@ -1,0 +1,11 @@
+# Task ID: 3
+# Title: ローカルストレージ管理機能の実装
+# Status: pending
+# Dependencies: 2
+# Priority: medium
+# Description: Todoデータの永続化のためのローカルストレージ操作機能を実装する
+# Details:
+src/utils/localStorage.tsにgetTodos、saveTodos、clearTodos関数を実装。JSON.parse/stringifyでデータの変換を行い、エラーハンドリングを含める。
+
+# Test Strategy:
+ブラウザの開発者ツールでローカルストレージにデータが正しく保存・取得されることを確認

@@ -41,13 +41,37 @@ export async function expandTaskHandler(req, res) {
     }
     
     const projectRoot = ensureProjectDirectory();
-    const args = prepareDirectFunctionArgs('expandTask', {
+    
+    logger.info(`Expanding task ${taskId} with params:`, {
       taskId,
       numSubtasks: validation.data.numSubtasks,
-      useResearch: validation.data.useResearch,
-      session: {}
+      useResearch: validation.data.useResearch
     });
-    const result = await expandTaskDirect(args, logger, { session: {} });
+    
+    const args = prepareDirectFunctionArgs('expandTask', {
+      id: taskId,
+      numSubtasks: validation.data.numSubtasks,
+      research: validation.data.useResearch,
+      projectRoot
+    });
+    
+    logger.info(`Prepared args for expandTask:`, args);
+    
+    // Add session with API keys for Direct Function
+    const context = {
+      session: {
+        env: {
+          ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+          OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+          GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
+          PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY,
+          XAI_API_KEY: process.env.XAI_API_KEY,
+          OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY
+        }
+      }
+    };
+    
+    const result = await expandTaskDirect(args, logger, context);
     
     if (!result.success) {
       const statusCode = (result.error?.message?.includes('not found') || result.error?.code === 'TASK_NOT_FOUND') ? 404 : 400;
@@ -61,6 +85,12 @@ export async function expandTaskHandler(req, res) {
     }
     
     const responseTime = Date.now() - req.startTime;
+    
+    // Update the task in projects/default/tasks.json
+    if (result.task) {
+      const { updateTasksInProject } = await import('../services/task-updater.js');
+      await updateTasksInProject([result.task]);
+    }
     
     res.json({
       success: true,

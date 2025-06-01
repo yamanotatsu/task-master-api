@@ -1,0 +1,11 @@
+# Task ID: 6
+# Title: Todo入力フォームコンポーネントの実装
+# Status: pending
+# Dependencies: 2
+# Priority: medium
+# Description: 新しいTodoを追加するための入力フォームコンポーネントを作成する
+# Details:
+src/components/TodoInput.tsxを作成。入力フィールド、Enterキーでの追加機能、空文字チェック、入力後のクリア機能を実装。プレースホルダーテキストを設定。
+
+# Test Strategy:
+有効な入力でTodoが追加され、無効な入力が拒否されることを確認

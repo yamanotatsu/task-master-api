@@ -1,123 +1,95 @@
-/**
- * Simple task update service for API
- * Provides direct task updates without AI
- */
-
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-/**
- * Update task properties directly without AI
- */
-export function updateTaskSimple(tasksJsonPath, taskId, updates) {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export async function updateTasksInProject(tasks) {
+  const projectPath = path.join(__dirname, '..', '..', 'projects', 'default', 'tasks.json');
+  
+  // Ensure directory exists
+  const projectDir = path.dirname(projectPath);
+  if (!fs.existsSync(projectDir)) {
+    fs.mkdirSync(projectDir, { recursive: true });
+  }
+  
+  // Read existing tasks
+  let existingData = { tasks: [], lastTaskId: 0 };
+  if (fs.existsSync(projectPath)) {
+    try {
+      const content = fs.readFileSync(projectPath, 'utf8');
+      existingData = JSON.parse(content);
+    } catch (error) {
+      console.error('Error reading existing tasks:', error);
+    }
+  }
+  
+  // Merge new tasks with existing ones
+  const existingTasksMap = new Map(existingData.tasks.map(t => [t.id, t]));
+  
+  // Update or add new tasks
+  tasks.forEach(task => {
+    existingTasksMap.set(task.id, task);
+  });
+  
+  // Convert back to array and sort by ID
+  const allTasks = Array.from(existingTasksMap.values()).sort((a, b) => a.id - b.id);
+  
+  // Find the highest ID
+  const maxId = allTasks.length > 0 ? Math.max(...allTasks.map(t => t.id)) : 0;
+  
+  // Save updated tasks
+  const updatedData = {
+    tasks: allTasks,
+    lastTaskId: maxId
+  };
+  
+  fs.writeFileSync(projectPath, JSON.stringify(updatedData, null, 2), 'utf8');
+  console.log(`[API INFO] Updated ${tasks.length} tasks in ${projectPath}`);
+  
+  return updatedData;
+}
+
+export async function getTaskById(taskId) {
+  const projectPath = path.join(__dirname, '..', '..', 'projects', 'default', 'tasks.json');
+  
+  if (!fs.existsSync(projectPath)) {
+    return null;
+  }
+  
   try {
-    // Read tasks
-    const data = JSON.parse(fs.readFileSync(tasksJsonPath, 'utf8'));
-    
-    // Find task
-    const task = data.tasks.find(t => t.id === taskId);
-    if (!task) {
-      return {
-        success: false,
-        error: {
-          code: 'TASK_NOT_FOUND',
-          message: `Task with ID ${taskId} not found`
-        }
-      };
-    }
-    
-    // Apply updates
-    const allowedFields = ['title', 'description', 'priority', 'details', 'testStrategy'];
-    let updated = false;
-    
-    for (const field of allowedFields) {
-      if (updates[field] !== undefined) {
-        task[field] = updates[field];
-        updated = true;
-      }
-    }
-    
-    if (!updated) {
-      return {
-        success: false,
-        error: {
-          code: 'NO_UPDATES',
-          message: 'No valid fields to update'
-        }
-      };
-    }
-    
-    // Save tasks
-    fs.writeFileSync(tasksJsonPath, JSON.stringify(data, null, 2));
-    
-    return {
-      success: true,
-      task,
-      message: `Task #${taskId} updated successfully`
-    };
-    
+    const content = fs.readFileSync(projectPath, 'utf8');
+    const data = JSON.parse(content);
+    return data.tasks.find(t => t.id === taskId) || null;
   } catch (error) {
-    return {
-      success: false,
-      error: {
-        code: 'UPDATE_ERROR',
-        message: error.message
-      }
-    };
+    console.error('Error reading tasks:', error);
+    return null;
   }
 }
 
-/**
- * Update task status
- */
-export function updateTaskStatus(tasksJsonPath, taskId, status) {
+export async function deleteTaskById(taskId) {
+  const projectPath = path.join(__dirname, '..', '..', 'projects', 'default', 'tasks.json');
+  
+  if (!fs.existsSync(projectPath)) {
+    return false;
+  }
+  
   try {
-    // Read tasks
-    const data = JSON.parse(fs.readFileSync(tasksJsonPath, 'utf8'));
+    const content = fs.readFileSync(projectPath, 'utf8');
+    const data = JSON.parse(content);
     
-    // Find task
-    const task = data.tasks.find(t => t.id === taskId);
-    if (!task) {
-      return {
-        success: false,
-        error: {
-          code: 'TASK_NOT_FOUND',
-          message: `Task with ID ${taskId} not found`
-        }
-      };
+    const initialLength = data.tasks.length;
+    data.tasks = data.tasks.filter(t => t.id !== taskId);
+    
+    if (data.tasks.length < initialLength) {
+      fs.writeFileSync(projectPath, JSON.stringify(data, null, 2), 'utf8');
+      return true;
     }
     
-    // Validate status
-    const validStatuses = ['pending', 'in-progress', 'completed', 'blocked'];
-    if (!validStatuses.includes(status)) {
-      return {
-        success: false,
-        error: {
-          code: 'INVALID_STATUS',
-          message: `Invalid status: ${status}. Must be one of: ${validStatuses.join(', ')}`
-        }
-      };
-    }
-    
-    // Update status
-    task.status = status;
-    
-    // Save tasks
-    fs.writeFileSync(tasksJsonPath, JSON.stringify(data, null, 2));
-    
-    return {
-      success: true,
-      task,
-      message: `Task #${taskId} status updated to ${status}`
-    };
-    
+    return false;
   } catch (error) {
-    return {
-      success: false,
-      error: {
-        code: 'UPDATE_ERROR',
-        message: error.message
-      }
-    };
+    console.error('Error deleting task:', error);
+    return false;
   }
 }
