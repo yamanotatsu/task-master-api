@@ -340,7 +340,7 @@ async function analyzeTaskComplexity(options, context = {}) {
 		// Continue with regular analysis path
 		const prompt = generateInternalComplexityAnalysisPrompt(tasksData);
 		const systemPrompt =
-			'You are an expert software architect and project manager analyzing task complexity. Respond only with the requested valid JSON array.';
+			'You are an expert software architect and project manager analyzing task complexity. 全ての分析結果の内容（taskTitle, expansionPrompt, reasoning）は日本語で記述してください。ただし、JSONのキー名は英語のままにしてください。Respond only with the requested valid JSON array.';
 
 		let loadingIndicator = null;
 		if (outputFormat === 'text') {

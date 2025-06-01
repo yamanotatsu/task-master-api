@@ -1,0 +1,11 @@
+# Task ID: 8
+# Title: フィルター機能の実装
+# Status: pending
+# Dependencies: 2
+# Priority: medium
+# Description: 全て、アクティブ、完了済みでTodoをフィルタリングする機能を実装する
+# Details:
+src/components/TodoFilter.tsxを作成。All、Active、Completedボタンを配置、現在のフィルター状態をハイライト表示。フィルター状態はuseStateで管理し、親コンポーネントに伝達。
+
+# Test Strategy:
+各フィルターが正しく動作し、適切なTodoが表示されることを確認

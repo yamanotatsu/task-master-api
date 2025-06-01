@@ -1,0 +1,43 @@
+# Task ID: 2
+# Title: データ型とインターフェースの定義
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Todoアイテムとアプリケーション全体で使用するTypeScriptの型定義を作成する
+# Details:
+Todo型（id: string, title: string, completed: boolean, createdAt: Date, updatedAt?: Date）、Filter型（'all' | 'active' | 'completed'）、AppState型を定義。src/types/index.tsファイルに集約。
+
+# Test Strategy:
+TypeScriptコンパイラーでエラーが発生しないことを確認
+
+# Subtasks:
+## 1. Todo型の定義 [pending]
+### Dependencies: None
+### Description: Todoアイテムを表現するTypeScript型を定義する
+### Details:
+src/types/index.tsファイルを作成し、Todo型を定義します。Todo型には、id（string）、title（string）、completed（boolean）、createdAt（Date）、updatedAt（オプショナルのDate）のプロパティを含めます。各プロパティには適切なコメントを追加して、その目的を明確にしてください。
+
+## 2. Filter型の定義 [pending]
+### Dependencies: None
+### Description: Todoリストのフィルタリングオプションを表現する型を定義する
+### Details:
+src/types/index.tsファイルに、Filter型をユニオン型として定義します。'all' | 'active' | 'completed'の3つの文字列リテラル型を含めます。この型はUIでのフィルタリング操作に使用されます。
+
+## 3. AppState型の定義 [pending]
+### Dependencies: None
+### Description: アプリケーション全体の状態を表現する型を定義する
+### Details:
+src/types/index.tsファイルに、AppState型を定義します。この型には、todos（Todo[]型の配列）、currentFilter（Filter型）、isLoading（boolean）などのアプリケーション状態を表すプロパティを含めます。将来の拡張性を考慮した設計にしてください。
+
+## 4. アクション関連の型定義 [pending]
+### Dependencies: 2.3
+### Description: アプリケーションのアクションを表現する型を定義する
+### Details:
+src/types/index.tsファイルに、アプリケーションのアクションを表現する型を定義します。例えば、ActionType（'ADD_TODO' | 'TOGGLE_TODO' | 'DELETE_TODO' | 'SET_FILTER'など）と、Action型（type: ActionType、payload: 任意のデータ）を定義します。これらはアプリケーションの状態管理に使用されます。
+
+## 5. 型定義のエクスポートと統合 [pending]
+### Dependencies: 2.3, 2.4
+### Description: 定義した全ての型を適切にエクスポートし、型定義ファイルを完成させる
+### Details:
+src/types/index.tsファイルで、定義した全ての型（Todo、Filter、AppState、ActionTypeなど）を適切にエクスポートします。必要に応じて型定義をグループ化し、関連する型をまとめます。また、型定義ファイル全体にわたって一貫したコメントスタイルを適用し、ドキュメンテーションを充実させます。
+

@@ -15,7 +15,7 @@ import {
   ensureProjectDirectory,
   getTasksJsonPath
 } from '../utils/direct-function-helpers.js';
-import { updateTaskSimple, updateTaskStatus } from '../services/task-updater.js';
+import { updateTasksInProject, getTaskById, deleteTaskById } from '../services/task-updater.js';
 
 // Validation schemas
 const taskCreateSchema = z.object({

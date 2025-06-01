@@ -107,10 +107,12 @@ export function prepareDirectFunctionArgs(functionName, apiArgs = {}) {
     case 'expandTask':
       return {
         tasksJsonPath,
-        taskId: apiArgs.taskId,
-        numSubtasks: apiArgs.numSubtasks || 5,
-        useResearch: apiArgs.useResearch || false,
-        session: apiArgs.session
+        id: apiArgs.id || apiArgs.taskId,  // expandTask expects 'id'
+        num: apiArgs.numSubtasks || apiArgs.num || 5,  // expandTask expects 'num'
+        research: apiArgs.research || apiArgs.useResearch || false,  // expandTask expects 'research'
+        prompt: apiArgs.prompt,
+        force: apiArgs.force,
+        projectRoot
       };
       
     case 'clearSubtasks':
