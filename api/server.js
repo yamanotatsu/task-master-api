@@ -48,7 +48,6 @@ app.use(express.json({ limit: '10mb' }));
 
 app.use((req, res, next) => {
   req.startTime = Date.now();
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
@@ -104,7 +103,6 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
   
   if (err.type === 'entity.too.large') {
     return res.status(413).json({
@@ -126,7 +124,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Task Master API server running on port ${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/health`);
-  console.log(`Generate tasks endpoint: POST http://localhost:${PORT}/api/v1/generate-tasks-from-prd`);
+  // Server started
 });

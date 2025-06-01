@@ -77,7 +77,6 @@ export async function addSubtaskHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error adding subtask:', error);
     res.status(500).json({
       success: false,
       error: {
@@ -157,7 +156,6 @@ export async function updateSubtaskHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error updating subtask:', error);
     res.status(500).json({
       success: false,
       error: {
@@ -222,7 +220,6 @@ export async function removeSubtaskHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error removing subtask:', error);
     res.status(500).json({
       success: false,
       error: {

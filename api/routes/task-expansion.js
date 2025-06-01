@@ -61,7 +61,6 @@ export async function expandTaskHandler(req, res) {
     }
     
     const responseTime = Date.now() - req.startTime;
-    console.log(`Task expansion completed in ${responseTime}ms`);
     
     res.json({
       success: true,
@@ -74,7 +73,6 @@ export async function expandTaskHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error expanding task:', error);
     res.status(500).json({
       success: false,
       error: {
@@ -125,7 +123,6 @@ export async function clearSubtasksHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error clearing subtasks:', error);
     res.status(500).json({
       success: false,
       error: {
@@ -171,7 +168,6 @@ export async function expandAllTasksHandler(req, res) {
     }
     
     const responseTime = Date.now() - req.startTime;
-    console.log(`All tasks expansion completed in ${responseTime}ms`);
     
     res.json({
       success: true,
@@ -183,7 +179,6 @@ export async function expandAllTasksHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error expanding all tasks:', error);
     res.status(500).json({
       success: false,
       error: {

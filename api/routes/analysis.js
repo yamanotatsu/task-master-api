@@ -50,7 +50,6 @@ export async function getNextTaskHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error getting next task:', error);
     res.status(500).json({
       success: false,
       error: {
@@ -107,7 +106,6 @@ export async function analyzeTaskComplexityHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error analyzing task complexity:', error);
     res.status(500).json({
       success: false,
       error: {
@@ -146,7 +144,6 @@ export async function getComplexityReportHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error generating complexity report:', error);
     res.status(500).json({
       success: false,
       error: {

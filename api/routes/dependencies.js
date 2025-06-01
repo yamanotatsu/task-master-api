@@ -82,7 +82,6 @@ export async function addDependencyHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error adding dependency:', error);
     res.status(500).json({
       success: false,
       error: {
@@ -136,7 +135,6 @@ export async function removeDependencyHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error removing dependency:', error);
     res.status(500).json({
       success: false,
       error: {
@@ -206,7 +204,6 @@ export async function validateDependenciesHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error validating dependencies:', error);
     res.status(500).json({
       success: false,
       error: {
@@ -243,7 +240,6 @@ export async function fixDependenciesHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error fixing dependencies:', error);
     res.status(500).json({
       success: false,
       error: {

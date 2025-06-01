@@ -70,7 +70,6 @@ export async function listTasksHandler(req, res) {
     });
     
   } catch (error) {
-    console.error('Error listing tasks:', error);
     res.status(500).json({
       success: false,
       error: {
@@ -100,25 +99,21 @@ export async function getTaskHandler(req, res) {
     const result = await showTaskDirect(args, logger, { session: {} });
     
     if (!result.success) {
-      const statusCode = (result.error?.message?.includes('not found') || result.error?.code === 'TASK_NOT_FOUND') ? 404 : 400;
-      return res.status(statusCode).json({
+      return res.status(404).json({
         success: false,
         error: {
-          code: statusCode === 404 ? 'TASK_NOT_FOUND' : 'GET_TASK_ERROR',
-          message: result.error
+          code: 'TASK_NOT_FOUND',
+          message: result.error || `Task ${taskId} not found`
         }
       });
     }
     
     res.json({
       success: true,
-      data: {
-        task: result.task
-      }
+      data: result.data
     });
     
   } catch (error) {
-    console.error('Error getting task:', error);
     res.status(500).json({
       success: false,
       error: {
@@ -129,24 +124,30 @@ export async function getTaskHandler(req, res) {
   }
 }
 
-// POST /api/v1/tasks - Create new task
+// POST /api/v1/tasks - Create a new task
 export async function createTaskHandler(req, res) {
   try {
-    const validation = taskCreateSchema.safeParse(req.body);
-    
-    if (!validation.success) {
+    const parseResult = taskCreateSchema.safeParse(req.body);
+    if (!parseResult.success) {
       return res.status(400).json({
         success: false,
         error: {
-          code: 'INVALID_INPUT',
+          code: 'VALIDATION_ERROR',
           message: 'Invalid task data',
-          details: validation.error.errors
+          details: parseResult.error.errors
         }
       });
     }
     
     ensureProjectDirectory();
-    const args = prepareDirectFunctionArgs('addTask', validation.data);
+    
+    const { title, ...otherFields } = parseResult.data;
+    const args = prepareDirectFunctionArgs('addTask', {
+      title,
+      details: otherFields.details || `Description: ${otherFields.description || 'No description'}\nPriority: ${otherFields.priority}`,
+      dependencies: otherFields.dependencies?.join(',') || ''
+    });
+    
     const result = await addTaskDirect(args, logger, { session: {} });
     
     if (!result.success) {
@@ -154,21 +155,18 @@ export async function createTaskHandler(req, res) {
         success: false,
         error: {
           code: 'CREATE_TASK_ERROR',
-          message: result.error
+          message: result.error || 'Failed to create task'
         }
       });
     }
     
     res.status(201).json({
       success: true,
-      data: {
-        task: result.task,
-        message: result.message
-      }
+      data: result.data,
+      message: 'Task created successfully'
     });
     
   } catch (error) {
-    console.error('Error creating task:', error);
     res.status(500).json({
       success: false,
       error: {
@@ -179,7 +177,7 @@ export async function createTaskHandler(req, res) {
   }
 }
 
-// PUT /api/v1/tasks/:id - Update task
+// PUT /api/v1/tasks/:id - Update a task
 export async function updateTaskHandler(req, res) {
   try {
     const taskId = parseInt(req.params.id);
@@ -193,46 +191,53 @@ export async function updateTaskHandler(req, res) {
       });
     }
     
-    const validation = taskUpdateSchema.safeParse(req.body);
-    
-    if (!validation.success) {
+    const parseResult = taskUpdateSchema.safeParse(req.body);
+    if (!parseResult.success) {
       return res.status(400).json({
         success: false,
         error: {
-          code: 'INVALID_INPUT',
+          code: 'VALIDATION_ERROR',
           message: 'Invalid update data',
-          details: validation.error.errors
+          details: parseResult.error.errors
         }
       });
     }
     
     ensureProjectDirectory();
-    const tasksJsonPath = getTasksJsonPath();
     
-    // Use simple update for API
-    const result = updateTaskSimple(tasksJsonPath, taskId, validation.data);
+    const { title, description, priority, dependencies, details, testStrategy } = parseResult.data;
+    
+    const args = prepareDirectFunctionArgs('updateTaskById', {
+      taskId,
+      updates: {
+        ...(title && { title }),
+        ...(description !== undefined && { description }),
+        ...(priority && { priority }),
+        ...(dependencies !== undefined && { dependencies }),
+        ...(details !== undefined && { details }),
+        ...(testStrategy !== undefined && { testStrategy })
+      }
+    });
+    
+    const result = await updateTaskByIdDirect(args, logger, { session: {} });
     
     if (!result.success) {
-      const statusCode = (result.error?.message?.includes('not found') || result.error?.code === 'TASK_NOT_FOUND') ? 404 : 400;
-      return res.status(statusCode).json({
+      return res.status(404).json({
         success: false,
         error: {
-          code: statusCode === 404 ? 'TASK_NOT_FOUND' : 'UPDATE_TASK_ERROR',
-          message: result.error
+          code: 'UPDATE_TASK_ERROR',
+          message: result.error || `Failed to update task ${taskId}`
         }
       });
     }
     
     res.json({
       success: true,
-      data: {
-        task: result.task,
-        message: result.message
-      }
+      data: result.data,
+      message: 'Task updated successfully'
     });
     
   } catch (error) {
-    console.error('Error updating task:', error);
     res.status(500).json({
       success: false,
       error: {
@@ -243,7 +248,7 @@ export async function updateTaskHandler(req, res) {
   }
 }
 
-// DELETE /api/v1/tasks/:id - Delete task
+// DELETE /api/v1/tasks/:id - Delete a task
 export async function deleteTaskHandler(req, res) {
   try {
     const taskId = parseInt(req.params.id);
@@ -258,30 +263,26 @@ export async function deleteTaskHandler(req, res) {
     }
     
     ensureProjectDirectory();
+    
     const args = prepareDirectFunctionArgs('removeTask', { taskId });
     const result = await removeTaskDirect(args, logger, { session: {} });
     
     if (!result.success) {
-      const statusCode = (result.error?.message?.includes('not found') || result.error?.code === 'TASK_NOT_FOUND') ? 404 : 400;
-      return res.status(statusCode).json({
+      return res.status(404).json({
         success: false,
         error: {
-          code: statusCode === 404 ? 'TASK_NOT_FOUND' : 'DELETE_TASK_ERROR',
-          message: result.error
+          code: 'DELETE_TASK_ERROR',
+          message: result.error || `Failed to delete task ${taskId}`
         }
       });
     }
     
     res.json({
       success: true,
-      data: {
-        message: result.message,
-        removedTask: result.removedTask
-      }
+      message: `Task ${taskId} deleted successfully`
     });
     
   } catch (error) {
-    console.error('Error deleting task:', error);
     res.status(500).json({
       success: false,
       error: {
@@ -306,46 +307,45 @@ export async function updateTaskStatusHandler(req, res) {
       });
     }
     
-    const validation = statusUpdateSchema.safeParse(req.body);
-    
-    if (!validation.success) {
+    const parseResult = statusUpdateSchema.safeParse(req.body);
+    if (!parseResult.success) {
       return res.status(400).json({
         success: false,
         error: {
-          code: 'INVALID_INPUT',
-          message: 'Invalid status',
-          details: validation.error.errors
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid status data',
+          details: parseResult.error.errors
         }
       });
     }
     
     ensureProjectDirectory();
-    const tasksJsonPath = getTasksJsonPath();
     
-    // Use simple status update for API
-    const result = updateTaskStatus(tasksJsonPath, taskId, validation.data.status);
+    const { status } = parseResult.data;
+    const args = prepareDirectFunctionArgs('setTaskStatus', { 
+      taskId, 
+      status 
+    });
+    
+    const result = await setTaskStatusDirect(args, logger, { session: {} });
     
     if (!result.success) {
-      const statusCode = (result.error?.message?.includes('not found') || result.error?.code === 'TASK_NOT_FOUND') ? 404 : 400;
-      return res.status(statusCode).json({
+      return res.status(404).json({
         success: false,
         error: {
-          code: statusCode === 404 ? 'TASK_NOT_FOUND' : 'UPDATE_STATUS_ERROR',
-          message: result.error
+          code: 'UPDATE_STATUS_ERROR',
+          message: result.error || `Failed to update status for task ${taskId}`
         }
       });
     }
     
     res.json({
       success: true,
-      data: {
-        task: result.task,
-        message: result.message
-      }
+      data: result.data,
+      message: `Task ${taskId} status updated to ${status}`
     });
     
   } catch (error) {
-    console.error('Error updating task status:', error);
     res.status(500).json({
       success: false,
       error: {

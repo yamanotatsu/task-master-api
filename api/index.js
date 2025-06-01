@@ -10,8 +10,6 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
-console.log(chalk.cyan('🚀 Starting Task Master API Server...'));
-
 const requiredKeys = [
   'ANTHROPIC_API_KEY',
   'OPENAI_API_KEY', 
@@ -33,10 +31,7 @@ if (availableKeys.length === 0) {
   process.exit(1);
 }
 
-console.log(chalk.green(`✅ Found ${availableKeys.length} API key(s):`));
-availableKeys.forEach(key => {
-  console.log(chalk.gray(`  - ${key}: ${chalk.green('✓')}`));
-});
+// API keys validated
 
 import('./server.js').catch(error => {
   console.error(chalk.red('❌ Failed to start server:'), error);
