@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { 
+import {
   addDependencyDirect,
   removeDependencyDirect,
   validateDependenciesDirect,
@@ -30,9 +30,9 @@ export async function addDependencyHandler(req, res) {
         }
       });
     }
-    
+
     const validation = addDependencySchema.safeParse(req.body);
-    
+
     if (!validation.success) {
       return res.status(400).json({
         success: false,
@@ -43,18 +43,18 @@ export async function addDependencyHandler(req, res) {
         }
       });
     }
-    
+
     const projectRoot = ensureProjectDirectory();
     const args = prepareDirectFunctionArgs('addDependency', {
       taskId,
       dependencyId: validation.data.dependencyId
     });
     const result = await addDependencyDirect(args, logger, { session: {} });
-    
+
     if (!result.success) {
       let statusCode = 400;
       let errorCode = 'ADD_DEPENDENCY_ERROR';
-      
+
       if (result.error?.message?.includes('not found') || result.error?.code === 'TASK_NOT_FOUND') {
         statusCode = 404;
         errorCode = 'TASK_NOT_FOUND';
@@ -63,7 +63,7 @@ export async function addDependencyHandler(req, res) {
       } else if (result.error?.message?.includes('already exists') || result.error?.code === 'DEPENDENCY_EXISTS') {
         errorCode = 'DEPENDENCY_EXISTS';
       }
-      
+
       return res.status(statusCode).json({
         success: false,
         error: {
@@ -72,7 +72,7 @@ export async function addDependencyHandler(req, res) {
         }
       });
     }
-    
+
     res.json({
       success: true,
       data: {
@@ -80,7 +80,7 @@ export async function addDependencyHandler(req, res) {
         message: result.message
       }
     });
-    
+
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -97,7 +97,7 @@ export async function removeDependencyHandler(req, res) {
   try {
     const taskId = parseInt(req.params.id);
     const dependencyId = parseInt(req.params.depId);
-    
+
     if (isNaN(taskId) || isNaN(dependencyId)) {
       return res.status(400).json({
         success: false,
@@ -107,14 +107,14 @@ export async function removeDependencyHandler(req, res) {
         }
       });
     }
-    
+
     const projectRoot = ensureProjectDirectory();
     const args = prepareDirectFunctionArgs('removeDependency', {
       taskId,
       dependencyId
     });
     const result = await removeDependencyDirect(args, logger, { session: {} });
-    
+
     if (!result.success) {
       const statusCode = (result.error?.message?.includes('not found') || result.error?.code === 'TASK_NOT_FOUND') ? 404 : 400;
       return res.status(statusCode).json({
@@ -125,7 +125,7 @@ export async function removeDependencyHandler(req, res) {
         }
       });
     }
-    
+
     res.json({
       success: true,
       data: {
@@ -133,7 +133,7 @@ export async function removeDependencyHandler(req, res) {
         message: result.message
       }
     });
-    
+
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -149,7 +149,7 @@ export async function removeDependencyHandler(req, res) {
 export async function validateDependenciesHandler(req, res) {
   try {
     const validation = validateDependenciesSchema.safeParse(req.body);
-    
+
     if (!validation.success) {
       return res.status(400).json({
         success: false,
@@ -160,13 +160,13 @@ export async function validateDependenciesHandler(req, res) {
         }
       });
     }
-    
+
     const projectRoot = ensureProjectDirectory();
     const args = prepareDirectFunctionArgs('validateDependencies', {
       autoFix: validation.data.autoFix
     });
     const result = await validateDependenciesDirect(args, logger, { session: {} });
-    
+
     if (!result.success) {
       return res.status(400).json({
         success: false,
@@ -176,12 +176,12 @@ export async function validateDependenciesHandler(req, res) {
         }
       });
     }
-    
+
     // If there are issues and autoFix is requested, fix them
     if (validation.data.autoFix && result.issues && result.issues.length > 0) {
       const fixArgs = prepareDirectFunctionArgs('fixDependencies', {});
       const fixResult = await fixDependenciesDirect(fixArgs, logger, { session: {} });
-      
+
       return res.json({
         success: true,
         data: {
@@ -193,7 +193,7 @@ export async function validateDependenciesHandler(req, res) {
         }
       });
     }
-    
+
     res.json({
       success: true,
       data: {
@@ -202,7 +202,7 @@ export async function validateDependenciesHandler(req, res) {
         message: result.message
       }
     });
-    
+
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -220,7 +220,7 @@ export async function fixDependenciesHandler(req, res) {
     const projectRoot = ensureProjectDirectory();
     const args = prepareDirectFunctionArgs('fixDependencies', {});
     const result = await fixDependenciesDirect(args, logger, { session: {} });
-    
+
     if (!result.success) {
       return res.status(400).json({
         success: false,
@@ -230,7 +230,7 @@ export async function fixDependenciesHandler(req, res) {
         }
       });
     }
-    
+
     res.json({
       success: true,
       data: {
@@ -238,7 +238,7 @@ export async function fixDependenciesHandler(req, res) {
         message: result.message
       }
     });
-    
+
   } catch (error) {
     res.status(500).json({
       success: false,
