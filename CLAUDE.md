@@ -15,6 +15,11 @@ npm run test:watch       # Run tests in watch mode
 npm run test:coverage    # Run tests with coverage report (target: 80%)
 npm run test:fails       # Run only failing tests
 
+# Run specific test categories
+npm test tests/api        # Run API tests only
+npm test tests/unit       # Run unit tests only
+npm test tests/integration # Run integration tests only
+
 # Run end-to-end tests
 npm run test:e2e         # Run full e2e test suite
 npm run test:e2e-report  # Run e2e tests with analysis report
@@ -72,11 +77,28 @@ Task Master is an AI-driven task management system with multiple interfaces:
 - **AI Providers**: Supports Anthropic, OpenAI, Google, Perplexity, xAI, OpenRouter, Ollama
 - **Task Processing**: PRD parsing, complexity analysis, task expansion, dependency management
 
+### API Architecture Patterns
+
+The API implementation has two versions:
+
+1. **Standard Implementation** (`/api/routes/*.js`):
+   - Direct imports of core functions
+   - Tightly coupled with implementation
+   - Simpler structure for production use
+
+2. **Dependency Injection Implementation** (`/api/routes/*-di.js`):
+   - Uses dependency injection pattern for better testability
+   - All dependencies injected via factory functions
+   - Enables easy mocking for comprehensive testing
+   - Production uses `createProductionDependencies()` from `/api/utils/dependency-factory.js`
+   - Tests use `createTestDependencies()` with mocked functions
+
 ### Important Patterns
 - **Error Handling**: All AI operations have fallback mechanisms and retry logic
 - **File Operations**: Always use absolute paths, maintain backup files (.bak)
 - **Testing**: Mock file system operations, use fixtures for consistent test data
 - **Async Operations**: Heavy use of async/await for file I/O and AI calls
+- **API Response Format**: Consistent structure with `success`, `data`, and `error` fields
 
 ## Development Workflow
 
@@ -90,6 +112,47 @@ When implementing features:
 ## Key Files to Understand
 - `/mcp-server/src/core/task-master-core.js` - Core task management logic
 - `/scripts/modules/task-manager.js` - CLI task operations
-- `/api/routes/` - REST API endpoints
+- `/api/routes/` - REST API endpoints (both standard and DI versions)
 - `/scripts/modules/ai-services-unified.js` - AI provider abstraction
 - `/mcp-server/src/tools/` - MCP tool definitions
+- `/api/utils/dependency-factory.js` - Dependency injection factory for API testing
+
+## Testing Strategy
+
+### API Test Structure
+- **Unit Tests** (`/tests/api/unit/`): Test individual route handlers with mocked dependencies
+- **Integration Tests** (`/tests/api/integration/`): Test complete workflows
+- **E2E Tests** (`/tests/api/e2e/`): Test full API functionality with in-memory data
+- **Test Fixtures** (`/tests/api/fixtures/`): Reusable test data and edge cases
+- **Mock Implementations** (`/tests/api/__mocks__/`): Mocked core functions
+
+### Running API Tests
+```bash
+# Run all API tests with detailed output
+npm test tests/api/
+
+# Run with specific pattern
+npm test tests/api/unit/tasks-di.test.js
+
+# Generate coverage report
+npm run test:coverage -- tests/api/
+```
+
+## API Development
+
+The REST API provides programmatic access to all Task Master features:
+
+### Key Endpoints
+- **Task Generation**: `POST /api/v1/generate-tasks-from-prd` - Generate tasks from PRD using AI
+- **Task CRUD**: Standard REST operations on `/api/v1/tasks`
+- **Subtasks**: Manage subtasks via `/api/v1/tasks/:id/subtasks`
+- **Dependencies**: Handle task dependencies via `/api/v1/tasks/:id/dependencies`
+- **AI Operations**: Task expansion, complexity analysis via dedicated endpoints
+
+### Starting the API Server
+```bash
+npm run api              # Production mode
+npm run api:dev          # Development mode with auto-reload
+```
+
+Default port is 3000 (configurable via `API_PORT` environment variable)
