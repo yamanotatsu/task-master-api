@@ -7,6 +7,7 @@
 // import { generateText, streamText, generateObject } from 'ai';
 
 // --- Core Dependencies ---
+import { LRUCache } from 'lru-cache';
 import {
 	getMainProvider,
 	getMainModelId,

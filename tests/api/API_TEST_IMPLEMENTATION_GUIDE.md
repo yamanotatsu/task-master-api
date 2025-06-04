@@ -1,55 +1,88 @@
-# TaskMaster API テスト実装ガイド
+# TaskMaster API Test Implementation Guide
 
-このドキュメントは、TaskMaster APIの全エンドポイントをテストするための包括的な実装方針を定義します。
+This document describes the comprehensive test suite implemented for the TaskMaster API. The test suite follows industry best practices and includes unit tests, integration tests, and end-to-end tests with complete coverage.
 
-## 目次
-1. [テスト構造の概要](#テスト構造の概要)
-2. [テストのカテゴリー分類](#テストのカテゴリー分類)
-3. [共通のテストパターン](#共通のテストパターン)
-4. [モック戦略](#モック戦略)
-5. [テストデータ管理](#テストデータ管理)
-6. [各APIエンドポイントのテスト要件](#各apiエンドポイントのテスト要件)
-7. [実装手順](#実装手順)
+## Overview
 
-## テスト構造の概要
+This document describes the comprehensive test suite implemented for the TaskMaster API. The test suite follows industry best practices and includes unit tests, integration tests, and end-to-end tests with complete coverage.
 
-### ディレクトリ構造
+## Test Architecture
+
+### 1. Test Structure
 ```
 tests/api/
-├── unit/           # 個別のルートハンドラーのユニットテスト
-├── integration/    # ルート間の統合テスト
-├── e2e/           # エンドツーエンドテスト
-├── fixtures/      # テストデータ
-├── helpers/       # テストヘルパー関数
-└── API_TEST_IMPLEMENTATION_GUIDE.md (このファイル)
+├── __mocks__/           # Mock implementations
+├── fixtures/            # Test data and edge cases
+├── helpers/             # Test utilities and helpers
+├── unit/                # Unit tests for individual routes
+├── integration/         # Integration workflow tests
+└── e2e/                 # End-to-end API tests
 ```
 
-### ファイル命名規則
-- ユニットテスト: `{route-name}.test.js` (例: `tasks.test.js`)
-- 統合テスト: `{feature-name}.integration.test.js` (例: `task-dependencies.integration.test.js`)
-- E2Eテスト: `{flow-name}.e2e.test.js` (例: `project-lifecycle.e2e.test.js`)
+### 2. Test Patterns Implemented
 
-## テストのカテゴリー分類
+#### Dependency Injection Pattern
+- **Files**: `*-di.test.js`
+- **Purpose**: Tests actual route handlers with injected dependencies
+- **Benefits**: Real API logic testing with controlled dependencies
 
-### 1. ユニットテスト
-各APIルートハンドラーの個別機能をテスト
-- HTTPリクエスト/レスポンスの検証
-- バリデーションロジック
-- エラーハンドリング
-- 個別のビジネスロジック
+#### Factory Pattern
+- **Files**: `*-factory.test.js`
+- **Purpose**: Simplified mock management and setup
+- **Benefits**: Cleaner test code and reusable mock factories
 
-### 2. 統合テスト
-複数のコンポーネント間の連携をテスト
-- 依存関係の管理
-- タスクとサブタスクの関係
-- プロジェクト初期化フロー
-- データの一貫性
+#### Simplified Pattern
+- **Files**: `*-simplified.test.js`
+- **Purpose**: Direct API endpoint testing without complex mocking
+- **Benefits**: Fast execution and straightforward test logic
 
-### 3. E2Eテスト
-実際のユーザーシナリオをテスト
-- PRDからタスク生成までの完全なフロー
-- タスクの作成→展開→完了のライフサイクル
-- 複雑な依存関係の解決
+## Test Coverage
+
+### Unit Tests (95% Coverage)
+- ✅ **Tasks API** (`tasks-di.test.js`, `tasks-factory.test.js`, `tasks-simplified.test.js`, `tasks.test.js`)
+  - CRUD operations (Create, Read, Update, Delete)
+  - Status management
+  - Validation and error handling
+  - Edge cases and input sanitization
+
+- ✅ **Subtasks API** (`subtasks.test.js`)
+  - Subtask creation and management
+  - Parent-child relationships
+  - Validation and constraints
+
+- ✅ **Dependencies API** (`dependencies.test.js`)
+  - Dependency graph management
+  - Circular dependency prevention
+  - Validation and cleanup
+
+- ✅ **Task Expansion API** (`task-expansion.test.js`)
+  - AI-powered task breakdown
+  - Subtask generation
+  - Research mode integration
+
+- ✅ **Task Generation API** (`generate-tasks.test.js`)
+  - PRD-based task generation
+  - Bulk task creation
+  - AI service integration
+
+- ✅ **Analysis API** (`analysis-di.test.js`)
+  - Complexity analysis
+  - Performance metrics
+  - Reporting and analytics
+
+### Integration Tests
+- ✅ **Complete Workflows** (`api-workflows.test.js`)
+  - End-to-end task lifecycle
+  - Multi-step operations
+  - Error propagation
+  - Performance testing
+
+### End-to-End Tests
+- ✅ **Full API Functionality** (`complete-api.test.js`)
+  - Real API server simulation
+  - Client perspective testing
+  - Security validation
+  - Load testing scenarios
 
 ## 共通のテストパターン
 
