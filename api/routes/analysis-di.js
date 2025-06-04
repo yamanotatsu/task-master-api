@@ -73,31 +73,36 @@ export function createAnalysisHandlers(dependencies) {
     }
   }
 
-  // POST /api/v1/tasks/analyze-complexity - Analyze task complexity
+  // POST /api/v1/tasks/:id/analyze - Analyze task complexity
   async function analyzeTaskComplexityHandler(req, res) {
     try {
-      const validation = analyzeComplexitySchema.safeParse(req.body);
-      
-      if (!validation.success) {
+      const taskId = parseInt(req.params.id);
+      if (isNaN(taskId)) {
         return res.status(400).json({
           success: false,
           error: {
-            code: 'INVALID_INPUT',
-            message: 'Invalid task ID',
-            details: validation.error.errors
+            code: 'INVALID_TASK_ID',
+            message: 'Task ID must be a number'
           }
         });
       }
+
+      // Parse query parameters
+      const { includeSubtasks, analyzeDependencies, detailLevel } = req.query;
       
       ensureProjectDirectory();
       const args = prepareDirectFunctionArgs('analyzeTaskComplexity', {
-        taskId: validation.data.taskId
+        taskId,
+        ...(includeSubtasks && { includeSubtasks: includeSubtasks === 'true' }),
+        ...(analyzeDependencies && { analyzeDependencies: analyzeDependencies === 'true' }),
+        ...(detailLevel && { detailLevel })
       });
+      
       const result = await analyzeTaskComplexityDirect(args, logger, { session: {} });
       
       if (!result.success) {
         let statusCode = 400;
-        let errorCode = 'ANALYZE_COMPLEXITY_ERROR';
+        let errorCode = 'ANALYSIS_ERROR';
         let message = result.error;
 
         // Handle error objects vs error strings
@@ -105,9 +110,9 @@ export function createAnalysisHandlers(dependencies) {
           if (result.error.code === 'TASK_NOT_FOUND') {
             statusCode = 404;
             errorCode = 'TASK_NOT_FOUND';
-          } else if (result.error.code === 'MISSING_API_KEY') {
-            statusCode = 401;
-            errorCode = 'MISSING_API_KEY';
+          } else if (result.error.code === 'AI_SERVICE_ERROR') {
+            statusCode = 503;
+            errorCode = 'AI_SERVICE_ERROR';
           }
           message = result.error.message || result.error.code || 'Complexity analysis failed';
         } else if (typeof result.error === 'string' && result.error.includes('not found')) {
@@ -127,10 +132,7 @@ export function createAnalysisHandlers(dependencies) {
       res.json({
         success: true,
         data: {
-          taskId: validation.data.taskId,
-          complexity: result.complexity,
-          factors: result.factors || [],
-          recommendations: result.recommendations || [],
+          analysis: result.analysis || result,
           telemetryData: result.telemetryData || {}
         }
       });
@@ -146,23 +148,89 @@ export function createAnalysisHandlers(dependencies) {
     }
   }
 
-  // GET /api/v1/tasks/complexity-report - Get complexity report for all tasks
+  // GET /api/v1/analytics/complexity-report - Get complexity report for all tasks
   async function getComplexityReportHandler(req, res) {
     try {
-      ensureProjectDirectory();
-      const args = prepareDirectFunctionArgs('complexityReport', {});
-      const result = await complexityReportDirect(args, logger, { session: {} });
+      // Validate query parameters
+      const { status, priority, includeRecommendations, includeRiskAssessment } = req.query;
       
-      if (!result.success) {
-        let message = result.error;
-        if (typeof result.error === 'object' && result.error !== null) {
-          message = result.error.message || result.error.code || 'Complexity report failed';
-        }
-
+      // Validate status parameter
+      if (status && !['pending', 'in-progress', 'completed', 'blocked'].includes(status)) {
         return res.status(400).json({
           success: false,
           error: {
-            code: 'COMPLEXITY_REPORT_ERROR',
+            code: 'INVALID_QUERY_PARAMS',
+            message: 'Invalid query parameters'
+          }
+        });
+      }
+      
+      // Validate priority parameter
+      if (priority && !['low', 'medium', 'high', 'critical'].includes(priority)) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_QUERY_PARAMS',
+            message: 'Invalid query parameters'
+          }
+        });
+      }
+      
+      // Validate boolean parameters
+      if (includeRecommendations !== undefined && 
+          includeRecommendations !== 'true' && 
+          includeRecommendations !== 'false') {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_QUERY_PARAMS',
+            message: 'Invalid query parameters'
+          }
+        });
+      }
+      
+      if (includeRiskAssessment !== undefined && 
+          includeRiskAssessment !== 'true' && 
+          includeRiskAssessment !== 'false') {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_QUERY_PARAMS',
+            message: 'Invalid query parameters'
+          }
+        });
+      }
+      
+      ensureProjectDirectory();
+      const args = prepareDirectFunctionArgs('complexityReport', {
+        ...(status && { status }),
+        ...(priority && { priority }),
+        includeRecommendations: includeRecommendations !== 'false',
+        includeRiskAssessment: includeRiskAssessment !== 'false'
+      });
+      
+      const result = await complexityReportDirect(args, logger, { session: {} });
+      
+      if (!result.success) {
+        let statusCode = 500;
+        let errorCode = 'REPORT_GENERATION_ERROR';
+        let message = result.error;
+
+        if (typeof result.error === 'object' && result.error !== null) {
+          if (result.error.code === 'AI_SERVICE_UNAVAILABLE') {
+            statusCode = 503;
+            errorCode = 'AI_SERVICE_UNAVAILABLE';
+          }
+          message = result.error.message || result.error.code || 'Complexity report failed';
+        } else if (typeof result.error === 'string' && result.error.includes('Insufficient')) {
+          statusCode = 400;
+          errorCode = 'COMPLEXITY_REPORT_ERROR';
+        }
+
+        return res.status(statusCode).json({
+          success: false,
+          error: {
+            code: errorCode,
             message: message
           }
         });
@@ -172,9 +240,9 @@ export function createAnalysisHandlers(dependencies) {
         success: true,
         data: {
           report: result.report || {},
-          summary: result.summary || {},
-          highComplexityTasks: result.highComplexityTasks || [],
-          recommendations: result.recommendations || []
+          recommendations: result.report?.recommendations || [],
+          riskAssessment: result.report?.riskAssessment || {},
+          telemetryData: result.telemetryData || {}
         }
       });
       
