@@ -61,7 +61,8 @@ export async function setTaskStatusDirect(args, log) {
 		const tasksPath = tasksJsonPath;
 
 		// Execute core setTaskStatus function
-		const taskId = id;
+		// Ensure taskId is a string for the core function
+		const taskId = String(id);
 		const newStatus = status;
 
 		log.info(`Setting task ${taskId} status to "${newStatus}"`);

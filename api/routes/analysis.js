@@ -98,10 +98,12 @@ export async function analyzeTaskComplexityHandler(req, res) {
       success: true,
       data: {
         taskId: validation.data.taskId,
-        complexity: result.complexity,
-        factors: result.factors,
-        recommendations: result.recommendations,
-        telemetryData: result.telemetryData
+        complexity: result.complexity || result.data?.fullReport?.complexityAnalysis?.[0]?.complexityScore,
+        factors: result.factors || result.data?.fullReport?.complexityAnalysis?.[0]?.factors,
+        recommendations: result.recommendations || result.data?.fullReport?.recommendations,
+        reportPath: result.data?.reportPath,
+        reportSummary: result.data?.reportSummary,
+        telemetryData: result.telemetryData || result.data?.telemetryData
       }
     });
     

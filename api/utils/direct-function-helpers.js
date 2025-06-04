@@ -67,6 +67,17 @@ export function prepareDirectFunctionArgs(functionName, apiArgs = {}) {
       };
       
     case 'addTask':
+      // Handle both AI-driven and manual task creation
+      if (apiArgs.prompt) {
+        return {
+          tasksJsonPath,
+          prompt: apiArgs.prompt,
+          research: apiArgs.research || false,
+          dependencies: apiArgs.dependencies || [],
+          priority: apiArgs.priority || 'medium',
+          projectRoot
+        };
+      }
       return {
         tasksJsonPath,
         title: apiArgs.title,
@@ -74,18 +85,30 @@ export function prepareDirectFunctionArgs(functionName, apiArgs = {}) {
         priority: apiArgs.priority || 'medium',
         dependencies: apiArgs.dependencies || [],
         details: apiArgs.details,
-        testStrategy: apiArgs.testStrategy
+        testStrategy: apiArgs.testStrategy,
+        projectRoot
       };
       
     case 'updateTaskById':
+      // If prompt is provided, it's an AI-driven update
+      if (apiArgs.prompt) {
+        return {
+          tasksJsonPath,
+          id: apiArgs.taskId,
+          prompt: apiArgs.prompt,
+          research: apiArgs.research || false,
+          projectRoot
+        };
+      }
+      // Otherwise, it's a manual update with specific fields
       return {
         tasksJsonPath,
         id: apiArgs.taskId,
-        title: apiArgs.title,
-        description: apiArgs.description,
-        priority: apiArgs.priority,
-        details: apiArgs.details,
-        testStrategy: apiArgs.testStrategy,
+        title: apiArgs.updates?.title || apiArgs.title,
+        description: apiArgs.updates?.description || apiArgs.description,
+        priority: apiArgs.updates?.priority || apiArgs.priority,
+        details: apiArgs.updates?.details || apiArgs.details,
+        testStrategy: apiArgs.updates?.testStrategy || apiArgs.testStrategy,
         projectRoot
       };
       
@@ -178,7 +201,15 @@ export function prepareDirectFunctionArgs(functionName, apiArgs = {}) {
     case 'analyzeTaskComplexity':
       return {
         tasksJsonPath,
-        taskId: apiArgs.taskId,
+        outputPath: apiArgs.outputPath || path.join(projectRoot, `task-complexity-${apiArgs.taskId || 'report'}-${Date.now()}.json`),
+        threshold: apiArgs.threshold,
+        research: apiArgs.research || false,
+        projectRoot,
+        // If a single taskId is provided, convert it to the 'id' parameter expected by the core function
+        id: apiArgs.taskId ? String(apiArgs.taskId) : undefined,
+        ids: apiArgs.ids,
+        from: apiArgs.from,
+        to: apiArgs.to,
         session: apiArgs.session
       };
       
