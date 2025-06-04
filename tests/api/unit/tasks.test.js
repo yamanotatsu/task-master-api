@@ -22,13 +22,24 @@ import {
 jest.mock('../../../mcp-server/src/core/task-master-core.js');
 jest.mock('../../../api/utils/logger.js');
 jest.mock('../../../api/utils/direct-function-helpers.js');
-
 jest.mock('../../../api/services/task-updater.js');
 
 // Import mocked modules
-import * as taskMasterCore from '../../../mcp-server/src/core/task-master-core.js';
+import { 
+  listTasksDirect,
+  showTaskDirect,
+  addTaskDirect,
+  updateTaskByIdDirect,
+  removeTaskDirect,
+  setTaskStatusDirect
+} from '../../../mcp-server/src/core/task-master-core.js';
 import { logger } from '../../../api/utils/logger.js';
-import * as directHelpers from '../../../api/utils/direct-function-helpers.js';
+import { 
+  prepareDirectFunctionArgs,
+  ensureProjectDirectory,
+  getTasksJsonPath,
+  getProjectRoot
+} from '../../../api/utils/direct-function-helpers.js';
 
 describe('API Route: /api/v1/tasks', () => {
   let app;
@@ -55,12 +66,11 @@ describe('API Route: /api/v1/tasks', () => {
     app.delete('/api/v1/tasks/:id', deleteTaskHandler);
     app.patch('/api/v1/tasks/:id/status', updateTaskStatusHandler);
     
-    // Setup default mock implementations
-    directHelpers.ensureProjectDirectory.mockReturnValue(undefined);
-    directHelpers.prepareDirectFunctionArgs.mockImplementation((action, params) => params);
-    
-    // Reset all mocks
-    jest.clearAllMocks();
+    // Setup mock implementations
+    prepareDirectFunctionArgs.mockImplementation((action, params) => params);
+    ensureProjectDirectory.mockImplementation(() => {});
+    getTasksJsonPath.mockReturnValue('/test/tasks.json');
+    getProjectRoot.mockReturnValue('/test/project');
   });
 
   afterEach(() => {
@@ -75,7 +85,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: true,
           data: { tasks: mockTasks }
         };
-        taskMasterCore.listTasksDirect.mockResolvedValue(mockResponse);
+        listTasksDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .get('/api/v1/tasks')
@@ -88,7 +98,7 @@ describe('API Route: /api/v1/tasks', () => {
           totalTasks: mockTasks.length,
           filteredBy: 'all'
         });
-        expect(taskMasterCore.listTasksDirect).toHaveBeenCalledWith(
+        expect(listTasksDirect).toHaveBeenCalledWith(
           expect.any(Object),
           logger,
           expect.any(Object)
@@ -101,7 +111,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: true,
           data: { tasks: filteredTasks }
         };
-        taskMasterCore.listTasksDirect.mockResolvedValue(mockResponse);
+        listTasksDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .get('/api/v1/tasks?filter=pending')
@@ -109,7 +119,7 @@ describe('API Route: /api/v1/tasks', () => {
 
         expectSuccessResponse(response);
         expect(response.body.data.filteredBy).toBe('pending');
-        expect(directHelpers.prepareDirectFunctionArgs).toHaveBeenCalledWith('listTasks', {
+        expect(prepareDirectFunctionArgs).toHaveBeenCalledWith('listTasks', {
           filter: 'pending',
           format: 'json'
         });
@@ -120,14 +130,14 @@ describe('API Route: /api/v1/tasks', () => {
           success: true,
           data: { tasks: mockTasks }
         };
-        taskMasterCore.listTasksDirect.mockResolvedValue(mockResponse);
+        listTasksDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .get('/api/v1/tasks?format=detailed')
           .expect(200);
 
         expectSuccessResponse(response);
-        expect(directHelpers.prepareDirectFunctionArgs).toHaveBeenCalledWith('listTasks', {
+        expect(prepareDirectFunctionArgs).toHaveBeenCalledWith('listTasks', {
           filter: undefined,
           format: 'detailed'
         });
@@ -138,7 +148,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: true,
           data: { tasks: [] }
         };
-        taskMasterCore.listTasksDirect.mockResolvedValue(mockResponse);
+        listTasksDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .get('/api/v1/tasks')
@@ -156,7 +166,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: false,
           error: 'Failed to read tasks file'
         };
-        taskMasterCore.listTasksDirect.mockResolvedValue(mockResponse);
+        listTasksDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .get('/api/v1/tasks')
@@ -167,7 +177,7 @@ describe('API Route: /api/v1/tasks', () => {
       });
 
       test('should handle unexpected errors', async () => {
-        taskMasterCore.listTasksDirect.mockRejectedValue(new Error('Unexpected error'));
+        listTasksDirect.mockRejectedValue(new Error('Unexpected error'));
 
         const response = await request(app)
           .get('/api/v1/tasks')
@@ -181,7 +191,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: true,
           // data is missing
         };
-        taskMasterCore.listTasksDirect.mockResolvedValue(mockResponse);
+        listTasksDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .get('/api/v1/tasks')
@@ -201,7 +211,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: true,
           data: task
         };
-        taskMasterCore.showTaskDirect.mockResolvedValue(mockResponse);
+        showTaskDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .get('/api/v1/tasks/1')
@@ -209,7 +219,7 @@ describe('API Route: /api/v1/tasks', () => {
 
         expectSuccessResponse(response);
         expect(response.body.data).toEqual(task);
-        expect(taskMasterCore.showTaskDirect).toHaveBeenCalledWith(
+        expect(showTaskDirect).toHaveBeenCalledWith(
           { taskId: 1 },
           logger,
           expect.any(Object)
@@ -222,14 +232,14 @@ describe('API Route: /api/v1/tasks', () => {
           success: true,
           data: createMockTask({ id: `task_${taskId}` })
         };
-        taskMasterCore.showTaskDirect.mockResolvedValue(mockResponse);
+        showTaskDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .get(`/api/v1/tasks/${taskId}`)
           .expect(200);
 
         expectSuccessResponse(response);
-        expect(directHelpers.prepareDirectFunctionArgs).toHaveBeenCalledWith('showTask', { taskId });
+        expect(prepareDirectFunctionArgs).toHaveBeenCalledWith('showTask', { taskId });
       });
     });
 
@@ -240,7 +250,7 @@ describe('API Route: /api/v1/tasks', () => {
           .expect(400);
 
         expectErrorResponse(response, 'INVALID_TASK_ID', 400);
-        expect(taskMasterCore.showTaskDirect).not.toHaveBeenCalled();
+        expect(showTaskDirect).not.toHaveBeenCalled();
       });
 
       test('should return 404 for non-existent task', async () => {
@@ -248,7 +258,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: false,
           error: 'Task not found'
         };
-        taskMasterCore.showTaskDirect.mockResolvedValue(mockResponse);
+        showTaskDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .get('/api/v1/tasks/999')
@@ -281,7 +291,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: true,
           data: createMockTask({ ...newTask, id: 'task_006' })
         };
-        taskMasterCore.addTaskDirect.mockResolvedValue(mockResponse);
+        addTaskDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .post('/api/v1/tasks')
@@ -290,7 +300,7 @@ describe('API Route: /api/v1/tasks', () => {
 
         expectSuccessResponse(response, 201);
         expect(response.body.message).toBe('Task created successfully');
-        expect(taskMasterCore.addTaskDirect).toHaveBeenCalledWith(
+        expect(addTaskDirect).toHaveBeenCalledWith(
           expect.objectContaining({
             title: 'New Task',
             details: expect.stringContaining('Priority: medium')
@@ -313,7 +323,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: true,
           data: createMockTask({ ...newTask, id: 'task_007' })
         };
-        taskMasterCore.addTaskDirect.mockResolvedValue(mockResponse);
+        addTaskDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .post('/api/v1/tasks')
@@ -321,7 +331,7 @@ describe('API Route: /api/v1/tasks', () => {
           .expect(201);
 
         expectSuccessResponse(response, 201);
-        expect(directHelpers.prepareDirectFunctionArgs).toHaveBeenCalledWith('addTask', 
+        expect(prepareDirectFunctionArgs).toHaveBeenCalledWith('addTask', 
           expect.objectContaining({
             title: 'Complete Task',
             dependencies: '1,2,3'
@@ -338,7 +348,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: true,
           data: createMockTask({ ...newTask, id: 'task_008' })
         };
-        taskMasterCore.addTaskDirect.mockResolvedValue(mockResponse);
+        addTaskDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .post('/api/v1/tasks')
@@ -358,7 +368,7 @@ describe('API Route: /api/v1/tasks', () => {
 
         expectErrorResponse(response, 'VALIDATION_ERROR', 400);
         expect(response.body.error.details).toBeDefined();
-        expect(taskMasterCore.addTaskDirect).not.toHaveBeenCalled();
+        expect(addTaskDirect).not.toHaveBeenCalled();
       });
 
       test('should reject empty title', async () => {
@@ -401,7 +411,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: false,
           error: 'Duplicate task title'
         };
-        taskMasterCore.addTaskDirect.mockResolvedValue(mockResponse);
+        addTaskDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .post('/api/v1/tasks')
@@ -412,7 +422,7 @@ describe('API Route: /api/v1/tasks', () => {
       });
 
       test('should handle unexpected errors', async () => {
-        taskMasterCore.addTaskDirect.mockRejectedValue(new Error('Database error'));
+        addTaskDirect.mockRejectedValue(new Error('Database error'));
 
         const response = await request(app)
           .post('/api/v1/tasks')
@@ -434,7 +444,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: true,
           data: createMockTask({ ...mockTasks[0], ...updates })
         };
-        taskMasterCore.updateTaskByIdDirect.mockResolvedValue(mockResponse);
+        updateTaskByIdDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .put('/api/v1/tasks/1')
@@ -443,7 +453,7 @@ describe('API Route: /api/v1/tasks', () => {
 
         expectSuccessResponse(response);
         expect(response.body.message).toBe('Task updated successfully');
-        expect(taskMasterCore.updateTaskByIdDirect).toHaveBeenCalledWith(
+        expect(updateTaskByIdDirect).toHaveBeenCalledWith(
           expect.objectContaining({
             taskId: 1,
             updates: { title: 'Updated Title' }
@@ -466,7 +476,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: true,
           data: createMockTask({ ...mockTasks[0], ...updates })
         };
-        taskMasterCore.updateTaskByIdDirect.mockResolvedValue(mockResponse);
+        updateTaskByIdDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .put('/api/v1/tasks/1')
@@ -474,7 +484,7 @@ describe('API Route: /api/v1/tasks', () => {
           .expect(200);
 
         expectSuccessResponse(response);
-        expect(directHelpers.prepareDirectFunctionArgs).toHaveBeenCalledWith('updateTaskById',
+        expect(prepareDirectFunctionArgs).toHaveBeenCalledWith('updateTaskById',
           expect.objectContaining({
             taskId: 1,
             updates: expect.objectContaining({
@@ -490,7 +500,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: true,
           data: mockTasks[0]
         };
-        taskMasterCore.updateTaskByIdDirect.mockResolvedValue(mockResponse);
+        updateTaskByIdDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .put('/api/v1/tasks/1')
@@ -536,7 +546,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: false,
           error: 'Task not found'
         };
-        taskMasterCore.updateTaskByIdDirect.mockResolvedValue(mockResponse);
+        updateTaskByIdDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .put('/api/v1/tasks/999')
@@ -551,7 +561,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: false,
           error: 'Circular dependency detected'
         };
-        taskMasterCore.updateTaskByIdDirect.mockResolvedValue(mockResponse);
+        updateTaskByIdDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .put('/api/v1/tasks/1')
@@ -570,7 +580,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: true,
           data: { deleted: true }
         };
-        taskMasterCore.removeTaskDirect.mockResolvedValue(mockResponse);
+        removeTaskDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .delete('/api/v1/tasks/1')
@@ -578,7 +588,7 @@ describe('API Route: /api/v1/tasks', () => {
 
         expectSuccessResponse(response);
         expect(response.body.message).toBe('Task 1 deleted successfully');
-        expect(taskMasterCore.removeTaskDirect).toHaveBeenCalledWith(
+        expect(removeTaskDirect).toHaveBeenCalledWith(
           { taskId: 1 },
           logger,
           expect.any(Object)
@@ -600,7 +610,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: false,
           error: 'Task not found'
         };
-        taskMasterCore.removeTaskDirect.mockResolvedValue(mockResponse);
+        removeTaskDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .delete('/api/v1/tasks/999')
@@ -614,7 +624,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: false,
           error: 'Cannot delete task with dependent tasks'
         };
-        taskMasterCore.removeTaskDirect.mockResolvedValue(mockResponse);
+        removeTaskDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .delete('/api/v1/tasks/1')
@@ -636,7 +646,7 @@ describe('API Route: /api/v1/tasks', () => {
             success: true,
             data: { ...mockTasks[0], status }
           };
-          taskMasterCore.setTaskStatusDirect.mockResolvedValue(mockResponse);
+          setTaskStatusDirect.mockResolvedValue(mockResponse);
 
           const response = await request(app)
             .patch('/api/v1/tasks/1/status')
@@ -645,7 +655,7 @@ describe('API Route: /api/v1/tasks', () => {
 
           expectSuccessResponse(response);
           expect(response.body.message).toBe(`Task 1 status updated to ${status}`);
-          expect(taskMasterCore.setTaskStatusDirect).toHaveBeenCalledWith(
+          expect(setTaskStatusDirect).toHaveBeenCalledWith(
             { taskId: 1, status },
             logger,
             expect.any(Object)
@@ -693,7 +703,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: false,
           error: 'Task not found'
         };
-        taskMasterCore.setTaskStatusDirect.mockResolvedValue(mockResponse);
+        setTaskStatusDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .patch('/api/v1/tasks/999/status')
@@ -708,7 +718,7 @@ describe('API Route: /api/v1/tasks', () => {
           success: false,
           error: 'Cannot complete task - dependencies not met'
         };
-        taskMasterCore.setTaskStatusDirect.mockResolvedValue(mockResponse);
+        setTaskStatusDirect.mockResolvedValue(mockResponse);
 
         const response = await request(app)
           .patch('/api/v1/tasks/4/status')
