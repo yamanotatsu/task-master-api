@@ -1,220 +1,302 @@
 "use client"
 
-import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Target, BarChart3, Link2, Rocket, Sparkles, TrendingUp, Brain, Zap, Shield } from 'lucide-react';
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import { Plus, Grid3X3, List, ChevronDown } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { ProjectCard } from "@/components/ui/project-card"
+import { EmptyState } from "@/components/ui/empty-state"
+import { Spinner } from "@/components/ui/spinner"
+import { api, Project } from "@/lib/api"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5 }
-};
+type ViewMode = "card" | "list"
+type FilterMode = "all" | "in-progress" | "completed"
+type SortMode = "updated" | "created" | "progress" | "name"
 
-const stagger = {
-  animate: {
-    transition: {
-      staggerChildren: 0.1
+export default function DashboardPage() {
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+  const [viewMode, setViewMode] = useState<ViewMode>("card")
+  const [filter, setFilter] = useState<FilterMode>("all")
+  const [sort, setSort] = useState<SortMode>("updated")
+
+  useEffect(() => {
+    loadProjects()
+  }, [])
+
+  const loadProjects = async () => {
+    try {
+      setLoading(true)
+      const data = await api.getProjects()
+      setProjects(data)
+    } catch (error) {
+      console.error("Failed to load projects:", error)
+    } finally {
+      setLoading(false)
     }
   }
-};
 
-export default function Home() {
+  // Filter projects
+  const filteredProjects = projects.filter(project => {
+    if (filter === "all") return true
+    if (filter === "in-progress") return project.progress > 0 && project.progress < 100
+    if (filter === "completed") return project.progress === 100
+    return true
+  })
+
+  // Sort projects
+  const sortedProjects = [...filteredProjects].sort((a, b) => {
+    switch (sort) {
+      case "updated":
+        return new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime()
+      case "created":
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      case "progress":
+        return b.progress - a.progress
+      case "name":
+        return a.name.localeCompare(b.name)
+      default:
+        return 0
+    }
+  })
+
+  const sortLabels: Record<SortMode, string> = {
+    updated: "更新日順",
+    created: "作成日順",
+    progress: "進捗順",
+    name: "名前順"
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Spinner size="lg" />
+      </div>
+    )
+  }
+
   return (
-    <div className="relative">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden pb-16 pt-20 md:pb-20 md:pt-28">
-        <div className="absolute inset-0 -z-10 mx-0 max-w-none overflow-hidden">
-          <div className="absolute left-1/2 top-0 ml-[-38rem] h-[25rem] w-[81.25rem] bg-gradient-conic from-primary via-primary/50 to-background opacity-20 blur-3xl"></div>
-        </div>
-        <motion.div
-          className="container relative"
-          initial="initial"
-          animate="animate"
-          variants={stagger}
-        >
-          <motion.div className="mx-auto max-w-3xl text-center" variants={fadeInUp}>
-            <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-              <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                タスク管理を
-              </span>
-              <br />
-              <span className="text-foreground">
-                次のレベルへ
-              </span>
-            </h1>
-            <p className="mt-6 text-lg leading-8 text-muted-foreground">
-              AIパワードのタスク管理システムで、プロジェクトを効率的に管理。
-              PRDから自動的にタスクを生成し、複雑な依存関係も簡単に追跡。
-            </p>
-            <motion.div className="mt-10 flex items-center justify-center gap-4" variants={fadeInUp}>
-              <Button asChild size="lg">
-                <Link href="/tasks">
-                  タスクを管理する
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href="/prd">
-                  PRDから始める
-                </Link>
-              </Button>
-            </motion.div>
-          </motion.div>
+    <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">ダッシュボード</h1>
+        <Button asChild size="lg" className="shadow-lg">
+          <Link href="/projects/new">
+            <Plus className="mr-2 h-5 w-5" />
+            新規プロジェクト作成
+          </Link>
+        </Button>
+      </div>
 
-          {/* Feature Cards */}
-          <motion.div className="mx-auto mt-16 grid max-w-5xl grid-cols-1 gap-6 sm:grid-cols-2" variants={stagger}>
-            <motion.div variants={fadeInUp}>
-              <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-                <CardHeader>
-                  <Brain className="mb-2 h-8 w-8 text-primary" />
-                  <CardTitle className="text-2xl">AIタスク管理</CardTitle>
-                  <CardDescription>
-                    高度なAIがタスクを分析し、最適な実行順序を提案
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button asChild variant="secondary">
-                    <Link href="/tasks">
-                      詳しく見る
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
+      {/* Control Bar */}
+      <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm border">
+        <div className="flex items-center space-x-4">
+          {/* View Mode Toggle */}
+          <div className="flex items-center bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode("card")}
+              className={`p-2 rounded transition-colors ${
+                viewMode === "card" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
+              }`}
+              title="カード表示"
+            >
+              <Grid3X3 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-2 rounded transition-colors ${
+                viewMode === "list" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
+              }`}
+              title="リスト表示"
+            >
+              <List className="h-4 w-4" />
+            </button>
+          </div>
 
-            <motion.div variants={fadeInUp}>
-              <Card className="relative overflow-hidden border-green-500/20 bg-gradient-to-br from-green-500/5 to-green-500/10">
-                <CardHeader>
-                  <Zap className="mb-2 h-8 w-8 text-green-500" />
-                  <CardTitle className="text-2xl">PRD自動解析</CardTitle>
-                  <CardDescription>
-                    要件定義書から自動的にタスクを生成・構造化
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button asChild variant="secondary">
-                    <Link href="/prd">
-                      今すぐ試す
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* Features Grid */}
-      <section className="border-t py-16 md:py-24">
-        <motion.div
-          className="container"
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true }}
-          variants={stagger}
-        >
-          <motion.div className="mx-auto max-w-3xl text-center" variants={fadeInUp}>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              パワフルな機能
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              プロジェクト管理に必要なすべての機能を搭載
-            </p>
-          </motion.div>
-
-          <motion.div className="mx-auto mt-12 grid max-w-6xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3" variants={stagger}>
-            {[
-              {
-                icon: Target,
-                title: "タスク優先順位付け",
-                description: "重要度と緊急度に基づいて、タスクを自動的に優先順位付け",
-                color: "text-red-500"
-              },
-              {
-                icon: BarChart3,
-                title: "複雑度分析",
-                description: "AIがタスクの複雑さを分析し、必要なリソースを見積もり",
-                color: "text-blue-500"
-              },
-              {
-                icon: Link2,
-                title: "依存関係追跡",
-                description: "タスク間の依存関係を視覚的に管理し、ボトルネックを回避",
-                color: "text-green-500"
-              },
-              {
-                icon: Rocket,
-                title: "タスク自動展開",
-                description: "大きなタスクを自動的にサブタスクに分解",
-                color: "text-purple-500"
-              },
-              {
-                icon: Sparkles,
-                title: "スマートPRD処理",
-                description: "要件定義を即座に実行可能なタスクリストに変換",
-                color: "text-yellow-500"
-              },
-              {
-                icon: TrendingUp,
-                title: "進捗トラッキング",
-                description: "リアルタイムでプロジェクトの進捗を可視化",
-                color: "text-indigo-500"
-              }
-            ].map((feature, index) => (
-              <motion.div key={index} variants={fadeInUp}>
-                <Card className="h-full transition-shadow hover:shadow-lg">
-                  <CardHeader>
-                    <feature.icon className={`mb-2 h-8 w-8 ${feature.color}`} />
-                    <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="border-t py-16 md:py-24">
-        <motion.div
-          className="container"
-          initial="initial"
-          whileInView="animate"
-          viewport={{ once: true }}
-          variants={fadeInUp}
-        >
-          <Card className="mx-auto max-w-4xl bg-gradient-to-r from-primary/10 to-primary/5 p-8 text-center md:p-12">
-            <Shield className="mx-auto mb-4 h-12 w-12 text-primary" />
-            <h3 className="mb-4 text-3xl font-bold">
-              プロジェクトを成功に導く
-            </h3>
-            <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground">
-              Task Masterで、複雑なプロジェクトも効率的に管理。
-              今すぐ始めて、生産性を最大化しましょう。
-            </p>
-            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Button asChild size="lg">
-                <Link href="/tasks">
-                  タスク管理を開始
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href="/prd">
-                  PRDを提出
-                </Link>
-              </Button>
+          {/* Filter */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-500">フィルタ:</span>
+            <div className="flex rounded-lg bg-gray-100 p-1">
+              <button
+                onClick={() => setFilter("all")}
+                className={`px-3 py-1 text-sm rounded transition-colors ${
+                  filter === "all" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                すべて
+              </button>
+              <button
+                onClick={() => setFilter("in-progress")}
+                className={`px-3 py-1 text-sm rounded transition-colors ${
+                  filter === "in-progress" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                進行中
+              </button>
+              <button
+                onClick={() => setFilter("completed")}
+                className={`px-3 py-1 text-sm rounded transition-colors ${
+                  filter === "completed" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                完了
+              </button>
             </div>
-          </Card>
-        </motion.div>
-      </section>
+          </div>
+        </div>
+
+        {/* Sort */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              {sortLabels[sort]}
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setSort("updated")}>
+              更新日順
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSort("created")}>
+              作成日順
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSort("progress")}>
+              進捗順
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSort("name")}>
+              名前順
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Projects Grid/List */}
+      {sortedProjects.length === 0 ? (
+        <EmptyState
+          icon={
+            <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} 
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" 
+              />
+            </svg>
+          }
+          title="プロジェクトがありません"
+          description="新規プロジェクトを作成して、タスク管理を始めましょう"
+          action={{
+            label: "プロジェクトを作成",
+            onClick: () => window.location.href = "/projects/new"
+          }}
+        />
+      ) : viewMode === "card" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {sortedProjects.map((project) => (
+            <ProjectCard
+              key={project.id}
+              id={project.id}
+              name={project.name}
+              createdAt={new Date(project.createdAt).toLocaleDateString("ja-JP")}
+              progress={project.progress}
+              completedTasks={project.completedTasks}
+              totalTasks={project.totalTasks}
+              assignees={project.assignees}
+              deadline={project.deadline ? new Date(project.deadline).toLocaleDateString("ja-JP") : undefined}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b bg-gray-50">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  プロジェクト名
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  進捗
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  タスク
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  担当者
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  期限
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {sortedProjects.map((project) => (
+                <tr 
+                  key={project.id} 
+                  className="hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => window.location.href = `/projects/${project.id}`}
+                >
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">{project.name}</div>
+                    <div className="text-xs text-gray-500">
+                      作成日: {new Date(project.createdAt).toLocaleDateString("ja-JP")}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full"
+                          style={{ width: `${project.progress}%` }}
+                        />
+                      </div>
+                      <span className="text-sm text-gray-600">{Math.round(project.progress)}%</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {project.completedTasks}/{project.totalTasks}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex -space-x-2">
+                      {project.assignees.slice(0, 3).map((assignee) => (
+                        <div
+                          key={assignee.id}
+                          className="w-8 h-8 rounded-full bg-gray-300 border-2 border-white flex items-center justify-center"
+                          title={assignee.name}
+                        >
+                          <span className="text-xs font-medium">
+                            {assignee.name.charAt(0)}
+                          </span>
+                        </div>
+                      ))}
+                      {project.assignees.length > 3 && (
+                        <span className="ml-2 text-sm text-gray-500">
+                          +{project.assignees.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {project.deadline ? (
+                      <span className={
+                        new Date(project.deadline) < new Date() 
+                          ? "text-red-500 font-medium" 
+                          : "text-gray-600"
+                      }>
+                        {new Date(project.deadline).toLocaleDateString("ja-JP")}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
-  );
+  )
 }

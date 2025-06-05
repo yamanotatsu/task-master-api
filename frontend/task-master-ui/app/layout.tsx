@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Sans_JP } from "next/font/google";
 import Link from "next/link";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "@/components/ui/toaster";
-import { Home, ListChecks, FileText, GitBranch } from "lucide-react";
+import { Home, Users, Settings, User } from "lucide-react";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,6 +14,12 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const notoSansJP = Noto_Sans_JP({
+  variable: "--font-noto-sans-jp",
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
 });
 
 export const metadata: Metadata = {
@@ -30,58 +35,50 @@ export default function RootLayout({
   return (
     <html lang="ja" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background`}
+        className={`${geistSans.variable} ${geistMono.variable} ${notoSansJP.variable} antialiased min-h-screen bg-background`}
       >
-        <ThemeProvider defaultTheme="system" storageKey="task-master-theme">
+        <ThemeProvider defaultTheme="light" storageKey="task-master-theme">
           <div className="relative flex min-h-screen flex-col">
-            <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="container flex h-16 items-center">
+            <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
+              <div className="max-w-screen-2xl mx-auto flex h-16 items-center px-4 sm:px-6 lg:px-8">
                 <Link href="/" className="mr-8 flex items-center space-x-2">
-                  <GitBranch className="h-6 w-6 text-primary" />
-                  <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                    Task Master
-                  </span>
+                  <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">T</span>
+                  </div>
+                  <span className="text-xl font-bold">Task Master</span>
                 </Link>
-                <nav className="flex items-center space-x-6 text-sm font-medium">
+                <nav className="flex items-center space-x-8 flex-1 justify-center">
                   <Link 
                     href="/" 
-                    className="flex items-center space-x-2 transition-colors hover:text-primary"
+                    className="transition-colors hover:text-primary text-gray-700 font-medium"
                   >
-                    <Home className="h-4 w-4" />
-                    <span>ホーム</span>
+                    ダッシュボード
                   </Link>
                   <Link 
-                    href="/tasks" 
-                    className="flex items-center space-x-2 transition-colors hover:text-primary"
+                    href="/settings/members" 
+                    className="transition-colors hover:text-primary text-gray-700 font-medium"
                   >
-                    <ListChecks className="h-4 w-4" />
-                    <span>タスク一覧</span>
+                    担当者管理
                   </Link>
                   <Link 
-                    href="/prd" 
-                    className="flex items-center space-x-2 transition-colors hover:text-primary"
+                    href="/settings" 
+                    className="transition-colors hover:text-primary text-gray-700 font-medium"
                   >
-                    <FileText className="h-4 w-4" />
-                    <span>PRD作成</span>
+                    設定
                   </Link>
                 </nav>
                 <div className="ml-auto flex items-center space-x-4">
-                  <ThemeToggle />
+                  <div className="relative">
+                    <button className="w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors flex items-center justify-center">
+                      <User className="h-5 w-5 text-gray-700" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </header>
-            <main className="flex-1">
-              <div className="container py-6">
-                {children}
-              </div>
+            <main className="flex-1 bg-gray-50">
+              {children}
             </main>
-            <footer className="border-t py-6 md:py-0">
-              <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">
-                <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-                  Built with AI-powered precision. © 2025 Task Master.
-                </p>
-              </div>
-            </footer>
           </div>
           <Toaster />
         </ThemeProvider>
