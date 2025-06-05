@@ -708,3 +708,122 @@ export {
 	generateObjectService,
 	logAiUsage
 };
+
+// Default export for compatibility
+export default {
+	generateTextService,
+	streamTextService,
+	generateObjectService,
+	logAiUsage,
+	// Add methods that tasks-db.js expects
+	generateTaskFromPrompt: async (prompt, options) => {
+		// Implementation would use generateTextService
+		const result = await generateTextService({
+			prompt: `Generate a task based on: ${prompt}`,
+			role: 'main'
+		});
+		// Parse and return task data
+		return result;
+	},
+	updateTaskWithPrompt: async (currentTask, prompt, options) => {
+		// Implementation would use generateTextService
+		const result = await generateTextService({
+			prompt: `Update the following task based on: ${prompt}\nCurrent task: ${JSON.stringify(currentTask)}`,
+			role: 'main'
+		});
+		// Parse and return updated task data
+		return result;
+	},
+	expandTaskToSubtasks: async (task, options) => {
+		try {
+			const targetCount = options?.targetCount || 5;
+			
+			const systemPrompt = `You are a task decomposition expert. Break down the given task into concrete, actionable subtasks in Japanese.
+
+タスクを具体的で実行可能なサブタスクに分解してください。
+各サブタスクは独立して実行可能で、明確な成果物があるものにしてください。`;
+
+			const userPrompt = `以下のタスクを${targetCount}個の具体的なサブタスクに分解してください。
+
+タスク情報:
+- タイトル: ${task.title}
+- 説明: ${task.description || 'なし'}
+- 詳細: ${task.details || 'なし'}
+
+以下のJSON形式で回答してください:
+{
+  "subtasks": [
+    {
+      "title": "サブタスクのタイトル",
+      "description": "サブタスクの詳細な説明"
+    }
+  ]
+}`;
+
+			const result = await generateTextService({
+				systemPrompt,
+				prompt: userPrompt,
+				role: 'main',
+				maxTokens: 1000, // Further reduce to avoid rate limit
+				commandName: 'expand-task',
+				outputType: 'api'
+			});
+
+			// generateTextService returns {mainResult, telemetryData}
+			if (result && result.mainResult) {
+				// Get content and clean markdown if present
+				let rawContent = result.mainResult.text || result.mainResult.content || result.mainResult;
+				if (typeof rawContent === 'string') {
+					// Remove ```json and ``` markers
+					rawContent = rawContent.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+				}
+				try {
+					// Parse the cleaned JSON response
+					const parsed = typeof rawContent === 'string' ? JSON.parse(rawContent) : rawContent;
+					return {
+						success: true,
+						subtasks: parsed.subtasks || []
+					};
+				} catch (parseError) {
+					// Try to extract JSON from the response
+					const content = result.mainResult.text || result.mainResult.content || JSON.stringify(result.mainResult);
+					const jsonMatch = content.match(/\{[\s\S]*\}/);
+					if (jsonMatch) {
+						try {
+							const parsed = JSON.parse(jsonMatch[0]);
+							return {
+								success: true,
+								subtasks: parsed.subtasks || []
+							};
+						} catch (e) {
+							console.error('Failed to parse extracted JSON:', e);
+						}
+					}
+					
+					console.error('Failed to parse AI response:', parseError);
+					console.error('Response was:', result);
+					return {
+						success: false,
+						error: 'Failed to parse AI response'
+					};
+				}
+			}
+
+			console.error('AI service failed - no mainResult:', result);
+			return {
+				success: false,
+				error: 'AI service returned no result'
+			};
+		} catch (error) {
+			console.error('Error in expandTaskToSubtasks:', error);
+			return {
+				success: false,
+				error: error.message
+			};
+		}
+	},
+	getLastModelUsed: () => 'unknown',
+	getLastTokenCount: () => 0,
+	getLastCost: () => 0,
+	getLastProcessingTime: () => 0
+};
