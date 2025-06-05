@@ -5,7 +5,7 @@ import { FileX, Home, ArrowLeft } from 'lucide-react'
 
 export default function NotFound() {
   return (
-    <div className="container flex items-center justify-center min-h-[600px]">
+    <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center min-h-[600px]">
       <Card className="max-w-md w-full text-center">
         <CardHeader>
           <div className="flex justify-center mb-4">
@@ -26,12 +26,6 @@ export default function NotFound() {
             <Link href="/">
               <Home className="mr-2 h-4 w-4" />
               ホームへ戻る
-            </Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/tasks">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              タスク一覧へ
             </Link>
           </Button>
         </CardFooter>
