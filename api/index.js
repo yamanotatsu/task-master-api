@@ -33,7 +33,7 @@ if (availableKeys.length === 0) {
 
 // API keys validated
 
-import('./server.js').catch(error => {
+import('./server-db.js').catch(error => {
   console.error(chalk.red('❌ Failed to start server:'), error);
   process.exit(1);
 });
