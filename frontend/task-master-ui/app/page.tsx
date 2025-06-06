@@ -1,302 +1,244 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
-import { Plus, Grid3X3, List, ChevronDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { ProjectCard } from "@/components/ui/project-card"
-import { EmptyState } from "@/components/ui/empty-state"
-import { Spinner } from "@/components/ui/spinner"
-import { api, Project } from "@/lib/api"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Plus, Calendar, CheckCircle, Clock, TrendingUp, Users, FolderOpen, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Spinner } from "@/components/ui/spinner";
+import { api, Project } from "@/lib/api";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 
-type ViewMode = "card" | "list"
-type FilterMode = "all" | "in-progress" | "completed"
-type SortMode = "updated" | "created" | "progress" | "name"
+interface DashboardStats {
+  todayTasks: number;
+  inProgressTasks: number;
+  completionRate: number;
+  totalProjects: number;
+}
 
 export default function DashboardPage() {
-  const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<ViewMode>("card")
-  const [filter, setFilter] = useState<FilterMode>("all")
-  const [sort, setSort] = useState<SortMode>("updated")
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [stats, setStats] = useState<DashboardStats>({
+    todayTasks: 0,
+    inProgressTasks: 0,
+    completionRate: 0,
+    totalProjects: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadProjects()
-  }, [])
+    loadDashboardData();
+  }, []);
 
-  const loadProjects = async () => {
+  const loadDashboardData = async () => {
     try {
-      setLoading(true)
-      const data = await api.getProjects()
-      setProjects(data)
+      setLoading(true);
+      const data = await api.getProjects();
+      setProjects(data);
+      
+      // 統計情報を計算
+      const totalTasks = data.reduce((sum, p) => sum + p.totalTasks, 0);
+      const completedTasks = data.reduce((sum, p) => sum + p.completedTasks, 0);
+      const inProgressProjects = data.filter(p => p.progress > 0 && p.progress < 100);
+      
+      setStats({
+        todayTasks: 12, // 実際のAPIから取得する場合はここを更新
+        inProgressTasks: totalTasks - completedTasks,
+        completionRate: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0,
+        totalProjects: data.length,
+      });
     } catch (error) {
-      console.error("Failed to load projects:", error)
+      console.error("Failed to load dashboard data:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  // Filter projects
-  const filteredProjects = projects.filter(project => {
-    if (filter === "all") return true
-    if (filter === "in-progress") return project.progress > 0 && project.progress < 100
-    if (filter === "completed") return project.progress === 100
-    return true
-  })
-
-  // Sort projects
-  const sortedProjects = [...filteredProjects].sort((a, b) => {
-    switch (sort) {
-      case "updated":
-        return new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime()
-      case "created":
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      case "progress":
-        return b.progress - a.progress
-      case "name":
-        return a.name.localeCompare(b.name)
-      default:
-        return 0
-    }
-  })
-
-  const sortLabels: Record<SortMode, string> = {
-    updated: "更新日順",
-    created: "作成日順",
-    progress: "進捗順",
-    name: "名前順"
-  }
+  // 最近のプロジェクト（最新5件）
+  const recentProjects = projects
+    .sort((a, b) => new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime())
+    .slice(0, 5);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Spinner size="lg" />
       </div>
-    )
+    );
   }
 
   return (
-    <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">ダッシュボード</h1>
-        <Button asChild size="lg" className="shadow-lg">
-          <Link href="/projects/new">
-            <Plus className="mr-2 h-5 w-5" />
-            新規プロジェクト作成
-          </Link>
-        </Button>
-      </div>
-
-      {/* Control Bar */}
-      <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm border">
-        <div className="flex items-center space-x-4">
-          {/* View Mode Toggle */}
-          <div className="flex items-center bg-gray-100 rounded-lg p-1">
-            <button
-              onClick={() => setViewMode("card")}
-              className={`p-2 rounded transition-colors ${
-                viewMode === "card" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
-              }`}
-              title="カード表示"
-            >
-              <Grid3X3 className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 rounded transition-colors ${
-                viewMode === "list" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
-              }`}
-              title="リスト表示"
-            >
-              <List className="h-4 w-4" />
-            </button>
+    <>
+      <Breadcrumb />
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in">
+        {/* ウェルカムメッセージ */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold">Welcome back!</h1>
+            <p className="text-muted-foreground mt-1">
+              今日も素晴らしい一日にしましょう
+            </p>
           </div>
-
-          {/* Filter */}
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-500">フィルタ:</span>
-            <div className="flex rounded-lg bg-gray-100 p-1">
-              <button
-                onClick={() => setFilter("all")}
-                className={`px-3 py-1 text-sm rounded transition-colors ${
-                  filter === "all" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                すべて
-              </button>
-              <button
-                onClick={() => setFilter("in-progress")}
-                className={`px-3 py-1 text-sm rounded transition-colors ${
-                  filter === "in-progress" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                進行中
-              </button>
-              <button
-                onClick={() => setFilter("completed")}
-                className={`px-3 py-1 text-sm rounded transition-colors ${
-                  filter === "completed" ? "bg-white text-primary shadow-sm" : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                完了
-              </button>
-            </div>
-          </div>
+          <Button asChild size="lg" className="shadow-lg button-hover w-full sm:w-auto">
+            <Link href="/projects/new">
+              <Plus className="mr-2 h-5 w-5" />
+              新規プロジェクト
+            </Link>
+          </Button>
         </div>
 
-        {/* Sort */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              {sortLabels[sort]}
-              <ChevronDown className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setSort("updated")}>
-              更新日順
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setSort("created")}>
-              作成日順
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setSort("progress")}>
-              進捗順
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setSort("name")}>
-              名前順
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+        {/* 統計カード */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">今日のタスク</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.todayTasks}</div>
+              <p className="text-xs text-muted-foreground">
+                期限が今日のタスク
+              </p>
+            </CardContent>
+          </Card>
 
-      {/* Projects Grid/List */}
-      {sortedProjects.length === 0 ? (
-        <EmptyState
-          icon={
-            <svg className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} 
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" 
-              />
-            </svg>
-          }
-          title="プロジェクトがありません"
-          description="新規プロジェクトを作成して、タスク管理を始めましょう"
-          action={{
-            label: "プロジェクトを作成",
-            onClick: () => window.location.href = "/projects/new"
-          }}
-        />
-      ) : viewMode === "card" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {sortedProjects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              id={project.id}
-              name={project.name}
-              createdAt={new Date(project.createdAt).toLocaleDateString("ja-JP")}
-              progress={project.progress}
-              completedTasks={project.completedTasks}
-              totalTasks={project.totalTasks}
-              assignees={project.assignees}
-              deadline={project.deadline ? new Date(project.deadline).toLocaleDateString("ja-JP") : undefined}
-            />
-          ))}
+          <Card className="card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">進行中</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.inProgressTasks}</div>
+              <p className="text-xs text-muted-foreground">
+                作業中のタスク
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">完了率</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.completionRate}%</div>
+              <Progress value={stats.completionRate} className="h-2 mt-2" />
+            </CardContent>
+          </Card>
+
+          <Card className="card-hover">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">プロジェクト数</CardTitle>
+              <FolderOpen className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalProjects}</div>
+              <p className="text-xs text-muted-foreground">
+                アクティブなプロジェクト
+              </p>
+            </CardContent>
+          </Card>
         </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b bg-gray-50">
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  プロジェクト名
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  進捗
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  タスク
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  担当者
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  期限
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {sortedProjects.map((project) => (
-                <tr 
-                  key={project.id} 
-                  className="hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => window.location.href = `/projects/${project.id}`}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{project.name}</div>
-                    <div className="text-xs text-gray-500">
-                      作成日: {new Date(project.createdAt).toLocaleDateString("ja-JP")}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
-                        <div 
-                          className="bg-primary h-2 rounded-full"
-                          style={{ width: `${project.progress}%` }}
-                        />
-                      </div>
-                      <span className="text-sm text-gray-600">{Math.round(project.progress)}%</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {project.completedTasks}/{project.totalTasks}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex -space-x-2">
-                      {project.assignees.slice(0, 3).map((assignee) => (
-                        <div
-                          key={assignee.id}
-                          className="w-8 h-8 rounded-full bg-gray-300 border-2 border-white flex items-center justify-center"
-                          title={assignee.name}
-                        >
-                          <span className="text-xs font-medium">
-                            {assignee.name.charAt(0)}
+
+        {/* 最近のプロジェクトとクイックアクション */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* 最近のプロジェクト */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>最近のプロジェクト</span>
+                  <Link href="/projects" className="text-sm text-primary hover:underline">
+                    すべて見る
+                  </Link>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {recentProjects.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FolderOpen className="mx-auto h-12 w-12 mb-2" />
+                    <p>プロジェクトがありません</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {recentProjects.map((project) => (
+                      <Link
+                        key={project.id}
+                        href={`/projects/${project.id}`}
+                        className="block p-4 rounded-lg border hover:border-primary transition-colors"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold">{project.name}</h3>
+                          <span className={`text-sm px-2 py-1 rounded-full ${
+                            project.progress === 100 
+                              ? "bg-green-100 text-green-800" 
+                              : "bg-blue-100 text-blue-800"
+                          }`}>
+                            {project.progress === 100 ? "完了" : "進行中"}
                           </span>
                         </div>
-                      ))}
-                      {project.assignees.length > 3 && (
-                        <span className="ml-2 text-sm text-gray-500">
-                          +{project.assignees.length - 3}
-                        </span>
-                      )}
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <span>進捗: {Math.round(project.progress)}%</span>
+                          <span>{project.completedTasks}/{project.totalTasks} タスク</span>
+                        </div>
+                        <Progress value={project.progress} className="h-2 mt-2" />
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* クイックアクション */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>クイックアクション</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button asChild variant="outline" className="w-full justify-start">
+                  <Link href="/tasks/new">
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    新規タスク作成
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full justify-start">
+                  <Link href="/reports">
+                    <TrendingUp className="mr-2 h-4 w-4" />
+                    レポートを見る
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full justify-start">
+                  <Link href="/settings/members">
+                    <Users className="mr-2 h-4 w-4" />
+                    メンバー管理
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* お知らせ */}
+            <Card>
+              <CardHeader>
+                <CardTitle>お知らせ</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex gap-3">
+                    <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium">期限間近のタスクがあります</p>
+                      <p className="text-muted-foreground">3件のタスクが今週中に期限を迎えます</p>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {project.deadline ? (
-                      <span className={
-                        new Date(project.deadline) < new Date() 
-                          ? "text-red-500 font-medium" 
-                          : "text-gray-600"
-                      }>
-                        {new Date(project.deadline).toLocaleDateString("ja-JP")}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      )}
-    </div>
-  )
+      </div>
+    </>
+  );
 }

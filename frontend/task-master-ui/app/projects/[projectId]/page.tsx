@@ -26,7 +26,7 @@ import { api, Project, Task } from "@/lib/api"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
-type ViewMode = "list" | "dependencies" | "gantt" | "stats"
+type ViewMode = "board" | "list" | "dependencies" | "gantt" | "stats"
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -36,7 +36,7 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null)
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<ViewMode>("list")
+  const [viewMode, setViewMode] = useState<ViewMode>("board")
   const [editingName, setEditingName] = useState(false)
   const [projectName, setProjectName] = useState("")
   const [selectedTasks, setSelectedTasks] = useState<number[]>([])
@@ -260,6 +260,17 @@ export default function ProjectDetailPage() {
       <div className="border-b">
         <nav className="flex space-x-8">
           <button
+            onClick={() => setViewMode("board")}
+            className={cn(
+              "py-2 px-1 border-b-2 font-medium text-sm transition-colors",
+              viewMode === "board"
+                ? "border-primary text-primary"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            )}
+          >
+            カンバンボード
+          </button>
+          <button
             onClick={() => setViewMode("list")}
             className={cn(
               "py-2 px-1 border-b-2 font-medium text-sm transition-colors",
@@ -307,6 +318,366 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* View Content */}
+      {viewMode === "board" && (
+        <div>
+          {/* Kanban Board */}
+          <div className="flex gap-4 lg:gap-6 overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+            {/* To Do Column */}
+            <div className="flex-shrink-0 w-80">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-sm text-gray-700">
+                    To Do ({tasks.filter(t => t.status === 'pending' || t.status === 'todo').length})
+                  </h3>
+                  <Button size="sm" variant="ghost">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {tasks
+                    .filter(t => t.status === 'pending' || t.status === 'todo')
+                    .map((task) => (
+                      <div
+                        key={task.id}
+                        draggable
+                        onDragStart={() => handleDragStart(task.id)}
+                        className="bg-white p-4 rounded-lg shadow-sm border cursor-move hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-medium text-sm">#{task.id} {task.title}</h4>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                <MoreVertical className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => router.push(`/projects/${projectId}/tasks/${task.id}`)}
+                              >
+                                詳細表示
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleTaskStatusChange(task.id, 'in-progress')}
+                              >
+                                開始
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => handleDeleteTask(task.id)}
+                              >
+                                削除
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <p className="text-xs text-gray-500 mb-3 line-clamp-2">
+                          {task.description || "説明なし"}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {task.assignee ? (
+                              <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center">
+                                <span className="text-xs font-medium">
+                                  {typeof task.assignee === 'string' 
+                                    ? task.assignee.charAt(0) 
+                                    : (task.assignee as any).name?.charAt(0) || '?'}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="w-6 h-6 rounded-full border-2 border-dashed border-gray-300" />
+                            )}
+                            {task.tags && task.tags.map((tag, idx) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                          {task.dependencies.length > 0 && (
+                            <Link className="h-4 w-4 text-gray-400" />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  <button className="w-full p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors">
+                    + タスクを追加
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* In Progress Column */}
+            <div className="flex-shrink-0 w-80">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-sm text-gray-700">
+                    In Progress ({tasks.filter(t => t.status === 'in-progress').length})
+                  </h3>
+                </div>
+                <div
+                  className="space-y-3 min-h-[100px]"
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggedTaskId) {
+                      handleTaskStatusChange(draggedTaskId, 'in-progress');
+                      setDraggedTaskId(null);
+                    }
+                  }}
+                >
+                  {tasks
+                    .filter(t => t.status === 'in-progress')
+                    .map((task) => (
+                      <div
+                        key={task.id}
+                        draggable
+                        onDragStart={() => handleDragStart(task.id)}
+                        className="bg-white p-4 rounded-lg shadow-sm border cursor-move hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-medium text-sm">#{task.id} {task.title}</h4>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                <MoreVertical className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => router.push(`/projects/${projectId}/tasks/${task.id}`)}
+                              >
+                                詳細表示
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleTaskStatusChange(task.id, 'pending')}
+                              >
+                                To Doに戻す
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleTaskStatusChange(task.id, 'completed')}
+                              >
+                                完了
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => handleDeleteTask(task.id)}
+                              >
+                                削除
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <p className="text-xs text-gray-500 mb-3 line-clamp-2">
+                          {task.description || "説明なし"}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {task.assignee ? (
+                              <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center">
+                                <span className="text-xs font-medium">
+                                  {typeof task.assignee === 'string' 
+                                    ? task.assignee.charAt(0) 
+                                    : (task.assignee as any).name?.charAt(0) || '?'}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="w-6 h-6 rounded-full border-2 border-dashed border-gray-300" />
+                            )}
+                            {task.tags && task.tags.map((tag, idx) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                          {task.dependencies.length > 0 && (
+                            <Link className="h-4 w-4 text-gray-400" />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Review Column */}
+            <div className="flex-shrink-0 w-80">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-sm text-gray-700">
+                    Review ({tasks.filter(t => t.status === 'review').length})
+                  </h3>
+                </div>
+                <div
+                  className="space-y-3 min-h-[100px]"
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggedTaskId) {
+                      handleTaskStatusChange(draggedTaskId, 'review');
+                      setDraggedTaskId(null);
+                    }
+                  }}
+                >
+                  {tasks
+                    .filter(t => t.status === 'review')
+                    .map((task) => (
+                      <div
+                        key={task.id}
+                        draggable
+                        onDragStart={() => handleDragStart(task.id)}
+                        className="bg-white p-4 rounded-lg shadow-sm border cursor-move hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-medium text-sm">#{task.id} {task.title}</h4>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                <MoreVertical className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => router.push(`/projects/${projectId}/tasks/${task.id}`)}
+                              >
+                                詳細表示
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleTaskStatusChange(task.id, 'in-progress')}
+                              >
+                                In Progressに戻す
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleTaskStatusChange(task.id, 'completed')}
+                              >
+                                完了
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => handleDeleteTask(task.id)}
+                              >
+                                削除
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <p className="text-xs text-gray-500 mb-3 line-clamp-2">
+                          {task.description || "説明なし"}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {task.assignee ? (
+                              <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center">
+                                <span className="text-xs font-medium">
+                                  {typeof task.assignee === 'string' 
+                                    ? task.assignee.charAt(0) 
+                                    : (task.assignee as any).name?.charAt(0) || '?'}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="w-6 h-6 rounded-full border-2 border-dashed border-gray-300" />
+                            )}
+                            {task.tags && task.tags.map((tag, idx) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                          {task.dependencies.length > 0 && (
+                            <Link className="h-4 w-4 text-gray-400" />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Done Column */}
+            <div className="flex-shrink-0 w-80">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-sm text-gray-700">
+                    Done ({tasks.filter(t => t.status === 'completed' || t.status === 'done').length})
+                  </h3>
+                </div>
+                <div
+                  className="space-y-3 min-h-[100px]"
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggedTaskId) {
+                      handleTaskStatusChange(draggedTaskId, 'completed');
+                      setDraggedTaskId(null);
+                    }
+                  }}
+                >
+                  {tasks
+                    .filter(t => t.status === 'completed' || t.status === 'done')
+                    .map((task) => (
+                      <div
+                        key={task.id}
+                        className="bg-white p-4 rounded-lg shadow-sm border opacity-60"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-medium text-sm line-through">#{task.id} {task.title}</h4>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                <MoreVertical className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => router.push(`/projects/${projectId}/tasks/${task.id}`)}
+                              >
+                                詳細表示
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleTaskStatusChange(task.id, 'pending')}
+                              >
+                                To Doに戻す
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => handleDeleteTask(task.id)}
+                              >
+                                削除
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <p className="text-xs text-gray-500 mb-3 line-clamp-2">
+                          {task.description || "説明なし"}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {task.assignee ? (
+                              <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center">
+                                <span className="text-xs font-medium">
+                                  {typeof task.assignee === 'string' 
+                                    ? task.assignee.charAt(0) 
+                                    : (task.assignee as any).name?.charAt(0) || '?'}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="w-6 h-6 rounded-full border-2 border-dashed border-gray-300" />
+                            )}
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {viewMode === "list" && (
         <div>
           {/* Action Bar */}

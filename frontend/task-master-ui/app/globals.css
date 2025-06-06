@@ -2,71 +2,107 @@
 
 @layer base {
   :root {
-    /* Blue color scheme for primary */
-    --primary: 217 91% 60%;
+    /* Primary Brand Colors - 要件に基づく色設定 */
+    --primary: 217 91% 60%; /* #2563EB - Blue */
     --primary-foreground: 0 0% 100%;
+    --primary-light: 217 91% 95%;
+    --primary-dark: 217 91% 45%;
     
-    /* Grayscale colors */
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+    /* Secondary Colors */
+    --secondary: 158 64% 52%; /* #10B981 - Green */
+    --secondary-foreground: 0 0% 100%;
+    --secondary-light: 158 64% 95%;
+    --secondary-dark: 158 64% 40%;
+    
+    /* Accent Colors */
+    --accent: 38 92% 50%; /* #F59E0B - Amber */
+    --accent-foreground: 0 0% 100%;
+    --accent-light: 38 92% 95%;
+    --accent-dark: 38 92% 40%;
+    
+    /* Error/Destructive Colors */
+    --destructive: 0 84% 60%; /* #EF4444 - Red */
+    --destructive-foreground: 0 0% 100%;
+    --destructive-light: 0 84% 95%;
+    --destructive-dark: 0 84% 45%;
+    
+    /* Neutral Colors */
+    --background: 0 0% 100%;
+    --foreground: 224 71% 4%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 224 71% 4%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --popover-foreground: 224 71% 4%;
     --muted: 210 40% 96%;
     --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 217 91% 60%;
     --radius: 0.5rem;
     
-    /* Status colors */
-    --status-pending: 217 91% 60%;
-    --status-in-progress: 38 92% 50%;
-    --status-done: 160 84% 39%;
-    --status-blocked: 0 84% 60%;
+    /* Status colors - より明確な色分け */
+    --status-pending: 217 91% 60%; /* Blue - 未着手 */
+    --status-in-progress: 38 92% 50%; /* Amber - 進行中 */
+    --status-done: 158 64% 52%; /* Green - 完了 */
+    --status-blocked: 0 84% 60%; /* Red - ブロック */
     
     /* Chart colors */
     --chart-1: 217 91% 60%;
-    --chart-2: 160 84% 39%;
+    --chart-2: 158 64% 52%;
     --chart-3: 38 92% 50%;
     --chart-4: 0 84% 60%;
     --chart-5: 262 83% 58%;
   }
 
   .dark {
+    /* Primary Brand Colors */
     --primary: 217 91% 60%;
     --primary-foreground: 210 20% 98%;
+    --primary-light: 217 91% 25%;
+    --primary-dark: 217 91% 75%;
     
+    /* Secondary Colors */
+    --secondary: 158 64% 52%;
+    --secondary-foreground: 210 20% 98%;
+    --secondary-light: 158 64% 25%;
+    --secondary-dark: 158 64% 65%;
+    
+    /* Accent Colors */
+    --accent: 38 92% 50%;
+    --accent-foreground: 210 20% 98%;
+    --accent-light: 38 92% 25%;
+    --accent-dark: 38 92% 65%;
+    
+    /* Error/Destructive Colors */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
+    --destructive-light: 0 84% 25%;
+    --destructive-dark: 0 84% 75%;
+    
+    /* Neutral Colors */
     --background: 224 71% 4%;
     --foreground: 210 20% 98%;
-    --card: 224 71% 4%;
+    --card: 224 71% 8%;
     --card-foreground: 210 20% 98%;
-    --popover: 224 71% 4%;
+    --popover: 224 71% 8%;
     --popover-foreground: 210 20% 98%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 20% 98%;
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 20% 98%;
     --border: 217 33% 17%;
     --input: 217 33% 17%;
     --ring: 217 91% 60%;
     
+    /* Status colors for dark mode */
+    --status-pending: 217 91% 60%;
+    --status-in-progress: 38 92% 50%;
+    --status-done: 158 64% 52%;
+    --status-blocked: 0 84% 60%;
+    
     /* Chart colors for dark mode */
     --chart-1: 217 91% 60%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 38 80% 55%;
-    --chart-4: 0 65% 60%;
+    --chart-2: 158 64% 52%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 0 84% 60%;
     --chart-5: 262 75% 55%;
   }
 }
@@ -77,9 +113,44 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    font-family: 'Inter', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
       sans-serif;
+  }
+  
+  /* Typography System */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold;
+    font-family: 'Inter', 'Noto Sans JP', sans-serif;
+  }
+  
+  h1 {
+    @apply text-4xl md:text-5xl leading-tight;
+  }
+  
+  h2 {
+    @apply text-3xl md:text-4xl leading-tight;
+  }
+  
+  h3 {
+    @apply text-2xl md:text-3xl leading-tight;
+  }
+  
+  h4 {
+    @apply text-xl md:text-2xl leading-tight;
+  }
+  
+  h5 {
+    @apply text-lg md:text-xl leading-tight;
+  }
+  
+  h6 {
+    @apply text-base md:text-lg leading-tight;
+  }
+  
+  /* Code blocks */
+  code, pre {
+    font-family: 'JetBrains Mono', monospace;
   }
 }
 
@@ -91,7 +162,7 @@
   }
   
   .badge-in-progress {
-    @apply bg-yellow-500 text-white;
+    @apply bg-amber-500 text-white;
   }
   
   .badge-done {
@@ -107,9 +178,39 @@
     @apply transition-all duration-200 hover:-translate-y-1 hover:shadow-xl;
   }
   
+  /* Button hover effect - 要件に基づく */
+  .button-hover {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md;
+  }
+  
   /* Loading spinner */
   .spinner {
     @apply border-2 border-gray-200 rounded-full border-t-primary w-6 h-6 animate-spin;
+  }
+  
+  /* Skeleton loading */
+  .skeleton {
+    @apply animate-pulse bg-gray-200 rounded;
+  }
+  
+  /* Focus styles for accessibility */
+  .focus-visible-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+  
+  /* Progress bar */
+  .progress-bar {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  /* Micro-interactions */
+  .interactive {
+    @apply transition-all duration-200 ease-in-out;
+  }
+  
+  /* Card selection state */
+  .card-selected {
+    @apply border-primary bg-primary-light;
   }
 }
 
@@ -158,6 +259,33 @@
   @apply bg-gray-400 rounded hover:bg-gray-500;
 }
 
+/* Responsive breakpoints from requirements */
+@layer utilities {
+  @media (max-width: 767px) {
+    .mobile-only {
+      @apply block;
+    }
+    .desktop-only {
+      @apply hidden;
+    }
+  }
+  
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .tablet-only {
+      @apply block;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .desktop-only {
+      @apply block;
+    }
+    .mobile-only {
+      @apply hidden;
+    }
+  }
+}
+
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -167,18 +295,26 @@
   --color-popover-foreground: hsl(var(--popover-foreground));
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-light: hsl(var(--primary-light));
+  --color-primary-dark: hsl(var(--primary-dark));
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary-light: hsl(var(--secondary-light));
+  --color-secondary-dark: hsl(var(--secondary-dark));
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent-light: hsl(var(--accent-light));
+  --color-accent-dark: hsl(var(--accent-dark));
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive-light: hsl(var(--destructive-light));
+  --color-destructive-dark: hsl(var(--destructive-dark));
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   --radius: var(--radius);
-  --font-sans: 'Noto Sans JP', var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: 'Inter', 'Noto Sans JP', var(--font-inter);
+  --font-mono: 'JetBrains Mono', var(--font-jetbrains-mono);
 }
