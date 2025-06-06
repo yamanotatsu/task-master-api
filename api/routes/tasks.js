@@ -19,25 +19,39 @@ import { updateTasksInProject, getTaskById, deleteTaskById } from '../services/t
 
 // Validation schemas
 const taskCreateSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
+  // For manual creation
+  title: z.string().min(1).optional(),
   description: z.string().optional(),
   priority: z.enum(['high', 'medium', 'low']).optional().default('medium'),
   dependencies: z.array(z.number()).optional().default([]),
   details: z.string().optional(),
-  testStrategy: z.string().optional()
-});
+  testStrategy: z.string().optional(),
+  // For AI-driven creation
+  prompt: z.string().optional(),
+  research: z.boolean().optional().default(false)
+}).refine(
+  data => data.prompt || (data.title && data.description),
+  {
+    message: 'Either prompt or both title and description are required',
+    path: ['prompt']
+  }
+);
 
 const taskUpdateSchema = z.object({
+  // For manual updates
   title: z.string().min(1).optional(),
   description: z.string().optional(),
   priority: z.enum(['high', 'medium', 'low']).optional(),
   dependencies: z.array(z.number()).optional(),
   details: z.string().optional(),
-  testStrategy: z.string().optional()
+  testStrategy: z.string().optional(),
+  // For AI-driven updates
+  prompt: z.string().optional(),
+  research: z.boolean().optional().default(false)
 });
 
 const statusUpdateSchema = z.object({
-  status: z.enum(['pending', 'in-progress', 'completed', 'blocked'])
+  status: z.enum(['pending', 'done', 'in-progress', 'review', 'deferred', 'cancelled'])
 });
 
 
@@ -141,12 +155,29 @@ export async function createTaskHandler(req, res) {
     
     ensureProjectDirectory();
     
-    const { title, ...otherFields } = parseResult.data;
-    const args = prepareDirectFunctionArgs('addTask', {
-      title,
-      details: otherFields.details || `Description: ${otherFields.description || 'No description'}\nPriority: ${otherFields.priority}`,
-      dependencies: otherFields.dependencies?.join(',') || ''
-    });
+    const data = parseResult.data;
+    let args;
+    
+    // Check if this is AI-driven creation (has prompt) or manual creation
+    if (data.prompt) {
+      // AI-driven creation
+      args = prepareDirectFunctionArgs('addTask', {
+        prompt: data.prompt,
+        research: data.research,
+        dependencies: data.dependencies?.join(',') || '',
+        priority: data.priority
+      });
+    } else {
+      // Manual creation
+      args = prepareDirectFunctionArgs('addTask', {
+        title: data.title,
+        description: data.description,
+        details: data.details,
+        testStrategy: data.testStrategy,
+        dependencies: data.dependencies?.join(',') || '',
+        priority: data.priority
+      });
+    }
     
     const result = await addTaskDirect(args, logger, { session: {} });
     
@@ -155,7 +186,7 @@ export async function createTaskHandler(req, res) {
         success: false,
         error: {
           code: 'CREATE_TASK_ERROR',
-          message: result.error || 'Failed to create task'
+          message: result.error?.message || result.error || 'Failed to create task'
         }
       });
     }
@@ -205,19 +236,32 @@ export async function updateTaskHandler(req, res) {
     
     ensureProjectDirectory();
     
-    const { title, description, priority, dependencies, details, testStrategy } = parseResult.data;
+    const data = parseResult.data;
+    let args;
     
-    const args = prepareDirectFunctionArgs('updateTaskById', {
-      taskId,
-      updates: {
-        ...(title && { title }),
-        ...(description !== undefined && { description }),
-        ...(priority && { priority }),
-        ...(dependencies !== undefined && { dependencies }),
-        ...(details !== undefined && { details }),
-        ...(testStrategy !== undefined && { testStrategy })
-      }
-    });
+    // Check if this is AI-driven update (has prompt) or manual update
+    if (data.prompt) {
+      // AI-driven update using updateTaskById
+      args = prepareDirectFunctionArgs('updateTaskById', {
+        taskId,
+        prompt: data.prompt,
+        research: data.research
+      });
+    } else {
+      // Manual update - only update fields that were provided
+      const updates = {};
+      if (data.title !== undefined) updates.title = data.title;
+      if (data.description !== undefined) updates.description = data.description;
+      if (data.priority !== undefined) updates.priority = data.priority;
+      if (data.dependencies !== undefined) updates.dependencies = data.dependencies;
+      if (data.details !== undefined) updates.details = data.details;
+      if (data.testStrategy !== undefined) updates.testStrategy = data.testStrategy;
+      
+      args = prepareDirectFunctionArgs('updateTaskById', {
+        taskId,
+        updates
+      });
+    }
     
     const result = await updateTaskByIdDirect(args, logger, { session: {} });
     
@@ -226,7 +270,7 @@ export async function updateTaskHandler(req, res) {
         success: false,
         error: {
           code: 'UPDATE_TASK_ERROR',
-          message: result.error || `Failed to update task ${taskId}`
+          message: result.error?.message || result.error || `Failed to update task ${taskId}`
         }
       });
     }
