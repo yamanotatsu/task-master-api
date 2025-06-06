@@ -32,13 +32,15 @@ npm run format-check     # Check code formatting
 npm run mcp-server       # Start MCP server for editor integration
 npm run api              # Start REST API server
 npm run api:dev          # Start API server with hot reload
+npm run api:db           # Start database-backed API server
+npm run api:db:dev       # Start database-backed API with hot reload
 ```
 
 ### Frontend Development
 ```bash
 cd frontend/task-master-ui
 npm install              # Install frontend dependencies
-npm run dev              # Start Next.js dev server
+npm run dev              # Start Next.js dev server (port 3000)
 npm run build            # Build for production
 npm run lint             # Run ESLint
 ```
@@ -76,22 +78,21 @@ Task Master is an AI-driven task management system with multiple interfaces:
 - **MCP Integration**: Uses FastMCP library, configured via mcp.json in editor configs
 - **AI Providers**: Supports Anthropic, OpenAI, Google, Perplexity, xAI, OpenRouter, Ollama
 - **Task Processing**: PRD parsing, complexity analysis, task expansion, dependency management
+- **Database Support**: Optional Supabase integration for persistence
 
 ### API Architecture Patterns
 
-The API implementation has two versions:
+The API implementation follows modular patterns:
 
 1. **Standard Implementation** (`/api/routes/*.js`):
    - Direct imports of core functions
    - Tightly coupled with implementation
    - Simpler structure for production use
 
-2. **Dependency Injection Implementation** (`/api/routes/*-di.js`):
-   - Uses dependency injection pattern for better testability
-   - All dependencies injected via factory functions
-   - Enables easy mocking for comprehensive testing
-   - Production uses `createProductionDependencies()` from `/api/utils/dependency-factory.js`
-   - Tests use `createTestDependencies()` with mocked functions
+2. **Database-Backed Implementation** (`/api/server-db.js`):
+   - Uses Supabase for data persistence
+   - Supports multi-project and team collaboration
+   - Port 8080 by default (configurable via API_PORT)
 
 ### Important Patterns
 - **Error Handling**: All AI operations have fallback mechanisms and retry logic
@@ -99,6 +100,7 @@ The API implementation has two versions:
 - **Testing**: Mock file system operations, use fixtures for consistent test data
 - **Async Operations**: Heavy use of async/await for file I/O and AI calls
 - **API Response Format**: Consistent structure with `success`, `data`, and `error` fields
+- **Silent Mode**: MCP operations wrap console output to prevent interference with JSON responses
 
 ## Development Workflow
 
@@ -112,19 +114,18 @@ When implementing features:
 ## Key Files to Understand
 - `/mcp-server/src/core/task-master-core.js` - Core task management logic
 - `/scripts/modules/task-manager.js` - CLI task operations
-- `/api/routes/` - REST API endpoints (both standard and DI versions)
+- `/api/routes/` - REST API endpoints
 - `/scripts/modules/ai-services-unified.js` - AI provider abstraction
 - `/mcp-server/src/tools/` - MCP tool definitions
-- `/api/utils/dependency-factory.js` - Dependency injection factory for API testing
+- `/src/ai-providers/` - Provider-specific AI implementations
 
 ## Testing Strategy
 
 ### API Test Structure
-- **Unit Tests** (`/tests/api/unit/`): Test individual route handlers with mocked dependencies
-- **Integration Tests** (`/tests/api/integration/`): Test complete workflows
-- **E2E Tests** (`/tests/api/e2e/`): Test full API functionality with in-memory data
-- **Test Fixtures** (`/tests/api/fixtures/`): Reusable test data and edge cases
-- **Mock Implementations** (`/tests/api/__mocks__/`): Mocked core functions
+- **Unit Tests** (`/tests/unit/`): Test individual functions with mocked dependencies
+- **Integration Tests** (`/tests/integration/`): Test complete workflows
+- **E2E Tests** (`/tests/e2e/`): Test full functionality with real data
+- **Test Fixtures** (`/tests/fixtures/`): Reusable test data and edge cases
 
 ### Running API Tests
 ```bash
@@ -132,7 +133,7 @@ When implementing features:
 npm test tests/api/
 
 # Run with specific pattern
-npm test tests/api/unit/tasks-di.test.js
+npm test tests/api/unit/tasks.test.js
 
 # Generate coverage report
 npm run test:coverage -- tests/api/
@@ -151,8 +152,61 @@ The REST API provides programmatic access to all Task Master features:
 
 ### Starting the API Server
 ```bash
-npm run api              # Production mode
+npm run api              # Production mode (port 3000)
 npm run api:dev          # Development mode with auto-reload
+npm run api:db           # Database-backed server (port 8080)
+npm run api:db:dev       # Database-backed with auto-reload
 ```
 
-Default port is 3000 (configurable via `API_PORT` environment variable)
+Default ports are configurable via `API_PORT` environment variable.
+
+## MCP Server Development
+
+### Adding New MCP Tools
+1. Create direct function in `/mcp-server/src/core/direct-functions/`
+2. Import and export in `task-master-core.js`
+3. Create tool wrapper in `/mcp-server/src/tools/`
+4. Register tool in `/mcp-server/src/tools/index.js`
+5. Update tool list in documentation
+
+### MCP Tool Patterns
+- Tools should wrap operations with `withNormalizedProjectRoot` HOF
+- Direct functions implement silent mode wrapping
+- Use structured return format: `{ success, data/error, fromCache }`
+- Handle async operations with `AsyncOperationManager` when appropriate
+
+## Configuration Management
+
+### Project Configuration (`.taskmasterconfig`)
+- Model selections (main, research, fallback)
+- AI parameters (temperature, max tokens)
+- Project settings (name, version, default subtasks)
+- Managed via `task-master models` command
+
+### API Keys (Environment Variables)
+- Store in `.env` for CLI usage
+- Store in `mcp.json` env section for MCP usage
+- Never commit API keys to repository
+- Required keys depend on selected AI providers
+
+## AI Integration
+
+### Supported Providers
+- **Anthropic** (Claude models)
+- **OpenAI** (GPT models)
+- **Google** (Gemini models)
+- **Perplexity** (Research-focused)
+- **xAI** (Grok models)
+- **OpenRouter** (Multi-provider gateway)
+- **Ollama** (Local models)
+
+### Model Roles
+- **Main**: Primary model for task generation/updates
+- **Research**: Enhanced context for complex operations
+- **Fallback**: Backup when primary models fail
+
+### AI Service Layer
+- Centralized through `ai-services-unified.js`
+- Automatic retry and fallback logic
+- Provider-agnostic interface
+- Cost tracking per operation

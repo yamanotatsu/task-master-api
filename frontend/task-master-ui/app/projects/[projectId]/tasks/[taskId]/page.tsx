@@ -15,7 +15,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { Spinner } from "@/components/ui/spinner"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
-import { api, Task, Subtask, Member } from "@/lib/api"
+import { api, Task, Member } from "@/lib/api"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 

@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { 
   ArrowLeft, Plus, GripVertical, Eye, GitBranch, 
   BarChart3, Calendar, MoreVertical, ChevronRight,
-  Edit2, Trash2, Link, Unlink, PlayCircle, CheckCircle,
+  Edit2, Trash2, Link, PlayCircle, CheckCircle,
   AlertTriangle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
