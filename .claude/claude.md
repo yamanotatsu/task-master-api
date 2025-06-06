@@ -4,15 +4,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 📚 Documentation Structure
 
-For comprehensive project information, refer to the following documents:
-- [`project.md`](./project.md) - Project overview, purpose, and features
-- [`architecture.md`](./architecture.md) - System architecture and design patterns
-- [`api.md`](./api.md) - Complete API documentation and specifications
-- [`database.md`](./database.md) - Database schema and design
-- [`dependencies.md`](./dependencies.md) - Dependency information and versions
-- [`context.md`](./context.md) - Current development context and status
+**IMPORTANT: Always refer to these documents FIRST before making any changes to understand the current system design and context.**
 
-**Important**: When making changes to the codebase that affect architecture, APIs, database schema, or dependencies, please update the corresponding documentation files to keep them synchronized.
+For comprehensive project information, refer to the following documents:
+
+### 📋 [`project.md`](./project.md) - Project Overview
+- プロジェクトの目的と主要機能
+- 技術スタックと開発環境要件
+- **更新が必要な場合**: 新機能追加、技術スタック変更、ライセンス変更時
+
+### 🏗️ [`architecture.md`](./architecture.md) - System Architecture
+- システム構成図とデータフロー
+- デザインパターンと設計原則
+- コーディング規約と命名規則
+- **更新が必要な場合**: 新コンポーネント追加、アーキテクチャ変更、設計パターン変更時
+
+### 🔌 [`api.md`](./api.md) - API Specifications
+- 全エンドポイントの詳細仕様
+- リクエスト/レスポンス形式
+- エラーコードとサンプル
+- **更新が必要な場合**: 新エンドポイント追加、既存API変更、エラーコード追加時
+
+### 💾 [`database.md`](./database.md) - Database Design
+- テーブル構造とER図
+- インデックスとリレーション
+- トリガーとRLS設定
+- **更新が必要な場合**: テーブル変更、カラム追加/削除、新規インデックス作成時
+
+### 📦 [`dependencies.md`](./dependencies.md) - Dependencies
+- 使用ライブラリと用途
+- バージョン情報と特殊設定
+- **更新が必要な場合**: 新規ライブラリ追加、バージョンアップ、依存関係削除時
+
+### 🎯 [`context.md`](./context.md) - Current Context
+- 現在の開発状態とブランチ
+- 進行中の作業と優先事項
+- **更新が必要な場合**: ブランチ切り替え、新タスク開始、優先順位変更時
+
+**⚠️ CRITICAL: When making changes to the codebase, you MUST update the corresponding documentation files. This is not optional.**
 
 ## 🚀 Common Development Commands
 
@@ -132,12 +161,64 @@ npm run test:coverage -- tests/api/
 
 ## 🔄 Documentation Maintenance
 
-When you make changes:
-- **Architecture changes** → Update `architecture.md`
-- **API changes** → Update `api.md`
-- **Database changes** → Update `database.md`
-- **Dependency updates** → Update `dependencies.md`
-- **Major feature additions** → Update `project.md` and relevant sections
-- **Context changes** → Update `context.md` with current state
+### 必須の更新手順
 
-Keep all documentation synchronized with code changes to maintain accuracy.
+When you make ANY changes to the codebase, follow this checklist:
+
+1. **コード変更前**:
+   - [ ] 該当するドキュメントを読んで現在の設計を理解する
+   - [ ] `context.md`で現在の開発状態を確認する
+   - [ ] 変更が既存の設計原則に従っているか確認する
+
+2. **コード変更時の必須更新**:
+   - **新機能追加** → 
+     - [ ] `project.md`の「主要機能」セクションを更新
+     - [ ] `architecture.md`にコンポーネントを追加
+     - [ ] 該当する場合は`api.md`にエンドポイントを追加
+   
+   - **API変更** → 
+     - [ ] `api.md`のエンドポイント仕様を更新
+     - [ ] リクエスト/レスポンス例を更新
+     - [ ] エラーコードを追加（新規の場合）
+   
+   - **データベース変更** → 
+     - [ ] `database.md`のテーブル定義を更新
+     - [ ] ER図を更新（大きな変更の場合）
+     - [ ] マイグレーションスクリプトの情報を追加
+   
+   - **依存関係変更** → 
+     - [ ] `dependencies.md`に新規ライブラリを追加
+     - [ ] バージョン情報と用途を明記
+     - [ ] 特殊な設定があれば記載
+   
+   - **アーキテクチャ変更** → 
+     - [ ] `architecture.md`のシステム構成図を更新
+     - [ ] データフロー図を更新
+     - [ ] 新しいデザインパターンを文書化
+
+3. **コード変更後**:
+   - [ ] `context.md`の「進行中の変更」セクションを更新
+   - [ ] 次のステップや注意事項を記載
+   - [ ] 技術的負債があれば追加
+
+### 📝 更新テンプレート
+
+各ドキュメント更新時は以下の形式で記載：
+
+```markdown
+## [日付] - [変更内容の要約]
+
+### 変更内容
+- 具体的な変更点1
+- 具体的な変更点2
+
+### 影響範囲
+- 影響を受けるコンポーネント
+- 破壊的変更の有無
+
+### 関連ファイル
+- `path/to/changed/file.js`
+- `path/to/another/file.js`
+```
+
+**⚠️ REMEMBER: Documentation is as important as code. Outdated documentation is worse than no documentation.**
