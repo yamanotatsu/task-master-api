@@ -3,6 +3,8 @@ import { Geist, Geist_Mono, Noto_Sans_JP } from "next/font/google";
 import Link from "next/link";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
+import { ToastProvider } from "@/providers/ToastProvider";
 import { Home, Users, Settings, User } from "lucide-react";
 import "./globals.css";
 
@@ -37,9 +39,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${notoSansJP.variable} antialiased min-h-screen bg-background`}
       >
-        <ThemeProvider defaultTheme="light" storageKey="task-master-theme">
-          <div className="relative flex min-h-screen flex-col">
-            <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
+        <ErrorBoundary>
+          <ThemeProvider defaultTheme="light" storageKey="task-master-theme">
+            <ToastProvider>
+              <div className="relative flex min-h-screen flex-col">
+                <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
               <div className="max-w-screen-2xl mx-auto flex h-16 items-center px-4 sm:px-6 lg:px-8">
                 <Link href="/" className="mr-8 flex items-center space-x-2">
                   <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -79,9 +83,11 @@ export default function RootLayout({
             <main className="flex-1 bg-gray-50">
               {children}
             </main>
+            <Toaster />
           </div>
-          <Toaster />
-        </ThemeProvider>
+            </ToastProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
