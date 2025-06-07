@@ -6,15 +6,31 @@ A comprehensive REST API for Task Master, providing programmatic access to all t
 
 ### 1. Set up environment variables
 
-Create a `.env` file in the project root with at least one API key:
+Create a `.env` file in the `api` directory with the following variables:
 
 ```bash
+# Database Configuration (Required)
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_KEY=your_supabase_service_key
+
+# AI Provider API Keys (At least one required)
 ANTHROPIC_API_KEY=your_key_here
 OPENAI_API_KEY=your_key_here
 GOOGLE_API_KEY=your_key_here
 PERPLEXITY_API_KEY=your_key_here
 XAI_API_KEY=your_key_here
 OPENROUTER_API_KEY=your_key_here
+
+# Server Configuration (Optional)
+API_PORT=8080
+FRONTEND_URL=http://localhost:3000
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
+
+# Security (Optional)
+ENABLE_RATE_LIMIT=true
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
 ```
 
 ### 2. Start the API server
@@ -30,7 +46,7 @@ npm run api:dev
 node api/index.js
 ```
 
-The server will start on port 3000 by default (or the port specified in `API_PORT` environment variable).
+The server will start on port 8080 by default (or the port specified in `API_PORT` environment variable).
 
 ## API Endpoints
 
@@ -44,7 +60,246 @@ Check if the API server is running and healthy.
 ```json
 {
   "status": "healthy",
-  "timestamp": "2024-01-20T10:30:00.000Z"
+  "timestamp": "2024-01-20T10:30:00.000Z",
+  "database": "supabase"
+}
+```
+
+### Authentication
+
+#### Sign Up
+
+**Endpoint:** `POST /api/v1/auth/signup`
+
+Register a new user account.
+
+**Request Body:**
+```json
+{
+  "fullName": "John Doe",
+  "email": "john@example.com",
+  "password": "SecurePassword123!"
+}
+```
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Registration successful. Please check your email to verify your account.",
+    "user": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "email": "john@example.com"
+    }
+  }
+}
+```
+
+#### Login
+
+**Endpoint:** `POST /api/v1/auth/login`
+
+Authenticate and receive access tokens.
+
+**Request Body:**
+```json
+{
+  "email": "john@example.com",
+  "password": "SecurePassword123!"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "email": "john@example.com",
+      "fullName": "John Doe"
+    },
+    "tokens": {
+      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "expiresIn": 3600
+    }
+  }
+}
+```
+
+### Organization Management
+
+#### Create Organization
+
+**Endpoint:** `POST /api/v1/organizations`
+
+Create a new organization. The authenticated user becomes the admin.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Request Body:**
+```json
+{
+  "name": "Acme Corporation",
+  "description": "Building awesome products"
+}
+```
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "organization": {
+      "id": "650e8400-e29b-41d4-a716-446655440001",
+      "name": "Acme Corporation",
+      "description": "Building awesome products",
+      "createdAt": "2024-01-01T00:00:00Z"
+    },
+    "membership": {
+      "role": "admin",
+      "joinedAt": "2024-01-01T00:00:00Z"
+    }
+  }
+}
+```
+
+#### List Organizations
+
+**Endpoint:** `GET /api/v1/organizations`
+
+Get all organizations the user is a member of.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Query Parameters:**
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 20, max: 100)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "organizations": [
+      {
+        "id": "650e8400-e29b-41d4-a716-446655440001",
+        "name": "Acme Corporation",
+        "description": "Building awesome products",
+        "role": "admin",
+        "memberCount": 5,
+        "projectCount": 3,
+        "joinedAt": "2024-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 1
+    }
+  }
+}
+```
+
+#### Get Organization Details
+
+**Endpoint:** `GET /api/v1/organizations/:organizationId`
+
+Get detailed information about a specific organization (members only).
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "organization": {
+      "id": "650e8400-e29b-41d4-a716-446655440001",
+      "name": "Acme Corporation",
+      "description": "Building awesome products",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z"
+    },
+    "membership": {
+      "role": "admin",
+      "joinedAt": "2024-01-01T00:00:00Z"
+    },
+    "statistics": {
+      "memberCount": 5,
+      "projectCount": 3,
+      "activeTaskCount": 25
+    }
+  }
+}
+```
+
+#### Update Organization
+
+**Endpoint:** `PUT /api/v1/organizations/:organizationId`
+
+Update organization details (admins only).
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Request Body:**
+```json
+{
+  "name": "Acme Corp (Updated)",
+  "description": "Updated description"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "organization": {
+      "id": "650e8400-e29b-41d4-a716-446655440001",
+      "name": "Acme Corp (Updated)",
+      "description": "Updated description",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-10T00:00:00Z"
+    }
+  }
+}
+```
+
+#### Delete Organization
+
+**Endpoint:** `DELETE /api/v1/organizations/:organizationId`
+
+Delete an organization (admins only). Organization must have no projects.
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Organization has been permanently deleted"
+  }
 }
 ```
 
@@ -852,6 +1107,24 @@ All endpoints return errors in a consistent format:
 
 ### Core Endpoints
 - `GET /health` - Health check
+
+### Authentication
+- `POST /api/v1/auth/signup` - Register new user
+- `POST /api/v1/auth/login` - User login
+- `POST /api/v1/auth/logout` - User logout
+- `POST /api/v1/auth/refresh` - Refresh access token
+- `POST /api/v1/auth/forgot-password` - Request password reset
+- `POST /api/v1/auth/reset-password` - Reset password with token
+- `DELETE /api/v1/auth/user` - Delete user account
+
+### Organization Management
+- `POST /api/v1/organizations` - Create organization
+- `GET /api/v1/organizations` - List user's organizations
+- `GET /api/v1/organizations/:organizationId` - Get organization details
+- `PUT /api/v1/organizations/:organizationId` - Update organization
+- `DELETE /api/v1/organizations/:organizationId` - Delete organization
+
+### Task Generation
 - `POST /api/v1/generate-tasks-from-prd` - Generate tasks from PRD using AI
 
 ### Task Management
@@ -892,7 +1165,7 @@ All endpoints return errors in a consistent format:
 ### Using cURL
 
 ```bash
-curl -X POST http://localhost:3000/api/v1/generate-tasks-from-prd \
+curl -X POST http://localhost:8080/api/v1/generate-tasks-from-prd \
   -H "Content-Type: application/json" \
   -d '{
     "prd_content": "# My Project\n\nA web application for task management...",
@@ -904,7 +1177,7 @@ curl -X POST http://localhost:3000/api/v1/generate-tasks-from-prd \
 ### Using JavaScript (fetch)
 
 ```javascript
-const response = await fetch('http://localhost:3000/api/v1/generate-tasks-from-prd', {
+const response = await fetch('http://localhost:8080/api/v1/generate-tasks-from-prd', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -925,7 +1198,7 @@ console.log(result);
 ```python
 import requests
 
-url = 'http://localhost:3000/api/v1/generate-tasks-from-prd'
+url = 'http://localhost:8080/api/v1/generate-tasks-from-prd'
 data = {
     'prd_content': '# My Project\n\nA web application for task management...',
     'target_task_count': 10,
@@ -941,7 +1214,22 @@ print(result)
 
 ### Environment Variables
 
-- `API_PORT`: Port for the API server (default: 3000)
+#### Database Configuration
+- `SUPABASE_URL`: Your Supabase project URL
+- `SUPABASE_ANON_KEY`: Supabase anonymous/public key
+- `SUPABASE_SERVICE_KEY`: Supabase service role key (for admin operations)
+
+#### Server Configuration
+- `API_PORT`: Port for the API server (default: 8080)
+- `FRONTEND_URL`: Frontend application URL for CORS and redirects
+- `ALLOWED_ORIGINS`: Comma-separated list of allowed origins for CORS
+
+#### Security Configuration
+- `ENABLE_RATE_LIMIT`: Enable rate limiting (default: false)
+- `RATE_LIMIT_WINDOW_MS`: Rate limit window in milliseconds (default: 900000 / 15 minutes)
+- `RATE_LIMIT_MAX_REQUESTS`: Maximum requests per window (default: 100)
+
+#### AI Provider Keys
 - `ANTHROPIC_API_KEY`: Anthropic API key for Claude models
 - `OPENAI_API_KEY`: OpenAI API key
 - `GOOGLE_API_KEY`: Google API key for Gemini models

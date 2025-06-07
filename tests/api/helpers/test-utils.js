@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 import express from 'express';
 import cors from 'cors';
+import request from 'supertest';
 import path from 'path';
 import { fileURLToPath } from 'url';
 

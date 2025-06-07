@@ -1,15 +1,21 @@
 import express from 'express';
 import { supabase } from '../db/supabase.js';
+import { authMiddleware, requireRole } from '../middleware/auth.js';
+import { logger } from '../utils/logger.js';
 
 const router = express.Router();
 
-// GET /api/v1/members - Get all members
-router.get('/', async (req, res) => {
+// GET /api/v1/members - Get all members (deprecated - use organization members endpoint)
+router.get('/', authMiddleware, async (req, res) => {
   try {
-    const { data: members, error } = await supabase
-      .from('members')
-      .select('*')
-      .order('created_at', { ascending: false });
+    // This endpoint is deprecated - redirect to organization members
+    return res.status(400).json({
+      success: false,
+      error: {
+        code: 'DEPRECATED_ENDPOINT',
+        message: 'This endpoint is deprecated. Please use /api/v1/organizations/:organizationId/members instead'
+      }
+    });
     
     if (error) throw error;
     
@@ -32,14 +38,17 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/v1/members/:id - Get member by ID
-router.get('/:id', async (req, res) => {
+// GET /api/v1/members/:id - Get member by ID (deprecated)
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
-    const { data: member, error } = await supabase
-      .from('members')
-      .select('*')
-      .eq('id', req.params.id)
-      .single();
+    // This endpoint is deprecated
+    return res.status(400).json({
+      success: false,
+      error: {
+        code: 'DEPRECATED_ENDPOINT',
+        message: 'This endpoint is deprecated. Please use /api/v1/organizations/:organizationId/members instead'
+      }
+    });
     
     if (error) throw error;
     
@@ -70,10 +79,17 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/v1/members - Create new member
-router.post('/', async (req, res) => {
+// POST /api/v1/members - Create new member (deprecated)
+router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { name, email, role = 'developer' } = req.body;
+    // This endpoint is deprecated
+    return res.status(400).json({
+      success: false,
+      error: {
+        code: 'DEPRECATED_ENDPOINT',
+        message: 'This endpoint is deprecated. Please use /api/v1/organizations/:organizationId/invites to invite members'
+      }
+    });
     
     if (!name || !email) {
       return res.status(400).json({
@@ -150,10 +166,17 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/v1/members/:id - Update member
-router.put('/:id', async (req, res) => {
+// PUT /api/v1/members/:id - Update member (deprecated)
+router.put('/:id', authMiddleware, async (req, res) => {
   try {
-    const { name, email, role, status, avatar_url } = req.body;
+    // This endpoint is deprecated
+    return res.status(400).json({
+      success: false,
+      error: {
+        code: 'DEPRECATED_ENDPOINT',
+        message: 'This endpoint is deprecated. Please use /api/v1/organizations/:organizationId/members/:profileId instead'
+      }
+    });
     
     const updates = {};
     if (name !== undefined) updates.name = name;
@@ -258,15 +281,17 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/v1/members/:id - Delete member
-router.delete('/:id', async (req, res) => {
+// DELETE /api/v1/members/:id - Delete member (deprecated)
+router.delete('/:id', authMiddleware, async (req, res) => {
   try {
-    // First check if member has any assigned tasks
-    const { data: tasks, error: taskError } = await supabase
-      .from('tasks')
-      .select('id')
-      .eq('assignee_id', req.params.id)
-      .limit(1);
+    // This endpoint is deprecated
+    return res.status(400).json({
+      success: false,
+      error: {
+        code: 'DEPRECATED_ENDPOINT',
+        message: 'This endpoint is deprecated. Please use /api/v1/organizations/:organizationId/members/:profileId instead'
+      }
+    });
     
     if (taskError) throw taskError;
     

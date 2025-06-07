@@ -10,9 +10,11 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { Spinner } from "@/components/ui/spinner"
 import { ProjectList } from "@/components/dashboard/ProjectList"
 import { api, Project } from "@/lib/api"
+import { useAuth, withAuth } from "@/lib/auth"
 
-export default function DashboardPage() {
+function DashboardPage() {
   const router = useRouter()
+  const { currentOrganization } = useAuth()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -56,7 +58,12 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="bg-white border-b px-6 py-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-gray-900">ワークスペース</h1>
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">ワークスペース</h1>
+            {currentOrganization && (
+              <p className="text-sm text-gray-500 mt-1">{currentOrganization.name}</p>
+            )}
+          </div>
           <Button asChild>
             <Link href="/projects/new">
               <Plus className="mr-2 h-4 w-4" />
@@ -114,3 +121,5 @@ export default function DashboardPage() {
     </div>
   )
 }
+
+export default withAuth(DashboardPage)
