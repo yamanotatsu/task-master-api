@@ -38,6 +38,7 @@ export const TaskTable: React.FC<TaskTableProps> = React.memo(({
     })
   }
 
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       onTaskSelectionChange(tasks.map(t => t.id))

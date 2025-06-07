@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from 'react'
-import { ChevronRight, ChevronDown, MoreHorizontal, Calendar, User, Link } from 'lucide-react'
+import { ChevronRight, ChevronDown, MoreHorizontal, Link } from 'lucide-react'
 import { Task } from '@/lib/api'
 import { StatusBadge } from '@/components/ui/status-badge'
 import { Checkbox } from '@/components/ui/checkbox'

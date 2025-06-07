@@ -15,6 +15,8 @@ import {
 	getResearchModelId,
 	getFallbackProvider,
 	getFallbackModelId,
+	getChatProvider,
+	getChatModelId,
 	getParametersForRole,
 	getUserId,
 	MODEL_MAP,
@@ -334,6 +336,8 @@ async function _unifiedServiceRunner(serviceType, params) {
 		sequence = ['research', 'fallback', 'main'];
 	} else if (initialRole === 'fallback') {
 		sequence = ['fallback', 'main', 'research'];
+	} else if (initialRole === 'chat') {
+		sequence = ['chat', 'fallback', 'main'];
 	} else {
 		log(
 			'warn',
@@ -369,6 +373,9 @@ async function _unifiedServiceRunner(serviceType, params) {
 			} else if (currentRole === 'fallback') {
 				providerName = getFallbackProvider(effectiveProjectRoot);
 				modelId = getFallbackModelId(effectiveProjectRoot);
+			} else if (currentRole === 'chat') {
+				providerName = getChatProvider(effectiveProjectRoot);
+				modelId = getChatModelId(effectiveProjectRoot);
 			} else {
 				log(
 					'error',
@@ -737,7 +744,7 @@ export default {
 	expandTaskToSubtasks: async (task, options) => {
 		try {
 			const targetCount = options?.targetCount || 5;
-			
+
 			const systemPrompt = `You are a task decomposition expert. Break down the given task into concrete, actionable subtasks in Japanese.
 
 タスクを具体的で実行可能なサブタスクに分解してください。
@@ -772,21 +779,33 @@ export default {
 			// generateTextService returns {mainResult, telemetryData}
 			if (result && result.mainResult) {
 				// Get content and clean markdown if present
-				let rawContent = result.mainResult.text || result.mainResult.content || result.mainResult;
+				let rawContent =
+					result.mainResult.text ||
+					result.mainResult.content ||
+					result.mainResult;
 				if (typeof rawContent === 'string') {
 					// Remove ```json and ``` markers
-					rawContent = rawContent.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+					rawContent = rawContent
+						.replace(/```json\s*/g, '')
+						.replace(/```\s*/g, '')
+						.trim();
 				}
 				try {
 					// Parse the cleaned JSON response
-					const parsed = typeof rawContent === 'string' ? JSON.parse(rawContent) : rawContent;
+					const parsed =
+						typeof rawContent === 'string'
+							? JSON.parse(rawContent)
+							: rawContent;
 					return {
 						success: true,
 						subtasks: parsed.subtasks || []
 					};
 				} catch (parseError) {
 					// Try to extract JSON from the response
-					const content = result.mainResult.text || result.mainResult.content || JSON.stringify(result.mainResult);
+					const content =
+						result.mainResult.text ||
+						result.mainResult.content ||
+						JSON.stringify(result.mainResult);
 					const jsonMatch = content.match(/\{[\s\S]*\}/);
 					if (jsonMatch) {
 						try {
@@ -799,7 +818,7 @@ export default {
 							console.error('Failed to parse extracted JSON:', e);
 						}
 					}
-					
+
 					console.error('Failed to parse AI response:', parseError);
 					console.error('Response was:', result);
 					return {

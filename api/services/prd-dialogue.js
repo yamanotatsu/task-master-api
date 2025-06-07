@@ -10,43 +10,50 @@ dotenv.config({ path: join(__dirname, '..', '.env') });
 
 // PRD sections that need to be filled
 const PRD_SECTIONS = {
-  overview: {
-    name: '概要セクション',
-    subsections: ['Overview（概要）', 'Core Features（主要機能）', 'User Experience（ユーザー体験）'],
-    weight: 0.20
-  },
-  technical: {
-    name: '技術仕様セクション',
-    subsections: [
-      'Technical Architecture（技術アーキテクチャ）',
-      'System Components（システム構成）',
-      'Data Model（データモデル）',
-      'APIs & Integrations（APIと統合）',
-      'Infrastructure（インフラ）',
-      'Libraries（使用ライブラリ）'
-    ],
-    weight: 0.25
-  },
-  roadmap: {
-    name: '開発ロードマップ',
-    subsections: ['Development Roadmap（開発手順・MVP要件）', 'Future Enhancements（将来の拡張）'],
-    weight: 0.20
-  },
-  dependencies: {
-    name: '論理的依存関係',
-    subsections: ['Logical Dependency Chain（実装順の依存関係）'],
-    weight: 0.15
-  },
-  risks: {
-    name: 'リスクと対策',
-    subsections: ['Risks and Mitigations（リスクとその軽減策）'],
-    weight: 0.10
-  },
-  appendix: {
-    name: '付録',
-    subsections: ['Appendix（補足情報：例としてのデータストア構造）'],
-    weight: 0.10
-  }
+	overview: {
+		name: '概要セクション',
+		subsections: [
+			'Overview（概要）',
+			'Core Features（主要機能）',
+			'User Experience（ユーザー体験）'
+		],
+		weight: 0.2
+	},
+	technical: {
+		name: '技術仕様セクション',
+		subsections: [
+			'Technical Architecture（技術アーキテクチャ）',
+			'System Components（システム構成）',
+			'Data Model（データモデル）',
+			'APIs & Integrations（APIと統合）',
+			'Infrastructure（インフラ）',
+			'Libraries（使用ライブラリ）'
+		],
+		weight: 0.25
+	},
+	roadmap: {
+		name: '開発ロードマップ',
+		subsections: [
+			'Development Roadmap（開発手順・MVP要件）',
+			'Future Enhancements（将来の拡張）'
+		],
+		weight: 0.2
+	},
+	dependencies: {
+		name: '論理的依存関係',
+		subsections: ['Logical Dependency Chain（実装順の依存関係）'],
+		weight: 0.15
+	},
+	risks: {
+		name: 'リスクと対策',
+		subsections: ['Risks and Mitigations（リスクとその軽減策）'],
+		weight: 0.1
+	},
+	appendix: {
+		name: '付録',
+		subsections: ['Appendix（補足情報：例としてのデータストア構造）'],
+		weight: 0.1
+	}
 };
 
 /**
@@ -56,17 +63,17 @@ const PRD_SECTIONS = {
  * @returns {Object} Analysis result with quality score and missing sections
  */
 export async function analyzePRDQuality(prdContent, messages = []) {
-  // Combine initial PRD with conversation context
-  let fullContext = prdContent;
-  
-  // Add relevant conversation context
-  for (const msg of messages) {
-    if (msg.role === 'user') {
-      fullContext += `\n\n追加情報: ${msg.content}`;
-    }
-  }
+	// Combine initial PRD with conversation context
+	let fullContext = prdContent;
 
-  const systemPrompt = `あなたはPRD（製品要求仕様書）の品質を評価する専門家です。
+	// Add relevant conversation context
+	for (const msg of messages) {
+		if (msg.role === 'user') {
+			fullContext += `\n\n追加情報: ${msg.content}`;
+		}
+	}
+
+	const systemPrompt = `あなたはPRD（製品要求仕様書）の品質を評価する専門家です。
 以下のPRD内容を分析し、各セクションの充実度を評価してください。
 
 評価基準:
@@ -77,7 +84,7 @@ export async function analyzePRDQuality(prdContent, messages = []) {
 
 各セクションについて0-100のスコアを付け、不足している具体的な情報を指摘してください。`;
 
-  const userPrompt = `以下のPRD内容を評価してください：
+	const userPrompt = `以下のPRD内容を評価してください：
 
 ${fullContext}
 
@@ -95,39 +102,39 @@ ${fullContext}
   "criticalMissing": ["最も重要な不足情報1", "最も重要な不足情報2"]
 }`;
 
-  try {
-    const response = await generateTextService({
-      role: 'main',
-      systemPrompt,
-      prompt: userPrompt,
-      commandName: 'analyze-prd-quality',
-      outputType: 'api'
-    });
+	try {
+		const response = await generateTextService({
+			role: 'chat',
+			systemPrompt,
+			prompt: userPrompt,
+			commandName: 'analyze-prd-quality',
+			outputType: 'api'
+		});
 
-    const analysis = JSON.parse(response.mainResult);
-    
-    // Calculate weighted overall score
-    let weightedScore = 0;
-    for (const [section, data] of Object.entries(PRD_SECTIONS)) {
-      const sectionScore = analysis.sectionScores[section]?.score || 0;
-      weightedScore += sectionScore * data.weight;
-    }
+		const analysis = JSON.parse(response.mainResult);
 
-    return {
-      sectionScores: analysis.sectionScores,
-      overallScore: Math.round(weightedScore),
-      criticalMissing: analysis.criticalMissing || [],
-      missingRequirements: getMissingRequirements(analysis.sectionScores)
-    };
-  } catch (error) {
-    console.error('Error analyzing PRD quality:', error);
-    return {
-      sectionScores: {},
-      overallScore: 0,
-      criticalMissing: [],
-      missingRequirements: ['分析エラーが発生しました']
-    };
-  }
+		// Calculate weighted overall score
+		let weightedScore = 0;
+		for (const [section, data] of Object.entries(PRD_SECTIONS)) {
+			const sectionScore = analysis.sectionScores[section]?.score || 0;
+			weightedScore += sectionScore * data.weight;
+		}
+
+		return {
+			sectionScores: analysis.sectionScores,
+			overallScore: Math.round(weightedScore),
+			criticalMissing: analysis.criticalMissing || [],
+			missingRequirements: getMissingRequirements(analysis.sectionScores)
+		};
+	} catch (error) {
+		console.error('Error analyzing PRD quality:', error);
+		return {
+			sectionScores: {},
+			overallScore: 0,
+			criticalMissing: [],
+			missingRequirements: ['分析エラーが発生しました']
+		};
+	}
 }
 
 /**
@@ -136,28 +143,29 @@ ${fullContext}
  * @returns {Object} AI response and updated quality score
  */
 export async function generatePRDDialogueResponse(params) {
-  const {
-    message,
-    mode = 'interactive',
-    messages = [],
-    initialPRD = ''
-  } = params;
+	const {
+		message,
+		mode = 'interactive',
+		messages = [],
+		initialPRD = ''
+	} = params;
 
-  // First analyze current PRD quality
-  const qualityAnalysis = await analyzePRDQuality(initialPRD, messages);
+	// First analyze current PRD quality
+	const qualityAnalysis = await analyzePRDQuality(initialPRD, messages);
 
-  // Build conversation context
-  let conversationContext = '';
-  for (const msg of messages.slice(-10)) { // Last 10 messages for context
-    conversationContext += `${msg.role === 'user' ? 'ユーザー' : 'AI'}: ${msg.content}\n\n`;
-  }
+	// Build conversation context
+	let conversationContext = '';
+	for (const msg of messages.slice(-10)) {
+		// Last 10 messages for context
+		conversationContext += `${msg.role === 'user' ? 'ユーザー' : 'AI'}: ${msg.content}\n\n`;
+	}
 
-  // Generate appropriate response based on mode
-  let systemPrompt, userPrompt;
+	// Generate appropriate response based on mode
+	let systemPrompt, userPrompt;
 
-  if (mode === 'guided') {
-    // Guided mode: Ask specific questions to fill missing sections
-    systemPrompt = `あなたは優秀なプロダクトマネージャーです。
+	if (mode === 'guided') {
+		// Guided mode: Ask specific questions to fill missing sections
+		systemPrompt = `あなたは優秀なプロダクトマネージャーです。
 ユーザーがプロジェクトのPRDを作成するのを支援してください。
 以下の不足情報を埋めるために、具体的で答えやすい質問をしてください。
 
@@ -170,7 +178,7 @@ export async function generatePRDDialogueResponse(params) {
 3. 例を示して回答しやすくする
 4. 進捗を認識させ、励ましの言葉を含める`;
 
-    userPrompt = `これまでの会話:
+		userPrompt = `これまでの会話:
 ${conversationContext}
 
 ユーザーの最新メッセージ: ${message}
@@ -178,43 +186,42 @@ ${conversationContext}
 最も改善が必要なセクション: ${getWeakestSection(qualityAnalysis.sectionScores)}
 
 適切な質問を日本語で生成してください。`;
-
-  } else {
-    // Interactive mode: Natural conversation
-    systemPrompt = `あなたは優秀なプロダクトマネージャーです。
+	} else {
+		// Interactive mode: Natural conversation
+		systemPrompt = `あなたは優秀なプロダクトマネージャーです。
 ユーザーとの自然な対話を通じて、プロジェクトのPRDを充実させてください。
 ユーザーの入力から重要な情報を理解し、さらなる詳細化のためのフォローアップを行ってください。
 
 現在の品質スコア: ${qualityAnalysis.overallScore}%`;
 
-    userPrompt = `これまでの会話:
+		userPrompt = `これまでの会話:
 ${conversationContext}
 
 ユーザーの最新メッセージ: ${message}
 
 ユーザーのメッセージに適切に応答し、PRDの品質向上につながる情報を引き出してください。`;
-  }
+	}
 
-  try {
-    const response = await generateTextService({
-      role: 'main',
-      systemPrompt,
-      prompt: userPrompt,
-      commandName: 'prd-dialogue',
-      outputType: 'api'
-    });
+	try {
+		const response = await generateTextService({
+			role: 'chat',
+			systemPrompt,
+			prompt: userPrompt,
+			commandName: 'prd-dialogue',
+			outputType: 'api'
+		});
 
-    return {
-      aiResponse: response.mainResult,
-      prdQualityScore: qualityAnalysis.overallScore,
-      missingRequirements: qualityAnalysis.missingRequirements,
-      sectionScores: qualityAnalysis.sectionScores,
-      telemetry: response.telemetryData
-    };
-  } catch (error) {
-    console.error('Error generating dialogue response:', error);
-    throw error;
-  }
+		return {
+			aiResponse: response.mainResult,
+			prdQualityScore: qualityAnalysis.overallScore,
+			missingRequirements: qualityAnalysis.missingRequirements,
+			sectionScores: qualityAnalysis.sectionScores,
+			telemetry: response.telemetryData
+		};
+	} catch (error) {
+		console.error('Error generating dialogue response:', error);
+		throw error;
+	}
 }
 
 /**
@@ -224,19 +231,19 @@ ${conversationContext}
  * @returns {string} Complete PRD in Markdown format
  */
 export async function generateFinalPRD(initialPRD, messages) {
-  // Collect all information from conversation
-  let collectedInfo = {
-    initial: initialPRD,
-    additions: []
-  };
+	// Collect all information from conversation
+	let collectedInfo = {
+		initial: initialPRD,
+		additions: []
+	};
 
-  for (const msg of messages) {
-    if (msg.role === 'user') {
-      collectedInfo.additions.push(msg.content);
-    }
-  }
+	for (const msg of messages) {
+		if (msg.role === 'user') {
+			collectedInfo.additions.push(msg.content);
+		}
+	}
 
-  const systemPrompt = `あなたは優秀な技術文書作成者です。
+	const systemPrompt = `あなたは優秀な技術文書作成者です。
 提供された情報を基に、完全で詳細なPRD（製品要求仕様書）をMarkdown形式で作成してください。
 
 以下の構造に従ってください：
@@ -249,7 +256,7 @@ export async function generateFinalPRD(initialPRD, messages) {
 
 各セクションは具体的で、実装に必要な詳細を含めてください。`;
 
-  const userPrompt = `以下の情報を基に、完全なPRDをMarkdown形式で作成してください：
+	const userPrompt = `以下の情報を基に、完全なPRDをMarkdown形式で作成してください：
 
 初期PRD:
 ${collectedInfo.initial}
@@ -259,43 +266,43 @@ ${collectedInfo.additions.join('\n\n')}
 
 タスク分割に適した、詳細で実装可能なPRDを生成してください。`;
 
-  try {
-    const response = await generateTextService({
-      role: 'main',
-      systemPrompt,
-      prompt: userPrompt,
-      commandName: 'generate-final-prd',
-      outputType: 'api'
-    });
+	try {
+		const response = await generateTextService({
+			role: 'chat',
+			systemPrompt,
+			prompt: userPrompt,
+			commandName: 'generate-final-prd',
+			outputType: 'api'
+		});
 
-    return response.mainResult;
-  } catch (error) {
-    console.error('Error generating final PRD:', error);
-    throw error;
-  }
+		return response.mainResult;
+	} catch (error) {
+		console.error('Error generating final PRD:', error);
+		throw error;
+	}
 }
 
 // Helper functions
 function getMissingRequirements(sectionScores) {
-  const missing = [];
-  for (const [section, data] of Object.entries(sectionScores)) {
-    if (data.score < 70 && data.missing) {
-      missing.push(...data.missing);
-    }
-  }
-  return missing;
+	const missing = [];
+	for (const [section, data] of Object.entries(sectionScores)) {
+		if (data.score < 70 && data.missing) {
+			missing.push(...data.missing);
+		}
+	}
+	return missing;
 }
 
 function getWeakestSection(sectionScores) {
-  let weakest = null;
-  let lowestScore = 100;
-  
-  for (const [section, data] of Object.entries(sectionScores)) {
-    if (data.score < lowestScore) {
-      lowestScore = data.score;
-      weakest = PRD_SECTIONS[section]?.name || PRD_SECTIONS[section] || section;
-    }
-  }
-  
-  return weakest;
+	let weakest = null;
+	let lowestScore = 100;
+
+	for (const [section, data] of Object.entries(sectionScores)) {
+		if (data.score < lowestScore) {
+			lowestScore = data.score;
+			weakest = PRD_SECTIONS[section]?.name || PRD_SECTIONS[section] || section;
+		}
+	}
+
+	return weakest;
 }
