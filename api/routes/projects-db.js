@@ -2,13 +2,55 @@ import express from 'express';
 import { supabase } from '../db/supabase.js';
 import { getProjectById, getAllProjects } from '../db/helpers.js';
 import { generatePRDDialogueResponse, generateFinalPRD } from '../services/prd-dialogue.js';
+import { authMiddleware, requireProjectAccess } from '../middleware/auth.js';
+import { logger } from '../utils/logger.js';
 
 const router = express.Router();
 
-// GET /api/v1/projects - Get all projects
-router.get('/', async (req, res) => {
+// GET /api/v1/projects - Get all projects for user's organizations
+router.get('/', authMiddleware, async (req, res) => {
   try {
-    const projects = await getAllProjects();
+    const userId = req.user.id;
+    const { organizationId } = req.query;
+    
+    // Get user's organizations
+    const { data: userOrgs, error: orgError } = await supabase
+      .from('organization_members')
+      .select('organization_id')
+      .eq('profile_id', userId);
+    
+    if (orgError) throw orgError;
+    
+    const orgIds = userOrgs.map(o => o.organization_id);
+    
+    // Filter projects by organization
+    let query = supabase
+      .from('projects')
+      .select(`
+        *,
+        organization:organizations (id, name),
+        task_count:tasks(count)
+      `)
+      .in('organization_id', orgIds)
+      .order('created_at', { ascending: false });
+    
+    if (organizationId) {
+      // Verify user has access to this organization
+      if (!orgIds.includes(organizationId)) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'AUTHZ_PROJECT_ACCESS_DENIED',
+            message: 'You do not have access to this organization'
+          }
+        });
+      }
+      query = query.eq('organization_id', organizationId);
+    }
+    
+    const { data: projects, error } = await query;
+    
+    if (error) throw error;
     
     res.json({
       success: true,
@@ -29,10 +71,51 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/v1/projects/:id - Get project by ID
-router.get('/:id', async (req, res) => {
+// GET /api/v1/projects/:id - Get project by ID (with access control)
+router.get('/:id', authMiddleware, async (req, res) => {
   try {
-    const project = await getProjectById(req.params.id);
+    const projectId = req.params.id;
+    const userId = req.user.id;
+    
+    // Get project with organization info
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select(`
+        *,
+        organization:organizations (id, name),
+        tasks:tasks(count),
+        members:organization_members!inner(
+          profile_id
+        )
+      `)
+      .eq('id', projectId)
+      .single();
+    
+    if (projectError || !project) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'PROJECT_NOT_FOUND',
+          message: 'Project not found'
+        }
+      });
+    }
+    
+    // Check if user is a member of the project's organization
+    const isMember = project.members.some(m => m.profile_id === userId);
+    
+    if (!isMember) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'AUTHZ_PROJECT_ACCESS_DENIED',
+          message: 'You do not have access to this project'
+        }
+      });
+    }
+    
+    // Remove members array from response
+    delete project.members;
     
     if (!project) {
       return res.status(404).json({
@@ -61,22 +144,41 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/v1/projects - Create new project
-router.post('/', async (req, res) => {
+// POST /api/v1/projects - Create new project (authenticated users)
+router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { name, projectPath, prdContent, deadline } = req.body;
+    const { name, projectPath, prdContent, deadline, organizationId } = req.body;
+    const userId = req.user.id;
     
-    if (!name || !projectPath) {
+    if (!name || !projectPath || !organizationId) {
       return res.status(400).json({
         success: false,
         error: {
           code: 'MISSING_REQUIRED_FIELDS',
-          message: 'Name and projectPath are required'
+          message: 'Name, projectPath, and organizationId are required'
         }
       });
     }
     
-    // Create project in database
+    // Verify user is a member of the organization
+    const { data: membership, error: memberError } = await supabase
+      .from('organization_members')
+      .select('role')
+      .eq('organization_id', organizationId)
+      .eq('profile_id', userId)
+      .single();
+    
+    if (memberError || !membership) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'AUTHZ_NOT_ORGANIZATION_MEMBER',
+          message: 'You are not a member of this organization'
+        }
+      });
+    }
+    
+    // Create project in database with organization
     const { data: project, error } = await supabase
       .from('projects')
       .insert({
@@ -84,7 +186,9 @@ router.post('/', async (req, res) => {
         project_path: projectPath,
         prd_content: prdContent,
         deadline,
-        status: 'active'
+        status: 'active',
+        organization_id: organizationId,
+        created_by: userId
       })
       .select()
       .single();
@@ -127,8 +231,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/v1/projects/:id - Update project
-router.put('/:id', async (req, res) => {
+// PUT /api/v1/projects/:id - Update project (project members only)
+router.put('/:id', authMiddleware, requireProjectAccess, async (req, res) => {
   try {
     const { name, deadline, description } = req.body;
     
@@ -173,9 +277,20 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/v1/projects/:id - Delete project
-router.delete('/:id', async (req, res) => {
+// DELETE /api/v1/projects/:id - Delete project (organization admins only)
+router.delete('/:id', authMiddleware, requireProjectAccess, async (req, res) => {
   try {
+    // Check if user is organization admin
+    if (req.organizationMember.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'AUTHZ_REQUIRES_ADMIN',
+          message: 'Only organization admins can delete projects'
+        }
+      });
+    }
+    
     const { error } = await supabase
       .from('projects')
       .delete()
@@ -202,8 +317,8 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// POST /api/v1/projects/ai-dialogue - AI dialogue for project creation
-router.post('/ai-dialogue', async (req, res) => {
+// POST /api/v1/projects/ai-dialogue - AI dialogue for project creation (authenticated)
+router.post('/ai-dialogue', authMiddleware, async (req, res) => {
   try {
     const { sessionId, message, mode } = req.body;
     
@@ -300,8 +415,8 @@ router.post('/ai-dialogue', async (req, res) => {
   }
 });
 
-// POST /api/v1/projects/:projectId/prd/finalize - Generate final PRD in markdown format
-router.post('/:projectId/prd/finalize', async (req, res) => {
+// POST /api/v1/projects/:projectId/prd/finalize - Generate final PRD (project members)
+router.post('/:projectId/prd/finalize', authMiddleware, requireProjectAccess, async (req, res) => {
   try {
     const { projectId } = req.params;
     const { sessionId } = req.body;
@@ -369,28 +484,49 @@ router.post('/:projectId/prd/finalize', async (req, res) => {
   }
 });
 
-// POST /api/v1/projects/initialize - Initialize project (legacy support)
-router.post('/initialize', async (req, res) => {
+// POST /api/v1/projects/initialize - Initialize project (legacy support - authenticated)
+router.post('/initialize', authMiddleware, async (req, res) => {
   try {
-    const { projectPath, projectName } = req.body;
+    const { projectPath, projectName, organizationId } = req.body;
+    const userId = req.user.id;
     
-    if (!projectPath || !projectName) {
+    if (!projectPath || !projectName || !organizationId) {
       return res.status(400).json({
         success: false,
         error: {
           code: 'MISSING_REQUIRED_FIELDS',
-          message: 'projectPath and projectName are required'
+          message: 'projectPath, projectName, and organizationId are required'
         }
       });
     }
     
-    // Create project in database
+    // Verify user is a member of the organization
+    const { data: membership, error: memberError } = await supabase
+      .from('organization_members')
+      .select('role')
+      .eq('organization_id', organizationId)
+      .eq('profile_id', userId)
+      .single();
+    
+    if (memberError || !membership) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'AUTHZ_NOT_ORGANIZATION_MEMBER',
+          message: 'You are not a member of this organization'
+        }
+      });
+    }
+    
+    // Create project in database with organization
     const { data: project, error } = await supabase
       .from('projects')
       .insert({
         name: projectName,
         project_path: projectPath,
-        status: 'active'
+        status: 'active',
+        organization_id: organizationId,
+        created_by: userId
       })
       .select()
       .single();

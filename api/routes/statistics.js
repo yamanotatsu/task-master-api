@@ -1,13 +1,53 @@
 import express from 'express';
 import { supabase } from '../db/supabase.js';
 import { getProjectStatistics } from '../db/helpers.js';
+import { authMiddleware, requireProjectAccess } from '../middleware/auth.js';
+import { logger } from '../utils/logger.js';
 
 const router = express.Router();
 
-// GET /api/v1/projects/:id/statistics - Get project statistics
-router.get('/projects/:id/statistics', async (req, res) => {
+// GET /api/v1/projects/:id/statistics - Get project statistics (project members only)
+router.get('/projects/:id/statistics', authMiddleware, async (req, res) => {
   try {
-    const statistics = await getProjectStatistics(req.params.id);
+    const projectId = req.params.id;
+    const userId = req.user.id;
+    
+    // Verify user has access to the project
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select(`
+        organization_id,
+        organization:organizations!inner(
+          members:organization_members!inner(
+            profile_id
+          )
+        )
+      `)
+      .eq('id', projectId)
+      .single();
+    
+    if (projectError || !project) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'PROJECT_NOT_FOUND',
+          message: 'Project not found'
+        }
+      });
+    }
+    
+    const hasAccess = project.organization.members.some(m => m.profile_id === userId);
+    if (!hasAccess) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'AUTHZ_PROJECT_ACCESS_DENIED',
+          message: 'You do not have access to this project'
+        }
+      });
+    }
+    
+    const statistics = await getProjectStatistics(projectId);
     
     res.json({
       success: true,
@@ -26,9 +66,47 @@ router.get('/projects/:id/statistics', async (req, res) => {
   }
 });
 
-// GET /api/v1/projects/:id/gantt-data - Get Gantt chart data
-router.get('/projects/:id/gantt-data', async (req, res) => {
+// GET /api/v1/projects/:id/gantt-data - Get Gantt chart data (project members only)
+router.get('/projects/:id/gantt-data', authMiddleware, async (req, res) => {
   try {
+    const projectId = req.params.id;
+    const userId = req.user.id;
+    
+    // Verify user has access to the project
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select(`
+        organization_id,
+        organization:organizations!inner(
+          members:organization_members!inner(
+            profile_id
+          )
+        )
+      `)
+      .eq('id', projectId)
+      .single();
+    
+    if (projectError || !project) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'PROJECT_NOT_FOUND',
+          message: 'Project not found'
+        }
+      });
+    }
+    
+    const hasAccess = project.organization.members.some(m => m.profile_id === userId);
+    if (!hasAccess) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'AUTHZ_PROJECT_ACCESS_DENIED',
+          message: 'You do not have access to this project'
+        }
+      });
+    }
+    
     const { data: tasks, error } = await supabase
       .from('tasks')
       .select(`
@@ -92,9 +170,47 @@ router.get('/projects/:id/gantt-data', async (req, res) => {
   }
 });
 
-// GET /api/v1/projects/:id/dependency-graph - Get dependency graph data
-router.get('/projects/:id/dependency-graph', async (req, res) => {
+// GET /api/v1/projects/:id/dependency-graph - Get dependency graph data (project members only)
+router.get('/projects/:id/dependency-graph', authMiddleware, async (req, res) => {
   try {
+    const projectId = req.params.id;
+    const userId = req.user.id;
+    
+    // Verify user has access to the project
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select(`
+        organization_id,
+        organization:organizations!inner(
+          members:organization_members!inner(
+            profile_id
+          )
+        )
+      `)
+      .eq('id', projectId)
+      .single();
+    
+    if (projectError || !project) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'PROJECT_NOT_FOUND',
+          message: 'Project not found'
+        }
+      });
+    }
+    
+    const hasAccess = project.organization.members.some(m => m.profile_id === userId);
+    if (!hasAccess) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'AUTHZ_PROJECT_ACCESS_DENIED',
+          message: 'You do not have access to this project'
+        }
+      });
+    }
+    
     const { data: tasks, error } = await supabase
       .from('tasks')
       .select(`
@@ -151,8 +267,8 @@ router.get('/projects/:id/dependency-graph', async (req, res) => {
   }
 });
 
-// POST /api/v1/tasks/analyze-complexity - Analyze task complexity (fixed)
-router.post('/tasks/analyze-complexity', async (req, res) => {
+// POST /api/v1/tasks/analyze-complexity - Analyze task complexity (authenticated)
+router.post('/tasks/analyze-complexity', authMiddleware, async (req, res) => {
   try {
     const { taskId } = req.body;
     
@@ -166,7 +282,9 @@ router.post('/tasks/analyze-complexity', async (req, res) => {
       });
     }
     
-    // Get task details
+    const userId = req.user.id;
+    
+    // Get task details with access check
     const { data: task, error } = await supabase
       .from('tasks')
       .select(`
@@ -174,6 +292,13 @@ router.post('/tasks/analyze-complexity', async (req, res) => {
         subtasks (id),
         dependencies:task_dependencies!task_dependencies_task_id_fkey (
           depends_on_task_id
+        ),
+        project:projects!inner(
+          organization:organizations!inner(
+            members:organization_members!inner(
+              profile_id
+            )
+          )
         )
       `)
       .eq('id', taskId)
@@ -187,6 +312,18 @@ router.post('/tasks/analyze-complexity', async (req, res) => {
         error: {
           code: 'TASK_NOT_FOUND',
           message: 'Task not found'
+        }
+      });
+    }
+    
+    // Check if user has access to the task's project
+    const hasAccess = task.project.organization.members.some(m => m.profile_id === userId);
+    if (!hasAccess) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'AUTHZ_TASK_ACCESS_DENIED',
+          message: 'You do not have access to this task'
         }
       });
     }
@@ -265,10 +402,48 @@ router.post('/tasks/analyze-complexity', async (req, res) => {
   }
 });
 
-// GET /api/v1/tasks/complexity-report - Get complexity report for all tasks
-router.get('/tasks/complexity-report', async (req, res) => {
+// GET /api/v1/tasks/complexity-report - Get complexity report (authenticated)
+router.get('/tasks/complexity-report', authMiddleware, async (req, res) => {
   try {
     const { projectId } = req.query;
+    const userId = req.user.id;
+    
+    // If projectId is provided, verify access
+    if (projectId) {
+      const { data: project, error: projectError } = await supabase
+        .from('projects')
+        .select(`
+          organization_id,
+          organization:organizations!inner(
+            members:organization_members!inner(
+              profile_id
+            )
+          )
+        `)
+        .eq('id', projectId)
+        .single();
+      
+      if (projectError || !project) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            code: 'PROJECT_NOT_FOUND',
+            message: 'Project not found'
+          }
+        });
+      }
+      
+      const hasAccess = project.organization.members.some(m => m.profile_id === userId);
+      if (!hasAccess) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'AUTHZ_PROJECT_ACCESS_DENIED',
+            message: 'You do not have access to this project'
+          }
+        });
+      }
+    }
     
     let query = supabase
       .from('tasks')
@@ -282,11 +457,22 @@ router.get('/tasks/complexity-report', async (req, res) => {
         subtasks (id),
         dependencies:task_dependencies!task_dependencies_task_id_fkey (
           depends_on_task_id
+        ),
+        project:projects!inner(
+          id,
+          organization:organizations!inner(
+            members:organization_members!inner(
+              profile_id
+            )
+          )
         )
       `);
     
     if (projectId) {
       query = query.eq('project_id', projectId);
+    } else {
+      // If no projectId, filter by user's organizations
+      query = query.eq('project.organization.members.profile_id', userId);
     }
     
     const { data: tasks, error } = await query;

@@ -2,11 +2,13 @@ import express from 'express';
 import { createTask } from '../db/helpers.js';
 import { supabase } from '../db/supabase.js';
 import { parsePRDContent } from '../services/prd-parser.js';
+import { authMiddleware } from '../middleware/auth.js';
+import { logger } from '../utils/logger.js';
 
 const router = express.Router();
 
-// POST /api/v1/generate-tasks-from-prd
-router.post('/', async (req, res) => {
+// POST /api/v1/generate-tasks-from-prd - Generate tasks from PRD (authenticated)
+router.post('/', authMiddleware, async (req, res) => {
   try {
     const { 
       prd_content, 
@@ -14,6 +16,7 @@ router.post('/', async (req, res) => {
       use_research_mode = false,
       projectId 
     } = req.body;
+    const userId = req.user.id;
 
     if (!prd_content) {
       return res.status(400).json({
@@ -31,6 +34,41 @@ router.post('/', async (req, res) => {
         error: {
           code: 'MISSING_PROJECT_ID',
           message: 'projectId is required'
+        }
+      });
+    }
+    
+    // Verify user has access to the project
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select(`
+        organization_id,
+        organization:organizations!inner(
+          members:organization_members!inner(
+            profile_id
+          )
+        )
+      `)
+      .eq('id', projectId)
+      .single();
+    
+    if (projectError || !project) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'PROJECT_NOT_FOUND',
+          message: 'Project not found'
+        }
+      });
+    }
+    
+    const hasAccess = project.organization.members.some(m => m.profile_id === userId);
+    if (!hasAccess) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'AUTHZ_PROJECT_ACCESS_DENIED',
+          message: 'You do not have access to this project'
         }
       });
     }
@@ -64,7 +102,9 @@ router.post('/', async (req, res) => {
         test_strategy: task.testStrategy,
         priority: task.priority || 'medium',
         status: task.status || 'pending',
-        dependencies: task.dependencies || []
+        dependencies: task.dependencies || [],
+        organization_id: project.organization_id,
+        created_by: userId
       };
 
       try {
