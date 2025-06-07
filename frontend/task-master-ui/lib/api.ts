@@ -97,14 +97,38 @@ export interface ExpandTaskRequest {
 }
 
 class ApiClient {
+  private getAuthToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    
+    // Get the token from localStorage where Supabase stores it
+    const supabaseAuth = localStorage.getItem('sb-auth-token');
+    if (supabaseAuth) {
+      try {
+        const authData = JSON.parse(supabaseAuth);
+        return authData?.access_token || null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
   private async fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
+    const token = this.getAuthToken();
+    
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...options?.headers,
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const response = await fetch(url, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
+      headers,
     });
 
     const data = await response.json();
