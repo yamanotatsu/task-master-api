@@ -13,6 +13,7 @@ import { LoadingOverlay } from "@/components/ui/spinner"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { useAuth, withAuth } from "@/lib/auth"
 
 type Step = 1 | 2 | 3
 type ConversationMode = "interactive" | "guided"
@@ -32,8 +33,9 @@ interface PRDQuality {
   score: number
 }
 
-export default function NewProjectPage() {
+function NewProjectPage() {
   const router = useRouter()
+  const { currentOrganization } = useAuth()
   const [currentStep, setCurrentStep] = useState<Step>(1)
   const [loading, setLoading] = useState(false)
   
@@ -142,7 +144,8 @@ export default function NewProjectPage() {
           name: projectName,
           projectPath,
           prdContent,
-          deadline: undefined
+          deadline: undefined,
+          organizationId: currentOrganization?.id
         })
         sessionId = newSessionId
         sessionStorage.setItem('currentSessionId', sessionId)
@@ -195,7 +198,8 @@ export default function NewProjectPage() {
         name: projectName,
         projectPath,
         prdContent,
-        deadline: undefined
+        deadline: undefined,
+        organizationId: currentOrganization?.id
       })
       
       // Store session ID for future use
@@ -640,3 +644,5 @@ export default function NewProjectPage() {
     </div>
   )
 }
+
+export default withAuth(NewProjectPage)
