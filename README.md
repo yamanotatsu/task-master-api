@@ -7,26 +7,56 @@
 [![Twitter Follow](https://img.shields.io/twitter/follow/eyaltoledano?style=flat)](https://x.com/eyaltoledano)
 [![Twitter Follow](https://img.shields.io/twitter/follow/RalphEcom?style=flat)](https://x.com/RalphEcom)
 
-A task management system for AI-driven development with Claude, designed to work seamlessly with Cursor AI.
+A task management system for AI-driven development with Claude, designed to work seamlessly with Cursor AI. Features a complete authentication system with multi-user support, project collaboration, and secure data management powered by Supabase.
+
+## Features
+
+### Core Task Management
+- AI-powered task generation from PRDs (Product Requirements Documents)
+- Intelligent task breakdown and dependency management
+- Multi-user collaboration with role-based access control
+- Real-time project synchronization
+
+### Authentication & Security
+- Complete user authentication system powered by Supabase
+- Multi-organization support with member management
+- Row-level security for data isolation
+- JWT-based authentication with session management
+
+### AI Integration
+- Support for multiple AI providers (Claude, GPT, Gemini, etc.)
+- Configurable model selection for different use cases
+- Intelligent task analysis and complexity assessment
+- Automated task expansion and dependency detection
 
 ## Requirements
 
-Taskmaster utilizes AI across several commands, and those require a separate API key. You can use a variety of models from different AI providers provided you add your API keys. For example, if you want to use Claude 3.7, you'll need an Anthropic API key.
-
-You can define 3 types of models to be used: the main model, the research model, and the fallback model (in case either the main or research fail). Whatever model you use, its provider API key must be present in either mcp.json or .env.
+### AI Provider Keys
+Taskmaster utilizes AI across several commands, and those require a separate API key. You can use a variety of models from different AI providers provided you add your API keys.
 
 At least one (1) of the following is required:
 
-- Anthropic API key (Claude API)
+- **Anthropic API key** (Claude API) - Recommended
 - OpenAI API key
 - Google Gemini API key
 - Perplexity API key (for research model)
 - xAI API Key (for research or main model)
 - OpenRouter API Key (for research or main model)
 
-Using the research model is optional but highly recommended. You will need at least ONE API key. Adding all API keys enables you to seamlessly switch between model providers at will.
+### Database & Authentication
+- **Supabase account** - Required for authentication and data storage
+- **PostgreSQL database** - Provided by Supabase
+
+Using the research model is optional but highly recommended. You will need at least ONE AI API key. Adding all API keys enables you to seamlessly switch between model providers at will.
 
 ## Quick Start
+
+### 🚀 New to Task Master? Start Here!
+
+**For the fastest setup with authentication:**
+- [**Quick Start Guide**](./QUICKSTART.md) - Get running in 5 minutes
+- [**Full Deployment Guide**](./DEPLOYMENT.md) - Complete production setup
+- [**Environment Configuration**](./ENVIRONMENT.md) - Detailed environment setup
 
 ### Option 1: MCP (Recommended)
 
@@ -179,8 +209,19 @@ task-master generate
 
 ## Documentation
 
-For more detailed information, check out the documentation in the `docs` directory:
+### Setup & Deployment
+- [**Quick Start Guide**](./QUICKSTART.md) - Get running in 5 minutes
+- [**Full Deployment Guide**](./DEPLOYMENT.md) - Complete production setup
+- [**Environment Configuration**](./ENVIRONMENT.md) - Detailed environment variables
+- [**Supabase Setup**](./SUPABASE_SETUP.md) - Database and authentication setup
 
+### Authentication System
+- [**Authentication Overview**](./requirements-docs/authentication/01-authentication-overview.md) - System architecture
+- [**Database Schema**](./requirements-docs/authentication/02-database-schema.md) - Database design
+- [**API Endpoints**](./requirements-docs/authentication/03-api-endpoints.md) - API reference
+- [**Security Guidelines**](./requirements-docs/authentication/05-security-guidelines.md) - Security best practices
+
+### Usage & Configuration
 - [Configuration Guide](docs/configuration.md) - Set up environment variables and customize Task Master
 - [Tutorial](docs/tutorial.md) - Step-by-step guide to getting started with Task Master
 - [Command Reference](docs/command-reference.md) - Complete list of all available commands
