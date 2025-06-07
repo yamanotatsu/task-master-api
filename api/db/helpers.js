@@ -116,7 +116,10 @@ export async function getTasksWithDetails(projectId = null, filters = {}) {
   return data?.map(task => ({
     ...task,
     assigneeName: task.assignee?.name,
-    dependencies: task.dependencies?.map(d => d.depends_on_task_id) || []
+    dependencies: task.dependencies?.map(d => d.depends_on_task_id) || [],
+    // Convert snake_case to camelCase for frontend compatibility
+    testStrategy: task.test_strategy,
+    test_strategy: undefined
   })) || [];
 }
 
@@ -154,6 +157,9 @@ export async function getTaskById(taskId) {
   if (data) {
     data.assigneeName = data.assignee?.name;
     data.dependencies = data.dependencies?.map(d => d.depends_on_task_id) || [];
+    // Convert snake_case to camelCase for frontend compatibility
+    data.testStrategy = data.test_strategy;
+    delete data.test_strategy;
   }
 
   return data;
@@ -164,6 +170,12 @@ export async function getTaskById(taskId) {
  */
 export async function createTask(taskData) {
   const { dependencies, subtasks, ...task } = taskData;
+  
+  // Convert camelCase to snake_case for database
+  if (task.testStrategy !== undefined) {
+    task.test_strategy = task.testStrategy;
+    delete task.testStrategy;
+  }
   
   // Insert the task
   const { data: newTask, error } = await supabase
@@ -206,6 +218,12 @@ export async function createTask(taskData) {
  */
 export async function updateTask(taskId, updates) {
   const { dependencies, subtasks, ...taskUpdates } = updates;
+  
+  // Convert camelCase to snake_case for database
+  if (taskUpdates.testStrategy !== undefined) {
+    taskUpdates.test_strategy = taskUpdates.testStrategy;
+    delete taskUpdates.testStrategy;
+  }
   
   // Update the task
   const { error } = await supabase

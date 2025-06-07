@@ -1,9 +1,10 @@
 "use client"
 
 import React from 'react'
-import { Calendar, User, Tag, Link, AlertCircle } from 'lucide-react'
+import { Calendar, User, Tag, Link, AlertCircle, Clock } from 'lucide-react'
 import { Task } from '@/lib/api'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
 
 interface TaskDetailSidebarProps {
   task: Task
@@ -68,6 +69,36 @@ export const TaskDetailSidebar: React.FC<TaskDetailSidebarProps> = ({
           <button className="w-full text-left px-3 py-2 bg-white border rounded-md text-sm hover:bg-gray-50">
             期限を設定
           </button>
+        </div>
+
+        {/* Estimated Effort */}
+        <div>
+          <label className="flex items-center text-xs font-medium text-gray-700 mb-2">
+            <Clock className="h-3 w-3 mr-1" />
+            見積もり工数
+          </label>
+          <Input
+            type="text"
+            value={task.estimatedEffort || ''}
+            onChange={(e) => onTaskUpdate({ estimatedEffort: e.target.value })}
+            placeholder="例: 2h, 1d, 3pts"
+            className="w-full"
+          />
+        </div>
+
+        {/* Actual Effort */}
+        <div>
+          <label className="flex items-center text-xs font-medium text-gray-700 mb-2">
+            <Clock className="h-3 w-3 mr-1" />
+            実績工数
+          </label>
+          <Input
+            type="text"
+            value={task.actualEffort || ''}
+            onChange={(e) => onTaskUpdate({ actualEffort: e.target.value })}
+            placeholder="例: 3h, 2d"
+            className="w-full"
+          />
         </div>
 
         {/* Labels */}

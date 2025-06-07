@@ -53,6 +53,12 @@ const DEFAULTS = {
 			modelId: 'claude-3-5-sonnet',
 			maxTokens: 64000, // Default parameters if fallback IS configured
 			temperature: 0.2
+		},
+		chat: {
+			provider: 'google',
+			modelId: 'gemini-2.0-flash',
+			maxTokens: 8192,
+			temperature: 0.3
 		}
 	},
 	global: {
@@ -119,7 +125,10 @@ function _loadAndValidateConfig(explicitRoot = null) {
 						parsedConfig?.models?.fallback?.provider &&
 						parsedConfig?.models?.fallback?.modelId
 							? { ...defaults.models.fallback, ...parsedConfig.models.fallback }
-							: { ...defaults.models.fallback }
+							: { ...defaults.models.fallback },
+					chat: parsedConfig?.models?.chat
+						? { ...parsedConfig.models.chat }
+						: { ...defaults.models.chat }
 				},
 				global: { ...defaults.global, ...parsedConfig?.global }
 			};
@@ -320,6 +329,28 @@ function getFallbackTemperature(explicitRoot = null) {
 	return getModelConfigForRole('fallback', explicitRoot).temperature;
 }
 
+// --- Chat Role Model Getters ---
+
+function getChatProvider(explicitRoot = null) {
+	// Directly return value from config
+	return getModelConfigForRole('chat', explicitRoot).provider;
+}
+
+function getChatModelId(explicitRoot = null) {
+	// Directly return value from config
+	return getModelConfigForRole('chat', explicitRoot).modelId;
+}
+
+function getChatMaxTokens(explicitRoot = null) {
+	// Directly return value from config
+	return getModelConfigForRole('chat', explicitRoot).maxTokens;
+}
+
+function getChatTemperature(explicitRoot = null) {
+	// Directly return value from config
+	return getModelConfigForRole('chat', explicitRoot).temperature;
+}
+
 // --- Global Settings Getters ---
 
 function getGlobalConfig(explicitRoot = null) {
@@ -369,7 +400,7 @@ function getOllamaBaseUrl(explicitRoot = null) {
 /**
  * Gets model parameters (maxTokens, temperature) for a specific role,
  * considering model-specific overrides from supported-models.json.
- * @param {string} role - The role ('main', 'research', 'fallback').
+ * @param {string} role - The role ('main', 'research', 'fallback', 'chat').
  * @param {string|null} explicitRoot - Optional explicit path to the project root.
  * @returns {{maxTokens: number, temperature: number}}
  */
@@ -739,6 +770,10 @@ export {
 	getFallbackModelId,
 	getFallbackMaxTokens,
 	getFallbackTemperature,
+	getChatProvider,
+	getChatModelId,
+	getChatMaxTokens,
+	getChatTemperature,
 	getBaseUrlForRole,
 
 	// Global setting getters (No env var overrides)
