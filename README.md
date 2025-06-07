@@ -11,6 +11,8 @@ A task management system for AI-driven development with Claude, designed to work
 
 ## Requirements
 
+### AI Provider Requirements
+
 Taskmaster utilizes AI across several commands, and those require a separate API key. You can use a variety of models from different AI providers provided you add your API keys. For example, if you want to use Claude 3.7, you'll need an Anthropic API key.
 
 You can define 3 types of models to be used: the main model, the research model, and the fallback model (in case either the main or research fail). Whatever model you use, its provider API key must be present in either mcp.json or .env.
@@ -25,6 +27,21 @@ At least one (1) of the following is required:
 - OpenRouter API Key (for research or main model)
 
 Using the research model is optional but highly recommended. You will need at least ONE API key. Adding all API keys enables you to seamlessly switch between model providers at will.
+
+### Database Requirements (For Authentication & Multi-user Support)
+
+Task Master now supports authentication and organization management via Supabase. To enable these features, you'll need:
+
+1. **Supabase Account**: Sign up at [supabase.com](https://supabase.com)
+2. **Environment Variables**: Set the following in your `.env` file:
+   ```env
+   SUPABASE_URL=your-project-url
+   SUPABASE_SERVICE_KEY=your-service-key
+   NEXT_PUBLIC_SUPABASE_URL=your-project-url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   ```
+
+3. **Database Migration**: Run the migration scripts in `supabase/` directory to set up the required tables and RLS policies.
 
 ## Quick Start
 

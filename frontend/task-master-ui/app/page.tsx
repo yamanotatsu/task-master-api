@@ -10,8 +10,10 @@ import { EmptyState } from "@/components/ui/empty-state"
 import { Spinner } from "@/components/ui/spinner"
 import { ProjectList } from "@/components/dashboard/ProjectList"
 import { api, Project } from "@/lib/api"
+import { useRequireAuth } from "@/hooks/useRequireAuth"
 
 export default function DashboardPage() {
+  useRequireAuth()
   const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
