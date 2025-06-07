@@ -13,11 +13,17 @@ const __dirname = dirname(__filename);
 dotenv.config({ path: join(__dirname, '.env') });
 
 // Import new database-backed routes
+import authRouter from './routes/auth.js';
+import organizationsRouter from './routes/organizations.js';
 import projectsRouter from './routes/projects-db.js';
 import membersRouter from './routes/members.js';
 import tasksRouter from './routes/tasks-db.js';
 import generateTasksRouter from './routes/generate-tasks-db.js';
 import statisticsRouter from './routes/statistics.js';
+
+// Import middleware
+import { authMiddleware, optionalAuthMiddleware } from './middleware/auth.js';
+import { projectOrganizationMiddleware, requireAnyOrganization } from './middleware/rbac.js';
 
 const app = express();
 const PORT = process.env.API_PORT || 8080;
@@ -34,11 +40,22 @@ app.use((req, res, next) => {
 });
 
 // Mount routers
-app.use('/api/v1/projects', projectsRouter);
-app.use('/api/v1/members', membersRouter);
-app.use('/api/v1/tasks', tasksRouter);
-app.use('/api/v1/generate-tasks-from-prd', generateTasksRouter);
-app.use('/api/v1', statisticsRouter);
+// Public routes (no auth required)
+app.use('/api/v1/auth', authRouter);
+
+// Protected routes
+app.use('/api/v1/organizations', organizationsRouter);
+
+// Project routes with organization context
+app.use('/api/v1/projects', authMiddleware, projectsRouter);
+app.use('/api/v1/tasks', authMiddleware, tasksRouter);
+app.use('/api/v1/generate-tasks-from-prd', authMiddleware, generateTasksRouter);
+
+// Legacy routes (will be deprecated)
+app.use('/api/v1/members', authMiddleware, membersRouter);
+
+// Statistics routes (optional auth for backward compatibility)
+app.use('/api/v1', optionalAuthMiddleware, statisticsRouter);
 
 // Health check
 app.get('/health', (req, res) => {

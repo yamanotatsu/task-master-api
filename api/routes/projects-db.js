@@ -1,21 +1,43 @@
 import express from 'express';
 import { supabase } from '../db/supabase.js';
 import { getProjectById, getAllProjects } from '../db/helpers.js';
+import { 
+  getProjectByIdWithOrgCheck, 
+  getAllProjectsForUser,
+  createProjectWithOrg,
+  updateProjectWithOrgCheck,
+  deleteProjectWithOrgCheck
+} from '../db/org-helpers.js';
 import { generatePRDDialogueResponse, generateFinalPRD } from '../services/prd-dialogue.js';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
 
 // GET /api/v1/projects - Get all projects
 router.get('/', async (req, res) => {
   try {
-    const projects = await getAllProjects();
-    
-    res.json({
-      success: true,
-      data: {
-        projects
-      }
-    });
+    // If user is authenticated, get their projects
+    if (req.user && req.user.id) {
+      const projects = await getAllProjectsForUser(req.user.id);
+      
+      res.json({
+        success: true,
+        data: {
+          projects
+        }
+      });
+    } else {
+      // Fallback for backward compatibility (will be removed)
+      logger.warn('Unauthenticated project access - using legacy mode');
+      const projects = await getAllProjects();
+      
+      res.json({
+        success: true,
+        data: {
+          projects
+        }
+      });
+    }
   } catch (error) {
     console.error('Error fetching projects:', error);
     res.status(500).json({
@@ -32,7 +54,16 @@ router.get('/', async (req, res) => {
 // GET /api/v1/projects/:id - Get project by ID
 router.get('/:id', async (req, res) => {
   try {
-    const project = await getProjectById(req.params.id);
+    let project;
+    
+    // If user is authenticated, check organization access
+    if (req.user && req.user.id) {
+      project = await getProjectByIdWithOrgCheck(req.params.id, req.user.id);
+    } else {
+      // Fallback for backward compatibility
+      logger.warn('Unauthenticated project access - using legacy mode');
+      project = await getProjectById(req.params.id);
+    }
     
     if (!project) {
       return res.status(404).json({
@@ -64,7 +95,7 @@ router.get('/:id', async (req, res) => {
 // POST /api/v1/projects - Create new project
 router.post('/', async (req, res) => {
   try {
-    const { name, projectPath, prdContent, deadline } = req.body;
+    const { name, projectPath, prdContent, deadline, organizationId } = req.body;
     
     if (!name || !projectPath) {
       return res.status(400).json({
@@ -76,20 +107,46 @@ router.post('/', async (req, res) => {
       });
     }
     
-    // Create project in database
-    const { data: project, error } = await supabase
-      .from('projects')
-      .insert({
+    let project;
+    
+    // If user is authenticated, require organization
+    if (req.user && req.user.id) {
+      if (!organizationId) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'ORGANIZATION_REQUIRED',
+            message: 'Organization ID is required for authenticated users'
+          }
+        });
+      }
+      
+      // Create project with organization
+      project = await createProjectWithOrg({
         name,
         project_path: projectPath,
         prd_content: prdContent,
         deadline,
         status: 'active'
-      })
-      .select()
-      .single();
-    
-    if (error) throw error;
+      }, organizationId, req.user.id);
+    } else {
+      // Legacy mode for backward compatibility
+      logger.warn('Creating project without organization - legacy mode');
+      const { data, error } = await supabase
+        .from('projects')
+        .insert({
+          name,
+          project_path: projectPath,
+          prd_content: prdContent,
+          deadline,
+          status: 'active'
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      project = data;
+    }
     
     // Create AI dialogue session
     const { data: session, error: sessionError } = await supabase
@@ -137,14 +194,24 @@ router.put('/:id', async (req, res) => {
     if (deadline !== undefined) updates.deadline = deadline;
     if (description !== undefined) updates.description = description;
     
-    const { data, error } = await supabase
-      .from('projects')
-      .update(updates)
-      .eq('id', req.params.id)
-      .select()
-      .single();
+    let data;
     
-    if (error) throw error;
+    // If user is authenticated, check organization access
+    if (req.user && req.user.id) {
+      data = await updateProjectWithOrgCheck(req.params.id, updates, req.user.id);
+    } else {
+      // Legacy mode
+      logger.warn('Updating project without auth check - legacy mode');
+      const result = await supabase
+        .from('projects')
+        .update(updates)
+        .eq('id', req.params.id)
+        .select()
+        .single();
+      
+      if (result.error) throw result.error;
+      data = result.data;
+    }
     
     if (!data) {
       return res.status(404).json({
@@ -176,12 +243,19 @@ router.put('/:id', async (req, res) => {
 // DELETE /api/v1/projects/:id - Delete project
 router.delete('/:id', async (req, res) => {
   try {
-    const { error } = await supabase
-      .from('projects')
-      .delete()
-      .eq('id', req.params.id);
-    
-    if (error) throw error;
+    // If user is authenticated, check admin access
+    if (req.user && req.user.id) {
+      await deleteProjectWithOrgCheck(req.params.id, req.user.id);
+    } else {
+      // Legacy mode
+      logger.warn('Deleting project without auth check - legacy mode');
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', req.params.id);
+      
+      if (error) throw error;
+    }
     
     res.json({
       success: true,
@@ -191,6 +265,17 @@ router.delete('/:id', async (req, res) => {
     });
   } catch (error) {
     console.error('Error deleting project:', error);
+    
+    if (error.message && error.message.includes('Only organization admins')) {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: 'INSUFFICIENT_PERMISSIONS',
+          message: error.message
+        }
+      });
+    }
+    
     res.status(500).json({
       success: false,
       error: {
