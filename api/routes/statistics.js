@@ -19,7 +19,7 @@ router.get('/projects/:id/statistics', authMiddleware, async (req, res) => {
         organization_id,
         organization:organizations!inner(
           members:organization_members!inner(
-            profile_id
+            user_id
           )
         )
       `)
@@ -36,7 +36,7 @@ router.get('/projects/:id/statistics', authMiddleware, async (req, res) => {
       });
     }
     
-    const hasAccess = project.organization.members.some(m => m.profile_id === userId);
+    const hasAccess = project.organization.members.some(m => m.user_id === userId);
     if (!hasAccess) {
       return res.status(403).json({
         success: false,
@@ -79,7 +79,7 @@ router.get('/projects/:id/gantt-data', authMiddleware, async (req, res) => {
         organization_id,
         organization:organizations!inner(
           members:organization_members!inner(
-            profile_id
+            user_id
           )
         )
       `)
@@ -96,7 +96,7 @@ router.get('/projects/:id/gantt-data', authMiddleware, async (req, res) => {
       });
     }
     
-    const hasAccess = project.organization.members.some(m => m.profile_id === userId);
+    const hasAccess = project.organization.members.some(m => m.user_id === userId);
     if (!hasAccess) {
       return res.status(403).json({
         success: false,
@@ -183,7 +183,7 @@ router.get('/projects/:id/dependency-graph', authMiddleware, async (req, res) =>
         organization_id,
         organization:organizations!inner(
           members:organization_members!inner(
-            profile_id
+            user_id
           )
         )
       `)
@@ -200,7 +200,7 @@ router.get('/projects/:id/dependency-graph', authMiddleware, async (req, res) =>
       });
     }
     
-    const hasAccess = project.organization.members.some(m => m.profile_id === userId);
+    const hasAccess = project.organization.members.some(m => m.user_id === userId);
     if (!hasAccess) {
       return res.status(403).json({
         success: false,
@@ -296,7 +296,7 @@ router.post('/tasks/analyze-complexity', authMiddleware, async (req, res) => {
         project:projects!inner(
           organization:organizations!inner(
             members:organization_members!inner(
-              profile_id
+              user_id
             )
           )
         )
@@ -317,7 +317,7 @@ router.post('/tasks/analyze-complexity', authMiddleware, async (req, res) => {
     }
     
     // Check if user has access to the task's project
-    const hasAccess = task.project.organization.members.some(m => m.profile_id === userId);
+    const hasAccess = task.project.organization.members.some(m => m.user_id === userId);
     if (!hasAccess) {
       return res.status(403).json({
         success: false,
@@ -416,7 +416,7 @@ router.get('/tasks/complexity-report', authMiddleware, async (req, res) => {
           organization_id,
           organization:organizations!inner(
             members:organization_members!inner(
-              profile_id
+              user_id
             )
           )
         `)
@@ -433,7 +433,7 @@ router.get('/tasks/complexity-report', authMiddleware, async (req, res) => {
         });
       }
       
-      const hasAccess = project.organization.members.some(m => m.profile_id === userId);
+      const hasAccess = project.organization.members.some(m => m.user_id === userId);
       if (!hasAccess) {
         return res.status(403).json({
           success: false,
@@ -462,7 +462,7 @@ router.get('/tasks/complexity-report', authMiddleware, async (req, res) => {
           id,
           organization:organizations!inner(
             members:organization_members!inner(
-              profile_id
+              user_id
             )
           )
         )
@@ -472,7 +472,7 @@ router.get('/tasks/complexity-report', authMiddleware, async (req, res) => {
       query = query.eq('project_id', projectId);
     } else {
       // If no projectId, filter by user's organizations
-      query = query.eq('project.organization.members.profile_id', userId);
+      query = query.eq('project.organization.members.user_id', userId);
     }
     
     const { data: tasks, error } = await query;

@@ -32,7 +32,7 @@ router.get('/', authMiddleware, async (req, res) => {
           organization_id,
           organization:organizations!inner(
             members:organization_members!inner(
-              profile_id
+              user_id
             )
           )
         `)
@@ -50,7 +50,7 @@ router.get('/', authMiddleware, async (req, res) => {
       }
       
       // Check if user has access to the project's organization
-      const hasAccess = project.organization.members.some(m => m.profile_id === userId);
+      const hasAccess = project.organization.members.some(m => m.user_id === userId);
       if (!hasAccess) {
         return res.status(403).json({
           success: false,
@@ -75,7 +75,7 @@ router.get('/', authMiddleware, async (req, res) => {
             id,
             name,
             members:organization_members!inner(
-              profile_id
+              user_id
             )
           )
         ),
@@ -85,7 +85,7 @@ router.get('/', authMiddleware, async (req, res) => {
       `);
     
     // Filter by user's organizations
-    query = query.eq('project.organization.members.profile_id', userId);
+    query = query.eq('project.organization.members.user_id', userId);
     
     // Apply additional filters
     if (projectId) {
@@ -150,7 +150,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
             id,
             name,
             members:organization_members!inner(
-              profile_id
+              user_id
             )
           )
         ),
@@ -172,7 +172,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
     }
     
     // Check if user has access to the task's project
-    const hasAccess = task.project.organization.members.some(m => m.profile_id === userId);
+    const hasAccess = task.project.organization.members.some(m => m.user_id === userId);
     if (!hasAccess) {
       return res.status(403).json({
         success: false,
@@ -245,7 +245,7 @@ router.post('/', authMiddleware, async (req, res) => {
         organization_id,
         organization:organizations!inner(
           members:organization_members!inner(
-            profile_id
+            user_id
           )
         )
       `)
@@ -262,7 +262,7 @@ router.post('/', authMiddleware, async (req, res) => {
       });
     }
     
-    const hasAccess = project.organization.members.some(m => m.profile_id === userId);
+    const hasAccess = project.organization.members.some(m => m.user_id === userId);
     if (!hasAccess) {
       return res.status(403).json({
         success: false,
@@ -390,7 +390,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
         project:projects!inner(
           organization:organizations!inner(
             members:organization_members!inner(
-              profile_id
+              user_id
             )
           )
         )
@@ -408,7 +408,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       });
     }
     
-    const hasAccess = taskAccess.project.organization.members.some(m => m.profile_id === userId);
+    const hasAccess = taskAccess.project.organization.members.some(m => m.user_id === userId);
     if (!hasAccess) {
       return res.status(403).json({
         success: false,
@@ -526,7 +526,7 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
         project:projects!inner(
           organization:organizations!inner(
             members:organization_members!inner(
-              profile_id
+              user_id
             )
           )
         )
@@ -544,7 +544,7 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
       });
     }
     
-    const hasAccess = taskAccess.project.organization.members.some(m => m.profile_id === userId);
+    const hasAccess = taskAccess.project.organization.members.some(m => m.user_id === userId);
     if (!hasAccess) {
       return res.status(403).json({
         success: false,
@@ -613,7 +613,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
         project:projects!inner(
           organization:organizations!inner(
             members:organization_members!inner(
-              profile_id
+              user_id
             )
           )
         )
@@ -631,7 +631,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       });
     }
     
-    const hasAccess = taskAccess.project.organization.members.some(m => m.profile_id === userId);
+    const hasAccess = taskAccess.project.organization.members.some(m => m.user_id === userId);
     if (!hasAccess) {
       return res.status(403).json({
         success: false,
@@ -963,7 +963,7 @@ router.post('/batch-update', authMiddleware, async (req, res) => {
         project:projects!inner(
           organization:organizations!inner(
             members:organization_members!inner(
-              profile_id
+              user_id
             )
           )
         )
@@ -974,7 +974,7 @@ router.post('/batch-update', authMiddleware, async (req, res) => {
     
     // Check access for each task
     const inaccessibleTasks = tasks.filter(task => 
-      !task.project.organization.members.some(m => m.profile_id === req.user.id)
+      !task.project.organization.members.some(m => m.user_id === req.user.id)
     );
     
     if (inaccessibleTasks.length > 0) {

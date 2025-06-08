@@ -45,7 +45,7 @@ router.post('/', authMiddleware, async (req, res) => {
         organization_id,
         organization:organizations!inner(
           members:organization_members!inner(
-            profile_id
+            user_id
           )
         )
       `)
@@ -62,7 +62,7 @@ router.post('/', authMiddleware, async (req, res) => {
       });
     }
     
-    const hasAccess = project.organization.members.some(m => m.profile_id === userId);
+    const hasAccess = project.organization.members.some(m => m.user_id === userId);
     if (!hasAccess) {
       return res.status(403).json({
         success: false,

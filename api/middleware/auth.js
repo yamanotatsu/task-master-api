@@ -1,3 +1,4 @@
+import { supabase } from '../db/supabase.js';
 import { supabaseAuth } from '../db/supabase-auth.js';
 import { logger } from '../utils/logger.js';
 
@@ -6,161 +7,170 @@ import { logger } from '../utils/logger.js';
  * Implements role-based access control (RBAC) and attaches user info to request
  */
 export const authMiddleware = async (req, res, next) => {
-  try {
-    // Extract and validate Authorization header
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'AUTH_TOKEN_MISSING',
-          message: 'Authentication required'
-        }
-      });
-    }
+	try {
+		// Extract and validate Authorization header
+		const authHeader = req.headers.authorization;
 
-    // Extract token
-    const token = authHeader.substring(7);
+		if (!authHeader || !authHeader.startsWith('Bearer ')) {
+			return res.status(401).json({
+				success: false,
+				error: {
+					code: 'AUTH_TOKEN_MISSING',
+					message: 'Authentication required'
+				}
+			});
+		}
 
-    // Validate token format
-    if (!/^[\w-]+\.[\w-]+\.[\w-]+$/.test(token)) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'AUTH_INVALID_TOKEN_FORMAT',
-          message: 'Invalid token format'
-        }
-      });
-    }
+		// Extract token
+		const token = authHeader.substring(7);
 
-    // Verify token with Supabase
-    const { data: { user }, error } = await supabaseAuth.auth.getUser(token);
+		// Validate token format
+		if (!/^[\w-]+\.[\w-]+\.[\w-]+$/.test(token)) {
+			return res.status(401).json({
+				success: false,
+				error: {
+					code: 'AUTH_TOKEN_INVALID',
+					message: 'Invalid token format'
+				}
+			});
+		}
 
-    if (error || !user) {
-      logger.error('Token verification failed:', error);
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'AUTH_TOKEN_INVALID',
-          message: 'Invalid or expired token'
-        }
-      });
-    }
+		// Verify JWT token using Supabase auth
+		const { data: tokenData, error: tokenError } =
+			await supabaseAuth.auth.getUser(token);
 
-    // Get user profile information
-    const { data: profile, error: profileError } = await supabaseAuth
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+		if (tokenError || !tokenData?.user) {
+			logger.error('Token verification failed:', tokenError);
+			return res.status(401).json({
+				success: false,
+				error: {
+					code: 'AUTH_TOKEN_INVALID',
+					message: 'Invalid or expired token'
+				}
+			});
+		}
 
-    if (profileError) {
-      logger.error('Failed to fetch user profile:', profileError);
-    }
+		// Get user profile using service key
+		const { data: profile, error: profileError } = await supabase
+			.from('profiles')
+			.select('*')
+			.eq('id', tokenData.user.id)
+			.single();
 
-    // Attach user information to request object
-    req.user = {
-      id: user.id,
-      email: user.email,
-      profile: profile || null,
-      metadata: user.user_metadata || {}
-    };
-    req.token = token;
+		if (profileError || !profile) {
+			logger.error('Failed to fetch user profile:', profileError);
+			return res.status(401).json({
+				success: false,
+				error: {
+					code: 'USER_PROFILE_ERROR',
+					message: 'User profile not found'
+				}
+			});
+		}
 
-    // Log successful authentication
-    logger.info(`User authenticated: ${user.email} (${user.id})`);
+		// Attach user information to request
+		req.user = {
+			id: profile.id,
+			email: profile.email,
+			profile: profile,
+			supabaseUser: tokenData.user
+		};
 
-    next();
-  } catch (error) {
-    logger.error('Auth middleware error:', error);
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'AUTH_ERROR',
-        message: 'Authentication error occurred'
-      }
-    });
-  }
+		next();
+	} catch (error) {
+		logger.error('Authentication middleware error:', error);
+		res.status(500).json({
+			success: false,
+			error: {
+				code: 'AUTH_INTERNAL_ERROR',
+				message: 'Internal authentication error'
+			}
+		});
+	}
 };
 
 /**
  * Role-based access control middleware
  * Checks if user has required role in the organization
- * 
+ *
  * @param {string} requiredRole - The role required to access the resource ('admin' or 'member')
  */
 export const requireRole = (requiredRole) => {
-  return async (req, res, next) => {
-    try {
-      const { organizationId } = req.params;
-      
-      if (!organizationId) {
-        return res.status(400).json({
-          success: false,
-          error: {
-            code: 'ORGANIZATION_ID_REQUIRED',
-            message: 'Organization ID is required'
-          }
-        });
-      }
+	return async (req, res, next) => {
+		try {
+			const { organizationId } = req.params;
 
-      // Check user's membership in the organization
-      const { data: membership, error } = await supabaseAuth
-        .from('organization_members')
-        .select(`
+			if (!organizationId) {
+				return res.status(400).json({
+					success: false,
+					error: {
+						code: 'ORGANIZATION_ID_REQUIRED',
+						message: 'Organization ID is required'
+					}
+				});
+			}
+
+			// Check user's membership in the organization using service key
+			const { data: membership, error } = await supabase
+				.from('organization_members')
+				.select(
+					`
           role,
           joined_at,
           organization:organizations (
             id,
             name
           )
-        `)
-        .eq('organization_id', organizationId)
-        .eq('profile_id', req.user.id)
-        .single();
+        `
+				)
+				.eq('organization_id', organizationId)
+				.eq('user_id', req.user.id)
+				.single();
 
-      if (error || !membership) {
-        return res.status(403).json({
-          success: false,
-          error: {
-            code: 'AUTHZ_NOT_ORGANIZATION_MEMBER',
-            message: 'You are not a member of this organization'
-          }
-        });
-      }
+			if (error || !membership) {
+				logger.error('Failed to check organization membership:', error);
+				return res.status(403).json({
+					success: false,
+					error: {
+						code: 'ACCESS_DENIED',
+						message: 'Access denied: User is not a member of this organization'
+					}
+				});
+			}
 
-      // Check if user has required role
-      if (requiredRole === 'admin' && membership.role !== 'admin') {
-        return res.status(403).json({
-          success: false,
-          error: {
-            code: 'AUTHZ_REQUIRES_ADMIN',
-            message: 'Admin privileges required'
-          }
-        });
-      }
+			// Check role requirements
+			const roleHierarchy = { member: 1, admin: 2 };
+			const userRole = membership.role;
+			const requiredRoleLevel = Array.isArray(requiredRole)
+				? Math.min(...requiredRole.map((r) => roleHierarchy[r] || 0))
+				: roleHierarchy[requiredRole] || 0;
+			const userRoleLevel = roleHierarchy[userRole] || 0;
 
-      // Attach organization membership to request
-      req.organizationMember = {
-        role: membership.role,
-        joined_at: membership.joined_at,
-        organizationId,
-        organization: membership.organization
-      };
+			if (userRoleLevel < requiredRoleLevel) {
+				return res.status(403).json({
+					success: false,
+					error: {
+						code: 'INSUFFICIENT_PERMISSIONS',
+						message: `Insufficient permissions: ${requiredRole} role required`
+					}
+				});
+			}
 
-      next();
-    } catch (error) {
-      logger.error('Role check error:', error);
-      res.status(500).json({
-        success: false,
-        error: {
-          code: 'AUTHZ_ERROR',
-          message: 'Authorization error occurred'
-        }
-      });
-    }
-  };
+			// Attach organization membership info to request
+			req.organizationMember = membership;
+
+			next();
+		} catch (error) {
+			logger.error('Role authorization error:', error);
+			res.status(500).json({
+				success: false,
+				error: {
+					code: 'AUTH_INTERNAL_ERROR',
+					message: 'Internal authorization error'
+				}
+			});
+		}
+	};
 };
 
 /**
@@ -168,48 +178,51 @@ export const requireRole = (requiredRole) => {
  * Attempts to authenticate user but doesn't fail if no token is provided
  */
 export const optionalAuth = async (req, res, next) => {
-  try {
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      // No token provided, continue without authentication
-      req.user = null;
-      return next();
-    }
+	try {
+		const authHeader = req.headers.authorization;
 
-    const token = authHeader.substring(7);
+		if (!authHeader || !authHeader.startsWith('Bearer ')) {
+			// No token provided, continue without authentication
+			req.user = null;
+			return next();
+		}
 
-    // Verify token with Supabase
-    const { data: { user }, error } = await supabaseAuth.auth.getUser(token);
+		const token = authHeader.substring(7);
 
-    if (error || !user) {
-      // Invalid token, continue without authentication
-      req.user = null;
-      return next();
-    }
+		// Verify token with Supabase
+		const {
+			data: { user },
+			error
+		} = await supabaseAuth.auth.getUser(token);
 
-    // Get user profile if authenticated
-    const { data: profile } = await supabaseAuth
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+		if (error || !user) {
+			// Invalid token, continue without authentication
+			req.user = null;
+			return next();
+		}
 
-    req.user = {
-      id: user.id,
-      email: user.email,
-      profile: profile || null,
-      metadata: user.user_metadata || {}
-    };
-    req.token = token;
+		// Get user profile if authenticated (using service client)
+		const { data: profile } = await supabase
+			.from('profiles')
+			.select('*')
+			.eq('id', user.id)
+			.single();
 
-    next();
-  } catch (error) {
-    // Log error but continue without authentication
-    logger.error('Optional auth error:', error);
-    req.user = null;
-    next();
-  }
+		req.user = {
+			id: user.id,
+			email: user.email,
+			profile: profile || null,
+			metadata: user.user_metadata || {}
+		};
+		req.token = token;
+
+		next();
+	} catch (error) {
+		// Log error but continue without authentication
+		logger.error('Optional auth error:', error);
+		req.user = null;
+		next();
+	}
 };
 
 /**
@@ -217,72 +230,72 @@ export const optionalAuth = async (req, res, next) => {
  * Verifies user has access to a specific project
  */
 export const requireProjectAccess = async (req, res, next) => {
-  try {
-    const { projectId } = req.params;
-    
-    if (!projectId) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'PROJECT_ID_REQUIRED',
-          message: 'Project ID is required'
-        }
-      });
-    }
+	try {
+		const { projectId } = req.params;
 
-    // Get project details to check organization
-    const { data: project, error: projectError } = await supabaseAuth
-      .from('projects')
-      .select('id, organization_id')
-      .eq('id', projectId)
-      .single();
+		if (!projectId) {
+			return res.status(400).json({
+				success: false,
+				error: {
+					code: 'PROJECT_ID_REQUIRED',
+					message: 'Project ID is required'
+				}
+			});
+		}
 
-    if (projectError || !project) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: 'PROJECT_NOT_FOUND',
-          message: 'Project not found'
-        }
-      });
-    }
+		// Get project details to check organization (using service client)
+		const { data: project, error: projectError } = await supabase
+			.from('projects')
+			.select('id, organization_id')
+			.eq('id', projectId)
+			.single();
 
-    // Check if user is member of the organization
-    const { data: membership, error: memberError } = await supabaseAuth
-      .from('organization_members')
-      .select('role')
-      .eq('organization_id', project.organization_id)
-      .eq('profile_id', req.user.id)
-      .single();
+		if (projectError || !project) {
+			return res.status(404).json({
+				success: false,
+				error: {
+					code: 'PROJECT_NOT_FOUND',
+					message: 'Project not found'
+				}
+			});
+		}
 
-    if (memberError || !membership) {
-      return res.status(403).json({
-        success: false,
-        error: {
-          code: 'AUTHZ_PROJECT_ACCESS_DENIED',
-          message: 'You do not have access to this project'
-        }
-      });
-    }
+		// Check if user is member of the organization (using service client)
+		const { data: membership, error: memberError } = await supabase
+			.from('organization_members')
+			.select('role')
+			.eq('organization_id', project.organization_id)
+			.eq('user_id', req.user.id)
+			.single();
 
-    // Attach project and membership info to request
-    req.project = project;
-    req.organizationMember = {
-      role: membership.role,
-      organizationId: project.organization_id
-    };
+		if (memberError || !membership) {
+			return res.status(403).json({
+				success: false,
+				error: {
+					code: 'AUTHZ_PROJECT_ACCESS_DENIED',
+					message: 'You do not have access to this project'
+				}
+			});
+		}
 
-    next();
-  } catch (error) {
-    logger.error('Project access check error:', error);
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'AUTHZ_ERROR',
-        message: 'Authorization error occurred'
-      }
-    });
-  }
+		// Attach project and membership info to request
+		req.project = project;
+		req.organizationMember = {
+			role: membership.role,
+			organizationId: project.organization_id
+		};
+
+		next();
+	} catch (error) {
+		logger.error('Project access check error:', error);
+		res.status(500).json({
+			success: false,
+			error: {
+				code: 'AUTHZ_ERROR',
+				message: 'Authorization error occurred'
+			}
+		});
+	}
 };
 
 /**
@@ -290,10 +303,10 @@ export const requireProjectAccess = async (req, res, next) => {
  * Should be used in conjunction with express-rate-limit
  */
 export const checkRateLimit = () => {
-  return async (req, res, next) => {
-    // This is a placeholder for rate limit checking
-    // Actual implementation would integrate with Redis or similar
-    // for distributed rate limiting
-    next();
-  };
+	return async (req, res, next) => {
+		// This is a placeholder for rate limit checking
+		// Actual implementation would integrate with Redis or similar
+		// for distributed rate limiting
+		next();
+	};
 };

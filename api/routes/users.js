@@ -227,7 +227,7 @@ export const getOrganizationsHandler = async (req, res) => {
     const { count, error: countError } = await supabaseAuth
       .from('organization_members')
       .select('*', { count: 'exact', head: true })
-      .eq('profile_id', userId);
+      .eq('user_id', userId);
 
     if (countError) {
       logger.error('Error counting organizations:', countError);
@@ -247,7 +247,7 @@ export const getOrganizationsHandler = async (req, res) => {
           updated_at
         )
       `)
-      .eq('profile_id', userId)
+      .eq('user_id', userId)
       .order('joined_at', { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
 
@@ -347,7 +347,7 @@ export const getActivitiesHandler = async (req, res) => {
           name
         )
       `, { count: 'exact' })
-      .eq('profile_id', userId)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .range((page - 1) * limit, page * limit - 1);
 
@@ -444,7 +444,7 @@ export const deleteAccountHandler = async (req, res) => {
     const { data: adminMemberships } = await supabaseAuth
       .from('organization_members')
       .select('organization_id')
-      .eq('profile_id', userId)
+      .eq('user_id', userId)
       .eq('role', 'admin');
 
     if (adminMemberships && adminMemberships.length > 0) {
