@@ -9,6 +9,20 @@ jspm_packages/
 .env.test.local
 .env.production.local
 
+# API環境変数ファイル
+api/.env
+api/.env.local
+api/.env.development.local
+api/.env.test.local
+api/.env.production.local
+
+# Frontend環境変数ファイル
+frontend/task-master-ui/.env
+frontend/task-master-ui/.env.local
+frontend/task-master-ui/.env.development.local
+frontend/task-master-ui/.env.test.local
+frontend/task-master-ui/.env.production.local
+
 # Cursor configuration -- might have ENV variables. Included by default
 # .cursor/mcp.json
 
