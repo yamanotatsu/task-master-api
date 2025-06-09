@@ -102,6 +102,20 @@ router.post('/', authMiddleware, async (req, res) => {
 			});
 		}
 
+		// Update user's current_organization_id
+		const { error: profileUpdateError } = await supabase
+			.from('profiles')
+			.update({ current_organization_id: organization.id })
+			.eq('id', userId);
+
+		if (profileUpdateError) {
+			logger.error(
+				'Failed to update user profile with organization:',
+				profileUpdateError
+			);
+			// Log but don't fail the request since organization was created successfully
+		}
+
 		// Log organization creation
 		await logOrganizationEvent(AUDIT_EVENTS.ORG_CREATE, {
 			description: `Organization created: ${organization.name}`,
