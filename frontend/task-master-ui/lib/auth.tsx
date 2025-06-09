@@ -67,6 +67,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	// Load user organizations
 	const loadOrganizations = useCallback(async (userId: string) => {
 		try {
+			// ユーザーのプロファイルから現在の組織IDを取得
+			const { data: profileData } = await supabase
+				.from('profiles')
+				.select('current_organization_id')
+				.eq('id', userId)
+				.single();
+
+			// organization_membersから所属組織を取得
 			const { data, error } = await supabase
 				.from('organization_members')
 				.select(
@@ -94,19 +102,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 			setOrganizations(orgs);
 
-			// Set current organization from cookie or default to first
-			const savedOrgId = Cookies.get('current_organization');
-			if (savedOrgId) {
-				const savedOrg = orgs.find((org: any) => org.id === savedOrgId);
-				if (savedOrg) {
-					setCurrentOrganization(savedOrg);
-				} else if (orgs.length > 0) {
-					setCurrentOrganization(orgs[0]);
-					Cookies.set('current_organization', orgs[0].id);
+			// current_organization_idが設定されている場合はそれを優先
+			if (profileData?.current_organization_id) {
+				const currentOrg = orgs.find(
+					(org: any) => org.id === profileData.current_organization_id
+				);
+				if (currentOrg) {
+					setCurrentOrganization(currentOrg);
+					Cookies.set('current_organization', currentOrg.id);
+				} else {
+					// 現在の組織IDが無効な場合はクリア
+					setCurrentOrganization(null);
+					Cookies.remove('current_organization');
 				}
-			} else if (orgs.length > 0) {
-				setCurrentOrganization(orgs[0]);
-				Cookies.set('current_organization', orgs[0].id);
+			} else {
+				// current_organization_idが未設定の場合
+				setCurrentOrganization(null);
+				Cookies.remove('current_organization');
 			}
 		} catch (err) {
 			console.error('Error loading organizations:', err);
@@ -180,16 +192,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				await loadProfile(data.user.id);
 				await loadOrganizations(data.user.id);
 
-				// 組織の存在確認
-				const { data: orgData } = await supabase
-					.from('organization_members')
-					.select('organization_id')
-					.eq('user_id', data.user.id)
-					.limit(1);
+				// current_organization_idをチェック
+				const { data: profileData } = await supabase
+					.from('profiles')
+					.select('current_organization_id')
+					.eq('id', data.user.id)
+					.single();
 
-				if (!orgData || orgData.length === 0) {
+				if (!profileData?.current_organization_id) {
 					// 組織に所属していない場合は組織作成ページへ
-					router.push('/settings/organization/new');
+					router.push('/setup/organization');
 				} else {
 					// 組織に所属している場合はダッシュボードへ
 					router.push('/');
@@ -222,34 +234,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				// 認証状態の確立を待つ
 				await new Promise((resolve) => setTimeout(resolve, 1000));
 
-				// 再度セッションを確認
-				const {
-					data: { session }
-				} = await supabase.auth.getSession();
-
-				if (session?.user) {
-					// Create default organization using the helper function
-					const organizationSlug = `${fullName.toLowerCase().replace(/\s+/g, '-')}-workspace-${Date.now()}`;
-					const { data: result, error: orgError } = await supabase.rpc(
-						'create_organization_with_admin',
-						{
-							org_name: `${fullName}'s Workspace`,
-							org_slug: organizationSlug,
-							org_description: 'Personal workspace',
-							admin_id: session.user.id
-						}
-					);
-
-					if (orgError || !result?.[0]?.success) {
-						throw new Error(
-							orgError?.message ||
-								result?.[0]?.message ||
-								'Failed to create organization'
-						);
-					}
-				}
-
-				router.push('/');
+				// 組織作成ページへリダイレクト
+				router.push('/setup/organization');
 			}
 		} catch (err) {
 			console.error('Signup error:', err);
@@ -389,16 +375,28 @@ export function useAuth() {
 }
 
 // HOC for protecting routes
-export function withAuth<P extends object>(Component: React.ComponentType<P>) {
+export function withAuth<P extends object>(
+	Component: React.ComponentType<P>,
+	requireOrganization = true
+) {
 	return function ProtectedRoute(props: P) {
-		const { user, loading } = useAuth();
+		const { user, currentOrganization, loading } = useAuth();
 		const router = useRouter();
 
 		useEffect(() => {
-			if (!loading && !user) {
-				router.push('/login');
+			if (!loading) {
+				if (!user) {
+					router.push('/login');
+					return;
+				}
+
+				if (requireOrganization && !currentOrganization) {
+					// 組織が必要だが現在の組織がない場合
+					router.push('/setup/organization');
+					return;
+				}
 			}
-		}, [user, loading, router]);
+		}, [user, currentOrganization, loading, router]);
 
 		if (loading) {
 			return (
@@ -409,6 +407,10 @@ export function withAuth<P extends object>(Component: React.ComponentType<P>) {
 		}
 
 		if (!user) {
+			return null;
+		}
+
+		if (requireOrganization && !currentOrganization) {
 			return null;
 		}
 
