@@ -13,7 +13,9 @@ const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
 if (!supabaseUrl || (!supabaseAnonKey && !supabaseServiceKey)) {
-  throw new Error('Missing Supabase authentication environment variables. Please set SUPABASE_URL and either SUPABASE_ANON_KEY or SUPABASE_SERVICE_KEY');
+	throw new Error(
+		'Missing Supabase authentication environment variables. Please set SUPABASE_URL and either SUPABASE_ANON_KEY or SUPABASE_SERVICE_KEY'
+	);
 }
 
 // Use anon key if available, otherwise fallback to service key for development
@@ -24,11 +26,11 @@ const authKey = supabaseAnonKey || supabaseServiceKey;
  * Uses the anon key for client-side compatible operations
  */
 export const supabaseAuth = createClient(supabaseUrl, authKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: false,
-    detectSessionInUrl: false
-  }
+	auth: {
+		autoRefreshToken: true,
+		persistSession: false,
+		detectSessionInUrl: false
+	}
 });
 
 /**
@@ -37,12 +39,12 @@ export const supabaseAuth = createClient(supabaseUrl, authKey, {
  * @returns {Promise<{user: Object|null, error: Error|null}>}
  */
 export const verifyToken = async (token) => {
-  try {
-    const { data, error } = await supabaseAuth.auth.getUser(token);
-    return { user: data?.user || null, error };
-  } catch (error) {
-    return { user: null, error };
-  }
+	try {
+		const { data, error } = await supabaseAuth.auth.getUser(token);
+		return { user: data?.user || null, error };
+	} catch (error) {
+		return { user: null, error };
+	}
 };
 
 /**
@@ -51,21 +53,21 @@ export const verifyToken = async (token) => {
  * @returns {Promise<{user: Object|null, session: Object|null, error: Error|null}>}
  */
 export const createUser = async ({ email, password, fullName }) => {
-  try {
-    const { data, error } = await supabaseAuth.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName
-        }
-      }
-    });
-    
-    return { user: data?.user || null, session: data?.session || null, error };
-  } catch (error) {
-    return { user: null, session: null, error };
-  }
+	try {
+		const { data, error } = await supabaseAuth.auth.signUp({
+			email,
+			password,
+			options: {
+				data: {
+					full_name: fullName
+				}
+			}
+		});
+
+		return { user: data?.user || null, session: data?.session || null, error };
+	} catch (error) {
+		return { user: null, session: null, error };
+	}
 };
 
 /**
@@ -74,16 +76,16 @@ export const createUser = async ({ email, password, fullName }) => {
  * @returns {Promise<{user: Object|null, session: Object|null, error: Error|null}>}
  */
 export const signInUser = async ({ email, password }) => {
-  try {
-    const { data, error } = await supabaseAuth.auth.signInWithPassword({
-      email,
-      password
-    });
-    
-    return { user: data?.user || null, session: data?.session || null, error };
-  } catch (error) {
-    return { user: null, session: null, error };
-  }
+	try {
+		const { data, error } = await supabaseAuth.auth.signInWithPassword({
+			email,
+			password
+		});
+
+		return { user: data?.user || null, session: data?.session || null, error };
+	} catch (error) {
+		return { user: null, session: null, error };
+	}
 };
 
 /**
@@ -91,12 +93,12 @@ export const signInUser = async ({ email, password }) => {
  * @returns {Promise<{error: Error|null}>}
  */
 export const signOutUser = async () => {
-  try {
-    const { error } = await supabaseAuth.auth.signOut();
-    return { error };
-  } catch (error) {
-    return { error };
-  }
+	try {
+		const { error } = await supabaseAuth.auth.signOut();
+		return { error };
+	} catch (error) {
+		return { error };
+	}
 };
 
 /**
@@ -105,12 +107,14 @@ export const signOutUser = async () => {
  * @returns {Promise<{session: Object|null, error: Error|null}>}
  */
 export const refreshSession = async (refreshToken) => {
-  try {
-    const { data, error } = await supabaseAuth.auth.refreshSession({ refresh_token: refreshToken });
-    return { session: data?.session || null, error };
-  } catch (error) {
-    return { session: null, error };
-  }
+	try {
+		const { data, error } = await supabaseAuth.auth.refreshSession({
+			refresh_token: refreshToken
+		});
+		return { session: data?.session || null, error };
+	} catch (error) {
+		return { session: null, error };
+	}
 };
 
 /**
@@ -119,14 +123,14 @@ export const refreshSession = async (refreshToken) => {
  * @returns {Promise<{error: Error|null}>}
  */
 export const resetPasswordRequest = async (email) => {
-  try {
-    const { error } = await supabaseAuth.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.FRONTEND_URL}/auth/reset-password`
-    });
-    return { error };
-  } catch (error) {
-    return { error };
-  }
+	try {
+		const { error } = await supabaseAuth.auth.resetPasswordForEmail(email, {
+			redirectTo: `${process.env.FRONTEND_URL}/auth/reset-password`
+		});
+		return { error };
+	} catch (error) {
+		return { error };
+	}
 };
 
 /**
@@ -135,14 +139,14 @@ export const resetPasswordRequest = async (email) => {
  * @returns {Promise<{user: Object|null, error: Error|null}>}
  */
 export const updatePassword = async (newPassword) => {
-  try {
-    const { data, error } = await supabaseAuth.auth.updateUser({
-      password: newPassword
-    });
-    return { user: data?.user || null, error };
-  } catch (error) {
-    return { user: null, error };
-  }
+	try {
+		const { data, error } = await supabaseAuth.auth.updateUser({
+			password: newPassword
+		});
+		return { user: data?.user || null, error };
+	} catch (error) {
+		return { user: null, error };
+	}
 };
 
 /**
@@ -151,16 +155,16 @@ export const updatePassword = async (newPassword) => {
  * @returns {Promise<{user: Object|null, session: Object|null, error: Error|null}>}
  */
 export const verifyOtp = async ({ email, token, type = 'email' }) => {
-  try {
-    const { data, error } = await supabaseAuth.auth.verifyOtp({
-      email,
-      token,
-      type
-    });
-    return { user: data?.user || null, session: data?.session || null, error };
-  } catch (error) {
-    return { user: null, session: null, error };
-  }
+	try {
+		const { data, error } = await supabaseAuth.auth.verifyOtp({
+			email,
+			token,
+			type
+		});
+		return { user: data?.user || null, session: data?.session || null, error };
+	} catch (error) {
+		return { user: null, session: null, error };
+	}
 };
 
 /**
@@ -170,19 +174,19 @@ export const verifyOtp = async ({ email, token, type = 'email' }) => {
  * @returns {Promise<{user: Object|null, error: Error|null}>}
  */
 export const getUserByEmail = async (email) => {
-  try {
-    // This requires admin/service role key
-    // For now, we'll use a different approach
-    const { data, error } = await supabaseAuth
-      .from('profiles')
-      .select('*')
-      .eq('email', email)
-      .single();
-    
-    return { user: data || null, error };
-  } catch (error) {
-    return { user: null, error };
-  }
+	try {
+		// This requires admin/service role key
+		// For now, we'll use a different approach
+		const { data, error } = await supabaseAuth
+			.from('profiles')
+			.select('*')
+			.eq('email', email)
+			.single();
+
+		return { user: data || null, error };
+	} catch (error) {
+		return { user: null, error };
+	}
 };
 
 /**
@@ -192,51 +196,57 @@ export const getUserByEmail = async (email) => {
  * @returns {Array<string>} Array of validation errors
  */
 export const validatePassword = (password, userInfo = {}) => {
-  const errors = [];
-  
-  // Length check
-  if (password.length < 8) {
-    errors.push('Password must be at least 8 characters long');
-  }
-  
-  // Uppercase check
-  if (!/[A-Z]/.test(password)) {
-    errors.push('Password must contain at least one uppercase letter');
-  }
-  
-  // Lowercase check
-  if (!/[a-z]/.test(password)) {
-    errors.push('Password must contain at least one lowercase letter');
-  }
-  
-  // Number check
-  if (!/\d/.test(password)) {
-    errors.push('Password must contain at least one number');
-  }
-  
-  // Common passwords check
-  const commonPasswords = [
-    'password', '12345678', 'qwerty', 'abc12345',
-    'password123', 'admin', 'letmein', '123456789'
-  ];
-  
-  if (commonPasswords.includes(password.toLowerCase())) {
-    errors.push('This password is too common and not secure');
-  }
-  
-  // Check if password contains user info
-  const userFields = [
-    userInfo.email?.split('@')[0],
-    userInfo.fullName?.toLowerCase().replace(/\s+/g, ''),
-  ].filter(Boolean);
-  
-  for (const field of userFields) {
-    if (field && password.toLowerCase().includes(field)) {
-      errors.push('Password should not contain personal information');
-    }
-  }
-  
-  return errors;
+	const errors = [];
+
+	// Length check
+	if (password.length < 8) {
+		errors.push('Password must be at least 8 characters long');
+	}
+
+	// Uppercase check
+	if (!/[A-Z]/.test(password)) {
+		errors.push('Password must contain at least one uppercase letter');
+	}
+
+	// Lowercase check
+	if (!/[a-z]/.test(password)) {
+		errors.push('Password must contain at least one lowercase letter');
+	}
+
+	// Number check
+	if (!/\d/.test(password)) {
+		errors.push('Password must contain at least one number');
+	}
+
+	// Common passwords check
+	const commonPasswords = [
+		'password',
+		'12345678',
+		'qwerty',
+		'abc12345',
+		'password123',
+		'admin',
+		'letmein',
+		'123456789'
+	];
+
+	if (commonPasswords.includes(password.toLowerCase())) {
+		errors.push('This password is too common and not secure');
+	}
+
+	// Check if password contains user info
+	const userFields = [
+		userInfo.email?.split('@')[0],
+		userInfo.fullName?.toLowerCase().replace(/\s+/g, '')
+	].filter(Boolean);
+
+	for (const field of userFields) {
+		if (field && password.toLowerCase().includes(field)) {
+			errors.push('Password should not contain personal information');
+		}
+	}
+
+	return errors;
 };
 
 /**
@@ -245,8 +255,8 @@ export const validatePassword = (password, userInfo = {}) => {
  * @returns {boolean} Whether the email is valid
  */
 export const isValidEmail = (email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	return emailRegex.test(email);
 };
 
 /**
@@ -255,10 +265,25 @@ export const isValidEmail = (email) => {
  * @returns {string} Sanitized input
  */
 export const sanitizeInput = (input) => {
-  if (typeof input !== 'string') return input;
-  
-  // Remove any HTML tags
-  return input
-    .replace(/<[^>]*>/g, '')
-    .trim();
+	if (typeof input !== 'string') return input;
+
+	// Remove any HTML tags
+	return input.replace(/<[^>]*>/g, '').trim();
+};
+
+/**
+ * Helper function to resend email verification
+ * @param {string} email - The user's email
+ * @returns {Promise<{error: Error|null}>}
+ */
+export const resendEmailVerification = async (email) => {
+	try {
+		const { error } = await supabaseAuth.auth.resend({
+			type: 'signup',
+			email: email
+		});
+		return { error };
+	} catch (error) {
+		return { error };
+	}
 };
