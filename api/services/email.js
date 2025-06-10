@@ -1,10 +1,103 @@
 import { logger } from '../utils/logger.js';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 /**
  * Email service for sending transactional emails
  * This is a basic implementation that can be extended with actual email providers
  * like SendGrid, AWS SES, or Resend
  */
+
+/**
+ * Save email to file system for development
+ * @param {Object} params - Email parameters
+ * @param {string} params.type - Type of email (invitation, welcome, etc.)
+ * @param {string} params.to - Recipient email address
+ * @param {string} params.subject - Email subject
+ * @param {string} params.html - HTML content
+ * @param {string} params.text - Text content
+ * @returns {Promise<void>}
+ */
+async function saveEmailToFile({ type, to, subject, html, text }) {
+  try {
+    // Create emails directory if it doesn't exist
+    const emailsDir = path.join(__dirname, '..', '..', 'dev-emails');
+    console.log('Saving email to directory:', emailsDir);
+    await fs.mkdir(emailsDir, { recursive: true });
+
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `${type}_${to.replace('@', '_at_')}_${timestamp}.html`;
+    const filepath = path.join(emailsDir, filename);
+
+    // Create a full HTML page with both HTML and text versions
+    const fullHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${subject}</title>
+    <style>
+        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+        .email-info { 
+            background: #f0f0f0; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            border-radius: 8px;
+        }
+        .email-info h2 { margin-top: 0; }
+        .email-info p { margin: 5px 0; }
+        .email-preview { 
+            border: 1px solid #ddd; 
+            padding: 20px; 
+            margin-bottom: 20px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .text-version {
+            background: #f5f5f5;
+            padding: 20px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-info">
+        <h2>Email Preview</h2>
+        <p><strong>Type:</strong> ${type}</p>
+        <p><strong>To:</strong> ${to}</p>
+        <p><strong>Subject:</strong> ${subject}</p>
+        <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
+    </div>
+    
+    <h3>HTML Version:</h3>
+    <div class="email-preview">
+        ${html}
+    </div>
+    
+    <h3>Text Version:</h3>
+    <div class="text-version">${text}</div>
+</body>
+</html>
+    `;
+
+    await fs.writeFile(filepath, fullHtml, 'utf8');
+    logger.info(`Email saved to: ${filepath}`);
+    console.log('Email file created successfully at:', filepath);
+    
+    return filepath;
+  } catch (error) {
+    logger.error('Failed to save email to file:', error);
+    // Don't throw - this is just for dev convenience
+  }
+}
 
 /**
  * Send invitation email to a new member
@@ -14,9 +107,10 @@ import { logger } from '../utils/logger.js';
  * @param {string} params.inviterName - Name of the person sending the invite
  * @param {string} params.role - Role being assigned to the invitee
  * @param {string} params.inviteUrl - URL to accept the invitation
+ * @param {Date} params.expiresAt - Expiration date of the invitation
  * @returns {Promise<void>}
  */
-export async function sendInvitationEmail({ to, organizationName, inviterName, role, inviteUrl }) {
+export async function sendInvitationEmail({ to, organizationName, inviterName, role, inviteUrl, expiresAt }) {
   try {
     // In production, integrate with an email service provider
     // For now, we'll log the email details
@@ -57,7 +151,7 @@ export async function sendInvitationEmail({ to, organizationName, inviterName, r
               </div>
               <p>Or copy and paste this link into your browser:</p>
               <p style="word-break: break-all; background-color: #eee; padding: 10px; border-radius: 4px;">${inviteUrl}</p>
-              <p>This invitation will expire in 7 days.</p>
+              <p>This invitation will expire on <strong>${expiresAt ? new Date(expiresAt).toLocaleString() : 'in 7 days'}</strong>.</p>
               <p>If you weren't expecting this invitation, you can safely ignore this email.</p>
             </div>
             <div class="footer">
@@ -76,7 +170,7 @@ ${inviterName} has invited you to join ${organizationName} as a ${role}.
 Accept the invitation by visiting:
 ${inviteUrl}
 
-This invitation will expire in 7 days.
+This invitation will expire on ${expiresAt ? new Date(expiresAt).toLocaleString() : 'in 7 days'}.
 
 If you weren't expecting this invitation, you can safely ignore this email.
 
@@ -94,13 +188,27 @@ If you weren't expecting this invitation, you can safely ignore this email.
     // };
     // await sgMail.send(msg);
 
-    // For development, you can use console.log or save to a file
-    if (process.env.NODE_ENV === 'development') {
+    // For development, save email to file and log details
+    if (process.env.NODE_ENV === 'development' || !process.env.EMAIL_PROVIDER) {
       console.log('=== INVITATION EMAIL ===');
       console.log('To:', to);
       console.log('Subject:', subject);
       console.log('Invite URL:', inviteUrl);
+      console.log('Expires at:', expiresAt ? new Date(expiresAt).toLocaleString() : 'in 7 days');
       console.log('=======================');
+      
+      // Save email to file for easy viewing
+      const filepath = await saveEmailToFile({
+        type: 'invitation',
+        to,
+        subject,
+        html: htmlContent,
+        text: textContent
+      });
+      
+      if (filepath) {
+        console.log(`📧 Email saved to: ${filepath}`);
+      }
     }
 
   } catch (error) {
