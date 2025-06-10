@@ -188,8 +188,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 			if (error) {
 				// Supabaseのエラーを詳細に処理
-				if (error.message?.includes('email not confirmed') || 
-				    error.message?.includes('Email not confirmed')) {
+				if (
+					error.message?.includes('email not confirmed') ||
+					error.message?.includes('Email not confirmed')
+				) {
 					const emailNotVerifiedError = new Error('Email not confirmed');
 					(emailNotVerifiedError as any).code = 'AUTH_EMAIL_NOT_VERIFIED';
 					throw emailNotVerifiedError;

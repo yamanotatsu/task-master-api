@@ -60,8 +60,14 @@ export async function updateTaskByIdDirect(args, log, context = {}) {
 		}
 
 		// Check if this is manual update (has specific field updates) or AI-driven (has prompt)
-		const isManualUpdate = !prompt && (args.title || args.description || args.priority || args.details || args.testStrategy);
-		
+		const isManualUpdate =
+			!prompt &&
+			(args.title ||
+				args.description ||
+				args.priority ||
+				args.details ||
+				args.testStrategy);
+
 		if (!prompt && !isManualUpdate) {
 			const errorMessage =
 				'No prompt or field updates specified. Please provide either a prompt for AI update or specific fields to update.';
@@ -102,40 +108,46 @@ export async function updateTaskByIdDirect(args, log, context = {}) {
 		if (isManualUpdate) {
 			// Handle manual update by directly modifying task fields
 			logWrapper.info(`Manually updating task ${taskId} with field updates`);
-			
+
 			try {
-				const { readJSON, writeJSON } = await import('../../../../scripts/modules/utils.js');
-				
+				const { readJSON, writeJSON } = await import(
+					'../../../../scripts/modules/utils.js'
+				);
+
 				// Read current tasks
 				const data = readJSON(tasksPath);
 				if (!data || !data.tasks) {
 					throw new Error(`No valid tasks found in ${tasksPath}`);
 				}
-				
+
 				// Find the task to update
-				const taskIndex = data.tasks.findIndex(task => task.id === taskId);
+				const taskIndex = data.tasks.findIndex((task) => task.id === taskId);
 				if (taskIndex === -1) {
 					return {
 						success: false,
-						error: { code: 'TASK_NOT_FOUND', message: `Task ${taskId} not found` },
+						error: {
+							code: 'TASK_NOT_FOUND',
+							message: `Task ${taskId} not found`
+						},
 						fromCache: false
 					};
 				}
-				
+
 				const task = data.tasks[taskIndex];
-				
+
 				// Update only the provided fields
 				if (args.title !== undefined) task.title = args.title;
 				if (args.description !== undefined) task.description = args.description;
 				if (args.priority !== undefined) task.priority = args.priority;
 				if (args.details !== undefined) task.details = args.details;
-				if (args.testStrategy !== undefined) task.testStrategy = args.testStrategy;
-				
+				if (args.testStrategy !== undefined)
+					task.testStrategy = args.testStrategy;
+
 				// Save the updated tasks
 				writeJSON(tasksPath, data);
-				
+
 				logWrapper.info(`Successfully updated task ${taskId} manually`);
-				
+
 				return {
 					success: true,
 					data: {
@@ -147,7 +159,6 @@ export async function updateTaskByIdDirect(args, log, context = {}) {
 					},
 					fromCache: false
 				};
-				
 			} catch (error) {
 				logWrapper.error(`Error in manual update: ${error.message}`);
 				return {
@@ -189,56 +200,56 @@ export async function updateTaskByIdDirect(args, log, context = {}) {
 					'json'
 				);
 
-			// Check if the core function returned null or an object without success
-			if (!coreResult || coreResult.updatedTask === null) {
-				// Core function logs the reason, just return success with info
-				const message = `Task ${taskId} was not updated (likely already completed).`;
-				logWrapper.info(message);
+				// Check if the core function returned null or an object without success
+				if (!coreResult || coreResult.updatedTask === null) {
+					// Core function logs the reason, just return success with info
+					const message = `Task ${taskId} was not updated (likely already completed).`;
+					logWrapper.info(message);
+					return {
+						success: true,
+						data: {
+							message: message,
+							taskId: taskId,
+							updated: false,
+							telemetryData: coreResult?.telemetryData
+						},
+						fromCache: false
+					};
+				}
+
+				// Task was updated successfully
+				const successMessage = `Successfully updated task with ID ${taskId} based on the prompt`;
+				logWrapper.success(successMessage);
 				return {
 					success: true,
 					data: {
-						message: message,
+						message: successMessage,
 						taskId: taskId,
-						updated: false,
-						telemetryData: coreResult?.telemetryData
+						tasksPath: tasksPath,
+						useResearch: useResearch,
+						updated: true,
+						updatedTask: coreResult.updatedTask,
+						telemetryData: coreResult.telemetryData
 					},
 					fromCache: false
 				};
-			}
-
-			// Task was updated successfully
-			const successMessage = `Successfully updated task with ID ${taskId} based on the prompt`;
-			logWrapper.success(successMessage);
-			return {
-				success: true,
-				data: {
-					message: successMessage,
-					taskId: taskId,
-					tasksPath: tasksPath,
-					useResearch: useResearch,
-					updated: true,
-					updatedTask: coreResult.updatedTask,
-					telemetryData: coreResult.telemetryData
-				},
-				fromCache: false
-			};
-		} catch (error) {
-			logWrapper.error(`Error updating task by ID: ${error.message}`);
-			return {
-				success: false,
-				error: {
-					code: 'UPDATE_TASK_CORE_ERROR',
-					message: error.message || 'Unknown error updating task'
-				},
-				fromCache: false
-			};
-		} finally {
-			if (!wasSilent && isSilentMode()) {
-				disableSilentMode();
+			} catch (error) {
+				logWrapper.error(`Error updating task by ID: ${error.message}`);
+				return {
+					success: false,
+					error: {
+						code: 'UPDATE_TASK_CORE_ERROR',
+						message: error.message || 'Unknown error updating task'
+					},
+					fromCache: false
+				};
+			} finally {
+				if (!wasSilent && isSilentMode()) {
+					disableSilentMode();
+				}
 			}
 		}
-	}
-} catch (error) {
+	} catch (error) {
 		logWrapper.error(`Setup error in updateTaskByIdDirect: ${error.message}`);
 		if (isSilentMode()) disableSilentMode();
 		return {

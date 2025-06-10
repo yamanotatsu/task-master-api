@@ -3,38 +3,38 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { generateTasksFromPRDHandler } from './routes/generate-tasks.js';
-import { 
-  listTasksHandler, 
-  getTaskHandler, 
-  createTaskHandler, 
-  updateTaskHandler, 
-  deleteTaskHandler,
-  updateTaskStatusHandler 
+import {
+	listTasksHandler,
+	getTaskHandler,
+	createTaskHandler,
+	updateTaskHandler,
+	deleteTaskHandler,
+	updateTaskStatusHandler
 } from './routes/tasks.js';
-import { 
-  expandTaskHandler, 
-  clearSubtasksHandler,
-  expandAllTasksHandler
+import {
+	expandTaskHandler,
+	clearSubtasksHandler,
+	expandAllTasksHandler
 } from './routes/task-expansion.js';
 import {
-  addDependencyHandler,
-  removeDependencyHandler,
-  validateDependenciesHandler,
-  fixDependenciesHandler
+	addDependencyHandler,
+	removeDependencyHandler,
+	validateDependenciesHandler,
+	fixDependenciesHandler
 } from './routes/dependencies.js';
 import {
-  initializeProjectHandler,
-  generateTaskFilesHandler
+	initializeProjectHandler,
+	generateTaskFilesHandler
 } from './routes/projects.js';
 import {
-  getNextTaskHandler,
-  analyzeTaskComplexityHandler,
-  getComplexityReportHandler
+	getNextTaskHandler,
+	analyzeTaskComplexityHandler,
+	getComplexityReportHandler
 } from './routes/analysis.js';
 import {
-  addSubtaskHandler,
-  updateSubtaskHandler,
-  removeSubtaskHandler
+	addSubtaskHandler,
+	updateSubtaskHandler,
+	removeSubtaskHandler
 } from './routes/subtasks.js';
 import userRoutes from './routes/users.js';
 import authRoutes from './routes/auth.js';
@@ -50,8 +50,8 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
 app.use((req, res, next) => {
-  req.startTime = Date.now();
-  next();
+	req.startTime = Date.now();
+	next();
 });
 
 // Authentication routes (with specific rate limiting)
@@ -65,8 +65,12 @@ app.post('/api/v1/generate-tasks-from-prd', generateTasksFromPRDHandler);
 
 // Task management endpoints (read operations with lenient rate limiting)
 app.get('/api/v1/tasks', rateLimiters.read, listTasksHandler);
-app.get('/api/v1/tasks/next', rateLimiters.read, getNextTaskHandler);  // Must come before :id
-app.get('/api/v1/tasks/complexity-report', rateLimiters.read, getComplexityReportHandler);  // Must come before :id
+app.get('/api/v1/tasks/next', rateLimiters.read, getNextTaskHandler); // Must come before :id
+app.get(
+	'/api/v1/tasks/complexity-report',
+	rateLimiters.read,
+	getComplexityReportHandler
+); // Must come before :id
 app.get('/api/v1/tasks/:id', rateLimiters.read, getTaskHandler);
 app.post('/api/v1/tasks', createTaskHandler);
 app.put('/api/v1/tasks/:id', updateTaskHandler);
@@ -106,40 +110,39 @@ app.delete('/api/v1/users/account', ...userRoutes.deleteAccountHandler);
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
+	res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: {
-      code: 'ENDPOINT_NOT_FOUND',
-      message: `The endpoint ${req.method} ${req.path} does not exist`
-    }
-  });
+	res.status(404).json({
+		success: false,
+		error: {
+			code: 'ENDPOINT_NOT_FOUND',
+			message: `The endpoint ${req.method} ${req.path} does not exist`
+		}
+	});
 });
 
 app.use((err, req, res, next) => {
-  
-  if (err.type === 'entity.too.large') {
-    return res.status(413).json({
-      success: false,
-      error: {
-        code: 'PAYLOAD_TOO_LARGE',
-        message: 'Request payload is too large. Maximum size is 10MB.'
-      }
-    });
-  }
-  
-  res.status(500).json({
-    success: false,
-    error: {
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'An unexpected error occurred'
-    }
-  });
+	if (err.type === 'entity.too.large') {
+		return res.status(413).json({
+			success: false,
+			error: {
+				code: 'PAYLOAD_TOO_LARGE',
+				message: 'Request payload is too large. Maximum size is 10MB.'
+			}
+		});
+	}
+
+	res.status(500).json({
+		success: false,
+		error: {
+			code: 'INTERNAL_SERVER_ERROR',
+			message: 'An unexpected error occurred'
+		}
+	});
 });
 
 app.listen(PORT, () => {
-  // Server started
+	// Server started
 });

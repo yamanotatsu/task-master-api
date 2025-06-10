@@ -5,7 +5,9 @@ This directory contains comprehensive documentation for the Claude Task Master s
 ## Documentation Structure
 
 ### 📄 [Database Schema](./database-schema.md)
+
 Complete reference for the PostgreSQL database structure including:
+
 - All tables and their relationships
 - Column definitions and data types
 - Foreign key constraints
@@ -14,7 +16,9 @@ Complete reference for the PostgreSQL database structure including:
 - Migration notes
 
 ### 📄 [API Reference](./api-reference.md)
+
 Comprehensive API documentation covering:
+
 - All REST endpoints with request/response formats
 - Authentication and authorization requirements
 - Rate limiting and security features
@@ -23,7 +27,9 @@ Comprehensive API documentation covering:
 - WebSocket endpoints (planned)
 
 ### 📄 [Architecture Overview](./architecture-overview.md)
+
 High-level system architecture including:
+
 - Technology stack and components
 - Data flow and system interactions
 - Scalability considerations
@@ -32,7 +38,9 @@ High-level system architecture including:
 - Future architecture plans
 
 ### 📄 [Security Guide](./security-guide.md)
+
 Detailed security implementation covering:
+
 - Authentication and authorization systems
 - API security measures
 - Data protection and encryption
@@ -43,18 +51,21 @@ Detailed security implementation covering:
 ## Quick Links
 
 ### For Developers
+
 - [API Endpoints List](./api-reference.md#api-endpoints)
 - [Database Relations](./database-schema.md#key-relationships)
 - [Security Middleware](./security-guide.md#security-middleware)
 - [Development Guidelines](./architecture-overview.md#development-guidelines)
 
 ### For System Administrators
+
 - [Security Monitoring](./security-guide.md#security-monitoring)
 - [Performance Optimization](./architecture-overview.md#performance-optimization)
 - [Audit System](./database-schema.md#security--audit-tables)
 - [Deployment Pipeline](./architecture-overview.md#deployment-pipeline)
 
 ### For Security Teams
+
 - [Security Architecture](./security-guide.md#security-architecture)
 - [Incident Response](./security-guide.md#incident-response)
 - [Vulnerability Management](./security-guide.md#vulnerability-management)
@@ -63,24 +74,28 @@ Detailed security implementation covering:
 ## Key Features
 
 ### Multi-Tenant Architecture
+
 - Organization-based data isolation
 - Role-based access control (RBAC)
 - Row Level Security (RLS) enforcement
 - Hierarchical permission system
 
 ### AI Integration
+
 - Multiple AI provider support
 - AI-assisted task generation
 - PRD parsing and analysis
 - Intelligent task expansion
 
 ### Security First
+
 - Defense in depth approach
 - Comprehensive audit logging
 - Real-time security monitoring
 - OWASP compliance
 
 ### Scalable Design
+
 - Microservices ready architecture
 - Horizontal scaling capabilities
 - Performance optimized queries
@@ -89,18 +104,21 @@ Detailed security implementation covering:
 ## Technology Stack
 
 ### Backend
+
 - Node.js + Express.js
 - PostgreSQL (Supabase)
 - JWT Authentication
 - Zod validation
 
 ### Frontend
+
 - Next.js 15 (App Router)
 - TypeScript
 - Tailwind CSS
 - React Query
 
 ### Infrastructure
+
 - Docker containerization
 - CI/CD pipelines
 - Automated testing
@@ -116,6 +134,7 @@ Detailed security implementation covering:
 ## Contributing
 
 When updating documentation:
+
 1. Maintain consistent formatting
 2. Update the table of contents
 3. Include code examples where relevant
@@ -125,6 +144,7 @@ When updating documentation:
 ## Support
 
 For questions or clarifications:
+
 - Technical issues: Create a GitHub issue
 - Security concerns: security@claudetaskmaster.com
 - General inquiries: support@claudetaskmaster.com

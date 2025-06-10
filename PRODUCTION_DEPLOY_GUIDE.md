@@ -6,7 +6,7 @@
 
 - **Supabase**: データベースと認証
 - **メールプロバイダー**: SendGrid、AWS SES、Resendなど
-- **ホスティング**: 
+- **ホスティング**:
   - バックエンド: Railway、Render、AWS、Heroku等
   - フロントエンド: Vercel、Netlify等
 
@@ -61,6 +61,7 @@ cp api/.env.example api/.env.production
 ### 2.2 Railwayへのデプロイ例
 
 1. **Railwayプロジェクトの作成**
+
 ```bash
 # Railway CLIのインストール
 npm install -g @railway/cli
@@ -73,6 +74,7 @@ railway init
 ```
 
 2. **環境変数の設定**
+
 ```bash
 railway variables set NODE_ENV=production
 railway variables set SUPABASE_URL=your_url
@@ -80,6 +82,7 @@ railway variables set SUPABASE_URL=your_url
 ```
 
 3. **デプロイ**
+
 ```bash
 # package.jsonのstart scriptを確認
 # "start": "node api/server-db.js"
@@ -90,6 +93,7 @@ railway up
 ### 2.3 Renderへのデプロイ例
 
 1. **render.yamlの作成**
+
 ```yaml
 services:
   - type: web
@@ -97,8 +101,8 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: "npm install"
-    startCommand: "node api/server-db.js"
+    buildCommand: 'npm install'
+    startCommand: 'node api/server-db.js'
     envVars:
       - key: NODE_ENV
         value: production
@@ -114,6 +118,7 @@ services:
 ### 3.1 Vercelへのデプロイ
 
 1. **環境変数の設定**
+
 ```bash
 # .env.production
 NEXT_PUBLIC_API_URL=https://api.your-domain.com
@@ -122,6 +127,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 ```
 
 2. **Vercel CLIでデプロイ**
+
 ```bash
 # Vercel CLIのインストール
 npm i -g vercel
@@ -139,6 +145,7 @@ vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
 ### 3.2 Netlifyへのデプロイ
 
 1. **netlify.tomlの作成**
+
 ```toml
 [build]
   base = "frontend/task-master-ui"
@@ -165,19 +172,22 @@ vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
 import sgMail from '@sendgrid/mail';
 
 if (process.env.EMAIL_PROVIDER === 'sendgrid') {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+	sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
 // sendInvitationEmail関数内
-if (process.env.NODE_ENV === 'production' && process.env.EMAIL_PROVIDER === 'sendgrid') {
-  const msg = {
-    to,
-    from: process.env.EMAIL_FROM || 'noreply@taskmaster.com',
-    subject,
-    html: htmlContent,
-    text: textContent
-  };
-  await sgMail.send(msg);
+if (
+	process.env.NODE_ENV === 'production' &&
+	process.env.EMAIL_PROVIDER === 'sendgrid'
+) {
+	const msg = {
+		to,
+		from: process.env.EMAIL_FROM || 'noreply@taskmaster.com',
+		subject,
+		html: htmlContent,
+		text: textContent
+	};
+	await sgMail.send(msg);
 }
 ```
 
@@ -269,14 +279,17 @@ pg_dump $DATABASE_URL > backup_$(date +%Y%m%d).sql
 ### よくある問題
 
 1. **CORSエラー**
+
    - API側のCORS設定を確認
    - 本番URLがホワイトリストに含まれているか
 
 2. **環境変数が読み込まれない**
+
    - デプロイプラットフォームの環境変数設定を確認
    - ビルド時と実行時の変数の違いに注意
 
 3. **メールが届かない**
+
    - メールプロバイダーのログを確認
    - SPF/DKIM設定を確認
    - スパムフォルダを確認

@@ -7,6 +7,7 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
 ## Core Tables
 
 ### 1. Organizations
+
 - **Table**: `organizations`
 - **Purpose**: Multi-tenant organization management
 - **Key Fields**:
@@ -18,6 +19,7 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
   - `created_at`, `updated_at` (TIMESTAMPTZ): Timestamps
 
 ### 2. Profiles
+
 - **Table**: `profiles`
 - **Purpose**: User profile information (extends Supabase auth.users)
 - **Key Fields**:
@@ -30,6 +32,7 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
   - `created_at`, `updated_at` (TIMESTAMPTZ): Timestamps
 
 ### 3. Organization Members
+
 - **Table**: `organization_members`
 - **Purpose**: Links users to organizations with roles
 - **Key Fields**:
@@ -44,6 +47,7 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
 - **Constraints**: UNIQUE(organization_id, user_id)
 
 ### 4. Invitations
+
 - **Table**: `invitations`
 - **Purpose**: Pending organization invitations
 - **Key Fields**:
@@ -58,6 +62,7 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
   - `created_at` (TIMESTAMPTZ): Creation timestamp
 
 ### 5. Projects
+
 - **Table**: `projects`
 - **Purpose**: Project management within organizations
 - **Key Fields**:
@@ -73,6 +78,7 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
   - `created_at`, `updated_at` (TIMESTAMPTZ): Timestamps
 
 ### 6. Tasks
+
 - **Table**: `tasks`
 - **Purpose**: Individual tasks within projects
 - **Key Fields**:
@@ -91,6 +97,7 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
   - `created_at`, `updated_at` (TIMESTAMPTZ): Timestamps
 
 ### 7. Subtasks
+
 - **Table**: `subtasks`
 - **Purpose**: Breakdown of tasks into smaller units
 - **Key Fields**:
@@ -103,6 +110,7 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
   - `created_at`, `updated_at` (TIMESTAMPTZ): Timestamps
 
 ### 8. Task Dependencies
+
 - **Table**: `task_dependencies`
 - **Purpose**: Define task relationships and dependencies
 - **Key Fields**:
@@ -112,6 +120,7 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
 - **Constraints**: PRIMARY KEY(task_id, depends_on_task_id)
 
 ### 9. Members (Legacy)
+
 - **Table**: `members`
 - **Purpose**: Legacy member management (being phased out)
 - **Key Fields**:
@@ -126,6 +135,7 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
   - `created_at`, `updated_at` (TIMESTAMPTZ): Timestamps
 
 ### 10. Project Members
+
 - **Table**: `project_members`
 - **Purpose**: Links members to projects
 - **Key Fields**:
@@ -137,6 +147,7 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
 ## AI/Dialogue Tables
 
 ### 11. AI Dialogue Sessions
+
 - **Table**: `ai_dialogue_sessions`
 - **Purpose**: Track AI-assisted PRD generation sessions
 - **Key Fields**:
@@ -147,6 +158,7 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
   - `created_at`, `updated_at` (TIMESTAMPTZ): Timestamps
 
 ### 12. AI Dialogue Messages
+
 - **Table**: `ai_dialogue_messages`
 - **Purpose**: Store conversation history
 - **Key Fields**:
@@ -159,6 +171,7 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
 ## Security & Audit Tables
 
 ### 13. Audit Logs
+
 - **Table**: `audit_logs`
 - **Purpose**: Comprehensive activity logging
 - **Key Fields**:
@@ -174,6 +187,7 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
   - `created_at` (TIMESTAMPTZ): Event timestamp
 
 ### 14. Security Events
+
 - **Table**: `security_events`
 - **Purpose**: Security-specific event tracking
 - **Key Fields**:
@@ -187,6 +201,7 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
   - `created_at` (TIMESTAMPTZ): Event timestamp
 
 ### 15. Failed Login Attempts
+
 - **Table**: `failed_login_attempts`
 - **Purpose**: Track failed authentication for security
 - **Key Fields**:
@@ -201,17 +216,20 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
 ## Key Relationships
 
 1. **Organization Hierarchy**:
+
    - Organizations → Organization Members → Profiles
    - Organizations → Projects → Tasks → Subtasks
    - Organizations → Invitations
 
 2. **User Relationships**:
+
    - Profiles ← Organization Members → Organizations
    - Profiles → Created Projects
    - Profiles → Created Tasks
    - Profiles → Audit Logs
 
 3. **Task Management**:
+
    - Projects → Tasks → Subtasks
    - Tasks ← Task Dependencies → Tasks
    - Tasks/Subtasks → Members (assignees)
@@ -224,23 +242,27 @@ The Claude Task Master database uses PostgreSQL with Supabase as the backend. Th
 ## Database Features
 
 ### Row Level Security (RLS)
+
 - Implemented on all tables
 - Users can only access data from their organizations
 - Admins have elevated privileges within their organizations
 
 ### Triggers & Functions
+
 - Automatic timestamp updates
 - Cascade deletes for related records
 - Audit log generation for sensitive operations
 - Organization slug generation
 
 ### Indexes
+
 - Primary keys on all tables
 - Foreign key indexes for performance
 - Unique constraints on email fields
 - Composite indexes for common query patterns
 
 ## Migration Notes
+
 - The system is transitioning from the legacy `members` table to `organization_members`
 - Profile data is synchronized with Supabase auth.users
 - All new features should use the organization-based multi-tenant model

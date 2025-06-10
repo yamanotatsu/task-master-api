@@ -54,6 +54,7 @@ The system uses Supabase Auth for robust authentication:
 Two primary roles per organization:
 
 1. **Admin**
+
    - Full organization management
    - Member management
    - Project deletion
@@ -85,10 +86,10 @@ All API inputs are validated using Zod schemas:
 ```javascript
 // Example validation schema
 const createTaskSchema = z.object({
-  title: z.string().min(1).max(255),
-  description: z.string().max(1000),
-  projectId: z.string().uuid(),
-  priority: z.enum(['high', 'medium', 'low'])
+	title: z.string().min(1).max(255),
+	description: z.string().max(1000),
+	projectId: z.string().uuid(),
+	priority: z.enum(['high', 'medium', 'low'])
 });
 ```
 
@@ -105,10 +106,10 @@ Implemented per endpoint category:
 
 ```javascript
 const corsOptions = {
-  origin: process.env.ALLOWED_ORIGINS?.split(','),
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+	origin: process.env.ALLOWED_ORIGINS?.split(','),
+	credentials: true,
+	methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+	allowedHeaders: ['Content-Type', 'Authorization']
 };
 ```
 
@@ -130,8 +131,8 @@ CREATE POLICY "Users can only see their organization's data"
 ON tasks
 FOR SELECT
 USING (organization_id IN (
-  SELECT organization_id 
-  FROM organization_members 
+  SELECT organization_id
+  FROM organization_members
   WHERE user_id = auth.uid()
 ));
 ```
@@ -148,21 +149,23 @@ USING (organization_id IN (
 ### Helmet.js Configuration
 
 ```javascript
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    }
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true
-  }
-}));
+app.use(
+	helmet({
+		contentSecurityPolicy: {
+			directives: {
+				defaultSrc: ["'self'"],
+				styleSrc: ["'self'", "'unsafe-inline'"],
+				scriptSrc: ["'self'"],
+				imgSrc: ["'self'", 'data:', 'https:']
+			}
+		},
+		hsts: {
+			maxAge: 31536000,
+			includeSubDomains: true,
+			preload: true
+		}
+	})
+);
 ```
 
 ### Security Headers
@@ -301,6 +304,7 @@ All security-relevant events are logged:
 ### For Developers
 
 1. **Code Security**
+
    - Input validation on all endpoints
    - Output encoding
    - Parameterized queries
@@ -308,6 +312,7 @@ All security-relevant events are logged:
    - Least privilege principle
 
 2. **Secret Management**
+
    - Environment variables
    - Never commit secrets
    - Regular rotation
@@ -324,6 +329,7 @@ All security-relevant events are logged:
 ### For Users
 
 1. **Account Security**
+
    - Strong passwords
    - Unique passwords
    - Enable 2FA (when available)
@@ -358,18 +364,21 @@ All security-relevant events are logged:
 ## Security Roadmap
 
 ### Short-term (Q1 2025)
+
 - Multi-factor authentication
 - Advanced rate limiting
 - Security dashboard
 - Improved audit tools
 
 ### Medium-term (Q2-Q3 2025)
+
 - Hardware token support
 - Zero-trust architecture
 - Advanced threat detection
 - Compliance certifications
 
 ### Long-term (Q4 2025+)
+
 - Machine learning security
 - Blockchain audit trails
 - Quantum-resistant crypto

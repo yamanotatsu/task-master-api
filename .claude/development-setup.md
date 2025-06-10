@@ -3,12 +3,14 @@
 ## Prerequisites
 
 ### Required Software
+
 - **Node.js**: v20.18.0 or higher
 - **PostgreSQL**: v14+ or Supabase CLI
 - **Git**: Latest version
 - **npm**: v10+ (comes with Node.js)
 
 ### Recommended Tools
+
 - **VS Code**: With recommended extensions
 - **Docker**: For local PostgreSQL (optional)
 - **Postman/Insomnia**: For API testing
@@ -170,11 +172,13 @@ npm run dev
 ### Creating New Migrations
 
 1. Create a new file in `supabase/migrations/`:
+
 ```bash
 touch supabase/migrations/$(date +%Y%m%d)_description.sql
 ```
 
 2. Write your migration:
+
 ```sql
 -- Description of changes
 BEGIN;
@@ -185,6 +189,7 @@ COMMIT;
 ```
 
 3. Apply the migration:
+
 ```bash
 psql -d your_database -f supabase/migrations/your_migration.sql
 ```
@@ -271,6 +276,7 @@ npm run prepare
 ```
 
 This runs:
+
 - ESLint
 - Prettier
 - Tests
@@ -339,6 +345,7 @@ SELECT pg_size_pretty(pg_relation_size('table_name'));
 ### Common Issues
 
 #### Port Already in Use
+
 ```bash
 # Find process using port
 lsof -i :3001
@@ -347,12 +354,14 @@ kill -9 [PID]
 ```
 
 #### Database Connection Failed
+
 - Check DATABASE_URL format
 - Ensure PostgreSQL is running
 - Verify credentials
 - Check firewall/network
 
 #### Module Not Found
+
 ```bash
 # Clear node_modules and reinstall
 rm -rf node_modules package-lock.json
@@ -360,6 +369,7 @@ npm install
 ```
 
 #### TypeScript Errors
+
 ```bash
 # Rebuild TypeScript
 npm run build:types
@@ -372,12 +382,12 @@ npm run build:types
 ```javascript
 // Add to server.js for request timing
 app.use((req, res, next) => {
-  const start = Date.now();
-  res.on('finish', () => {
-    const duration = Date.now() - start;
-    console.log(`${req.method} ${req.url} - ${duration}ms`);
-  });
-  next();
+	const start = Date.now();
+	res.on('finish', () => {
+		const duration = Date.now() - start;
+		console.log(`${req.method} ${req.url} - ${duration}ms`);
+	});
+	next();
 });
 ```
 
@@ -400,14 +410,14 @@ LIMIT 10;
 
 ```json
 {
-  "recommendations": [
-    "dbaeumer.vscode-eslint",
-    "esbenp.prettier-vscode",
-    "ms-vscode.vscode-typescript-next",
-    "prisma.prisma",
-    "streetsidesoftware.code-spell-checker",
-    "christian-kohler.path-intellisense"
-  ]
+	"recommendations": [
+		"dbaeumer.vscode-eslint",
+		"esbenp.prettier-vscode",
+		"ms-vscode.vscode-typescript-next",
+		"prisma.prisma",
+		"streetsidesoftware.code-spell-checker",
+		"christian-kohler.path-intellisense"
+	]
 }
 ```
 
@@ -415,11 +425,11 @@ LIMIT 10;
 
 ```json
 {
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
-  },
-  "typescript.updateImportsOnFileMove.enabled": "always"
+	"editor.formatOnSave": true,
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": true
+	},
+	"typescript.updateImportsOnFileMove.enabled": "always"
 }
 ```
 

@@ -7,6 +7,7 @@ Claude Task Master is a comprehensive project and task management system built w
 ## Technology Stack
 
 ### Backend
+
 - **Runtime**: Node.js (v20.18.0)
 - **Framework**: Express.js
 - **Database**: PostgreSQL (via Supabase)
@@ -15,6 +16,7 @@ Claude Task Master is a comprehensive project and task management system built w
 - **Real-time**: WebSockets (planned)
 
 ### Frontend
+
 - **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript
 - **UI Components**: Custom components with Radix UI primitives
@@ -23,6 +25,7 @@ Claude Task Master is a comprehensive project and task management system built w
 - **Forms**: React Hook Form with Zod validation
 
 ### Infrastructure
+
 - **Database Platform**: Supabase
 - **Hosting**: Vercel (Frontend), Railway/Heroku (Backend)
 - **File Storage**: Supabase Storage
@@ -50,6 +53,7 @@ api/
 ```
 
 Key Features:
+
 - RESTful API design
 - Comprehensive input validation
 - Role-based access control
@@ -72,6 +76,7 @@ frontend/task-master-ui/
 ```
 
 Key Features:
+
 - Server-side rendering
 - Optimistic updates
 - Real-time data synchronization
@@ -108,16 +113,19 @@ mcp-server/
 ## Data Flow Architecture
 
 ### 1. Authentication Flow
+
 ```
 User → Frontend → API → Supabase Auth → JWT Token → Authorized Requests
 ```
 
 ### 2. Task Management Flow
+
 ```
 User Action → API Request → Validation → Business Logic → Database → Response
 ```
 
 ### 3. AI Integration Flow
+
 ```
 User Input → API → AI Service Selection → Provider API → Response Processing → Database
 ```
@@ -125,11 +133,13 @@ User Input → API → AI Service Selection → Provider API → Response Proces
 ## Database Architecture
 
 ### Multi-Tenant Design
+
 - Organization-based isolation
 - Row Level Security (RLS)
 - Hierarchical permissions
 
 ### Key Relationships
+
 ```
 Organizations
     ├── Projects
@@ -144,6 +154,7 @@ Organizations
 ## Security Architecture
 
 ### Defense in Depth
+
 1. **Network Layer**: CORS, Rate limiting
 2. **Application Layer**: Input validation, CSRF protection
 3. **Authentication**: JWT tokens, Session management
@@ -152,6 +163,7 @@ Organizations
 6. **Audit Layer**: Comprehensive logging
 
 ### Security Features
+
 - Multi-factor authentication (planned)
 - Brute force protection
 - SQL injection prevention
@@ -162,12 +174,14 @@ Organizations
 ## API Design Principles
 
 ### RESTful Conventions
+
 - Resource-based URLs
 - Standard HTTP methods
 - Consistent response formats
 - Proper status codes
 
 ### Versioning Strategy
+
 - URL-based versioning (`/api/v1/`)
 - Backward compatibility
 - Deprecation notices
@@ -176,6 +190,7 @@ Organizations
 ## Performance Optimization
 
 ### Backend Optimizations
+
 - Database query optimization
 - Connection pooling
 - Response caching
@@ -183,6 +198,7 @@ Organizations
 - Batch operations
 
 ### Frontend Optimizations
+
 - Code splitting
 - Image optimization
 - Virtual scrolling
@@ -192,12 +208,14 @@ Organizations
 ## Scalability Considerations
 
 ### Horizontal Scaling
+
 - Stateless API design
 - Database read replicas
 - Load balancing ready
 - Microservices architecture (future)
 
 ### Vertical Scaling
+
 - Efficient algorithms
 - Memory management
 - Query optimization
@@ -206,18 +224,21 @@ Organizations
 ## Development Workflow
 
 ### Local Development
+
 1. PostgreSQL via Docker/Supabase CLI
 2. Node.js backend server
 3. Next.js development server
 4. Hot module replacement
 
 ### Testing Strategy
+
 - Unit tests (Jest)
 - Integration tests
 - E2E tests (Playwright)
 - API testing (Supertest)
 
 ### Deployment Pipeline
+
 1. Git push to feature branch
 2. Automated tests
 3. Code review
@@ -228,18 +249,21 @@ Organizations
 ## Monitoring & Observability
 
 ### Application Monitoring
+
 - Error tracking
 - Performance metrics
 - User analytics
 - API usage statistics
 
 ### Infrastructure Monitoring
+
 - Server health
 - Database performance
 - Response times
 - Error rates
 
 ### Audit & Compliance
+
 - Comprehensive audit logs
 - Security event tracking
 - Compliance reporting
@@ -248,6 +272,7 @@ Organizations
 ## Future Architecture Plans
 
 ### Planned Enhancements
+
 1. **Real-time Collaboration**: WebSocket integration
 2. **Microservices**: Service decomposition
 3. **Event-Driven Architecture**: Message queuing
@@ -255,6 +280,7 @@ Organizations
 5. **Mobile Applications**: React Native apps
 
 ### Scalability Roadmap
+
 1. **Caching Layer**: Redis integration
 2. **CDN Integration**: Static asset delivery
 3. **Search Infrastructure**: Elasticsearch
@@ -264,6 +290,7 @@ Organizations
 ## Integration Points
 
 ### External Services
+
 - **AI Providers**: OpenAI, Anthropic, Google, etc.
 - **Email Service**: SendGrid/AWS SES
 - **File Storage**: Supabase Storage
@@ -271,6 +298,7 @@ Organizations
 - **Monitoring**: Sentry, DataDog
 
 ### Internal Services
+
 - **Task Generator**: AI-powered task creation
 - **Dependency Analyzer**: Task relationship management
 - **PRD Parser**: Document analysis
@@ -280,12 +308,14 @@ Organizations
 ## Development Guidelines
 
 ### Code Organization
+
 - Feature-based structure
 - Separation of concerns
 - DRY principles
 - SOLID principles
 
 ### Best Practices
+
 - TypeScript for type safety
 - ESLint for code quality
 - Prettier for formatting
@@ -293,6 +323,7 @@ Organizations
 - Comprehensive documentation
 
 ### Security Guidelines
+
 - Input validation on all endpoints
 - Parameterized database queries
 - Secure session management

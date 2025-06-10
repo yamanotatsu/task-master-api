@@ -78,15 +78,15 @@ npm test -- --testNamePattern="validation"
 The `test-utils.tsx` file provides a custom render function that wraps components with necessary providers:
 
 ```tsx
-import { render } from '@/tests/utils/test-utils'
+import { render } from '@/tests/utils/test-utils';
 
 // Automatically includes QueryClient, AuthProvider, and ToastProvider
-render(<MyComponent />)
+render(<MyComponent />);
 
 // Override auth context values
 render(<MyComponent />, {
-  authContextValue: { user: mockUser }
-})
+	authContextValue: { user: mockUser }
+});
 ```
 
 ### Mock Auth Provider
@@ -95,15 +95,15 @@ The `MockAuthProvider` allows testing components with different authentication s
 
 ```tsx
 <MockAuthProvider
-  value={{
-    user: mockUser,
-    organization: mockOrganization,
-    loading: false,
-    signIn: jest.fn(),
-    // ... other auth methods
-  }}
+	value={{
+		user: mockUser,
+		organization: mockOrganization,
+		loading: false,
+		signIn: jest.fn()
+		// ... other auth methods
+	}}
 >
-  <ComponentUnderTest />
+	<ComponentUnderTest />
 </MockAuthProvider>
 ```
 
@@ -112,13 +112,13 @@ The `MockAuthProvider` allows testing components with different authentication s
 The `api-client.ts` mock provides pre-configured mock responses for all API methods:
 
 ```tsx
-import { mockApiClient, setupMockResponses } from '@/tests/mocks/api-client'
+import { mockApiClient, setupMockResponses } from '@/tests/mocks/api-client';
 
 // Setup default successful responses
-setupMockResponses()
+setupMockResponses();
 
 // Override specific methods
-mockApiClient.auth.signIn.mockRejectedValue(new Error('Invalid credentials'))
+mockApiClient.auth.signIn.mockRejectedValue(new Error('Invalid credentials'));
 ```
 
 ## Test Categories
@@ -126,6 +126,7 @@ mockApiClient.auth.signIn.mockRejectedValue(new Error('Invalid credentials'))
 ### Component Tests
 
 #### Authentication Components
+
 - **LoginForm**: Email/password validation, sign-in flow, error handling
 - **SignupForm**: Registration validation, password strength, terms acceptance
 - **ForgotPasswordForm**: Email validation, reset request flow
@@ -133,6 +134,7 @@ mockApiClient.auth.signIn.mockRejectedValue(new Error('Invalid credentials'))
 - **OrganizationSetupForm**: Organization creation flow
 
 #### Organization Components
+
 - **OrganizationSwitcher**: Organization selection and switching
 - **MemberList**: Member display, role management, search/filter
 - **InviteMemberModal**: Member invitation with validation
@@ -141,6 +143,7 @@ mockApiClient.auth.signIn.mockRejectedValue(new Error('Invalid credentials'))
 ### Library Tests
 
 #### Authentication Context (`auth.test.tsx`)
+
 - Context initialization and state management
 - Authentication methods (signIn, signUp, signOut)
 - Organization management
@@ -148,6 +151,7 @@ mockApiClient.auth.signIn.mockRejectedValue(new Error('Invalid credentials'))
 - Error handling and loading states
 
 #### API Client (`api.test.tsx`)
+
 - Authentication endpoints
 - Organization CRUD operations
 - Member management
@@ -157,6 +161,7 @@ mockApiClient.auth.signIn.mockRejectedValue(new Error('Invalid credentials'))
 ### Page Tests
 
 #### Authentication Pages
+
 - **Login Page**: Full login flow, redirects, error states
 - **Signup Page**: Registration flow, confirmation, invitation handling
 - **Settings Pages**: Profile management, member administration
@@ -164,72 +169,80 @@ mockApiClient.auth.signIn.mockRejectedValue(new Error('Invalid credentials'))
 ## Testing Patterns
 
 ### User Interactions
-```tsx
-import userEvent from '@testing-library/user-event'
 
-const user = userEvent.setup()
-await user.type(emailInput, 'test@example.com')
-await user.click(submitButton)
+```tsx
+import userEvent from '@testing-library/user-event';
+
+const user = userEvent.setup();
+await user.type(emailInput, 'test@example.com');
+await user.click(submitButton);
 ```
 
 ### Async Operations
+
 ```tsx
 await waitFor(() => {
-  expect(mockSignIn).toHaveBeenCalledWith(expectedData)
-  expect(screen.getByText('Success message')).toBeInTheDocument()
-})
+	expect(mockSignIn).toHaveBeenCalledWith(expectedData);
+	expect(screen.getByText('Success message')).toBeInTheDocument();
+});
 ```
 
 ### Error Handling
+
 ```tsx
-mockSignIn.mockRejectedValue(new Error('Network error'))
-await user.click(submitButton)
+mockSignIn.mockRejectedValue(new Error('Network error'));
+await user.click(submitButton);
 
 await waitFor(() => {
-  expect(toast.error).toHaveBeenCalledWith('Network error')
-})
+	expect(toast.error).toHaveBeenCalledWith('Network error');
+});
 ```
 
 ### Form Validation
+
 ```tsx
-await user.click(submitButton) // Submit without filling fields
+await user.click(submitButton); // Submit without filling fields
 
 await waitFor(() => {
-  expect(screen.getByText(/email is required/i)).toBeInTheDocument()
-  expect(screen.getByText(/password is required/i)).toBeInTheDocument()
-})
+	expect(screen.getByText(/email is required/i)).toBeInTheDocument();
+	expect(screen.getByText(/password is required/i)).toBeInTheDocument();
+});
 ```
 
 ## Best Practices
 
 ### 1. Test User Behavior, Not Implementation
+
 ```tsx
 // Good: Test what the user sees and does
-expect(screen.getByText('Welcome back')).toBeInTheDocument()
-await user.type(emailInput, 'test@example.com')
+expect(screen.getByText('Welcome back')).toBeInTheDocument();
+await user.type(emailInput, 'test@example.com');
 
 // Avoid: Testing implementation details
-expect(component.state.email).toBe('test@example.com')
+expect(component.state.email).toBe('test@example.com');
 ```
 
 ### 2. Use Accessible Queries
+
 ```tsx
 // Prefer accessible queries
-screen.getByLabelText('Email address')
-screen.getByRole('button', { name: 'Sign in' })
+screen.getByLabelText('Email address');
+screen.getByRole('button', { name: 'Sign in' });
 
 // Over CSS-based queries
-screen.getByTestId('email-input')
+screen.getByTestId('email-input');
 ```
 
 ### 3. Mock External Dependencies
+
 ```tsx
 // Mock API calls, timers, external libraries
-jest.mock('@supabase/supabase-js')
-jest.mock('next/navigation')
+jest.mock('@supabase/supabase-js');
+jest.mock('next/navigation');
 ```
 
 ### 4. Test Edge Cases
+
 - Empty states
 - Loading states
 - Error conditions
@@ -238,18 +251,19 @@ jest.mock('next/navigation')
 - Accessibility requirements
 
 ### 5. Organize Tests Logically
+
 ```tsx
 describe('LoginForm', () => {
-  describe('validation', () => {
-    it('validates required fields', () => {})
-    it('validates email format', () => {})
-  })
+	describe('validation', () => {
+		it('validates required fields', () => {});
+		it('validates email format', () => {});
+	});
 
-  describe('submission', () => {
-    it('handles successful login', () => {})
-    it('handles login errors', () => {})
-  })
-})
+	describe('submission', () => {
+		it('handles successful login', () => {});
+		it('handles login errors', () => {});
+	});
+});
 ```
 
 ## Coverage Goals
@@ -269,6 +283,7 @@ describe('LoginForm', () => {
 4. **Timing Issues**: Use `findBy` queries for elements that appear asynchronously
 
 ### Debugging Commands
+
 ```bash
 # Run single test with verbose output
 npm test -- --verbose LoginForm.test.tsx

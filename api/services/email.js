@@ -24,19 +24,19 @@ const __dirname = dirname(__filename);
  * @returns {Promise<void>}
  */
 async function saveEmailToFile({ type, to, subject, html, text }) {
-  try {
-    // Create emails directory if it doesn't exist
-    const emailsDir = path.join(__dirname, '..', '..', 'dev-emails');
-    console.log('Saving email to directory:', emailsDir);
-    await fs.mkdir(emailsDir, { recursive: true });
+	try {
+		// Create emails directory if it doesn't exist
+		const emailsDir = path.join(__dirname, '..', '..', 'dev-emails');
+		console.log('Saving email to directory:', emailsDir);
+		await fs.mkdir(emailsDir, { recursive: true });
 
-    // Generate filename with timestamp
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const filename = `${type}_${to.replace('@', '_at_')}_${timestamp}.html`;
-    const filepath = path.join(emailsDir, filename);
+		// Generate filename with timestamp
+		const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+		const filename = `${type}_${to.replace('@', '_at_')}_${timestamp}.html`;
+		const filepath = path.join(emailsDir, filename);
 
-    // Create a full HTML page with both HTML and text versions
-    const fullHtml = `
+		// Create a full HTML page with both HTML and text versions
+		const fullHtml = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -88,15 +88,15 @@ async function saveEmailToFile({ type, to, subject, html, text }) {
 </html>
     `;
 
-    await fs.writeFile(filepath, fullHtml, 'utf8');
-    logger.info(`Email saved to: ${filepath}`);
-    console.log('Email file created successfully at:', filepath);
-    
-    return filepath;
-  } catch (error) {
-    logger.error('Failed to save email to file:', error);
-    // Don't throw - this is just for dev convenience
-  }
+		await fs.writeFile(filepath, fullHtml, 'utf8');
+		logger.info(`Email saved to: ${filepath}`);
+		console.log('Email file created successfully at:', filepath);
+
+		return filepath;
+	} catch (error) {
+		logger.error('Failed to save email to file:', error);
+		// Don't throw - this is just for dev convenience
+	}
 }
 
 /**
@@ -110,21 +110,28 @@ async function saveEmailToFile({ type, to, subject, html, text }) {
  * @param {Date} params.expiresAt - Expiration date of the invitation
  * @returns {Promise<void>}
  */
-export async function sendInvitationEmail({ to, organizationName, inviterName, role, inviteUrl, expiresAt }) {
-  try {
-    // In production, integrate with an email service provider
-    // For now, we'll log the email details
-    logger.info('Sending invitation email', {
-      to,
-      organizationName,
-      inviterName,
-      role,
-      inviteUrl
-    });
+export async function sendInvitationEmail({
+	to,
+	organizationName,
+	inviterName,
+	role,
+	inviteUrl,
+	expiresAt
+}) {
+	try {
+		// In production, integrate with an email service provider
+		// For now, we'll log the email details
+		logger.info('Sending invitation email', {
+			to,
+			organizationName,
+			inviterName,
+			role,
+			inviteUrl
+		});
 
-    // Example email content
-    const subject = `You've been invited to join ${organizationName}`;
-    const htmlContent = `
+		// Example email content
+		const subject = `You've been invited to join ${organizationName}`;
+		const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -162,7 +169,7 @@ export async function sendInvitationEmail({ to, organizationName, inviterName, r
       </html>
     `;
 
-    const textContent = `
+		const textContent = `
 You're Invited!
 
 ${inviterName} has invited you to join ${organizationName} as a ${role}.
@@ -177,44 +184,46 @@ If you weren't expecting this invitation, you can safely ignore this email.
 © ${new Date().getFullYear()} Task Master. All rights reserved.
     `;
 
-    // TODO: Implement actual email sending
-    // Example with SendGrid:
-    // const msg = {
-    //   to,
-    //   from: process.env.EMAIL_FROM || 'noreply@taskmaster.com',
-    //   subject,
-    //   html: htmlContent,
-    //   text: textContent
-    // };
-    // await sgMail.send(msg);
+		// TODO: Implement actual email sending
+		// Example with SendGrid:
+		// const msg = {
+		//   to,
+		//   from: process.env.EMAIL_FROM || 'noreply@taskmaster.com',
+		//   subject,
+		//   html: htmlContent,
+		//   text: textContent
+		// };
+		// await sgMail.send(msg);
 
-    // For development, save email to file and log details
-    if (process.env.NODE_ENV === 'development' || !process.env.EMAIL_PROVIDER) {
-      console.log('=== INVITATION EMAIL ===');
-      console.log('To:', to);
-      console.log('Subject:', subject);
-      console.log('Invite URL:', inviteUrl);
-      console.log('Expires at:', expiresAt ? new Date(expiresAt).toLocaleString() : 'in 7 days');
-      console.log('=======================');
-      
-      // Save email to file for easy viewing
-      const filepath = await saveEmailToFile({
-        type: 'invitation',
-        to,
-        subject,
-        html: htmlContent,
-        text: textContent
-      });
-      
-      if (filepath) {
-        console.log(`📧 Email saved to: ${filepath}`);
-      }
-    }
+		// For development, save email to file and log details
+		if (process.env.NODE_ENV === 'development' || !process.env.EMAIL_PROVIDER) {
+			console.log('=== INVITATION EMAIL ===');
+			console.log('To:', to);
+			console.log('Subject:', subject);
+			console.log('Invite URL:', inviteUrl);
+			console.log(
+				'Expires at:',
+				expiresAt ? new Date(expiresAt).toLocaleString() : 'in 7 days'
+			);
+			console.log('=======================');
 
-  } catch (error) {
-    logger.error('Failed to send invitation email:', error);
-    throw error;
-  }
+			// Save email to file for easy viewing
+			const filepath = await saveEmailToFile({
+				type: 'invitation',
+				to,
+				subject,
+				html: htmlContent,
+				text: textContent
+			});
+
+			if (filepath) {
+				console.log(`📧 Email saved to: ${filepath}`);
+			}
+		}
+	} catch (error) {
+		logger.error('Failed to send invitation email:', error);
+		throw error;
+	}
 }
 
 /**
@@ -225,11 +234,11 @@ If you weren't expecting this invitation, you can safely ignore this email.
  * @returns {Promise<void>}
  */
 export async function sendWelcomeEmail({ to, name }) {
-  try {
-    logger.info('Sending welcome email', { to, name });
+	try {
+		logger.info('Sending welcome email', { to, name });
 
-    const subject = 'Welcome to Task Master!';
-    const htmlContent = `
+		const subject = 'Welcome to Task Master!';
+		const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -272,12 +281,11 @@ export async function sendWelcomeEmail({ to, name }) {
       </html>
     `;
 
-    // TODO: Implement actual email sending
-
-  } catch (error) {
-    logger.error('Failed to send welcome email:', error);
-    throw error;
-  }
+		// TODO: Implement actual email sending
+	} catch (error) {
+		logger.error('Failed to send welcome email:', error);
+		throw error;
+	}
 }
 
 /**
@@ -288,11 +296,11 @@ export async function sendWelcomeEmail({ to, name }) {
  * @returns {Promise<void>}
  */
 export async function sendPasswordResetEmail({ to, resetUrl }) {
-  try {
-    logger.info('Sending password reset email', { to });
+	try {
+		logger.info('Sending password reset email', { to });
 
-    const subject = 'Reset Your Task Master Password';
-    const htmlContent = `
+		const subject = 'Reset Your Task Master Password';
+		const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -329,12 +337,11 @@ export async function sendPasswordResetEmail({ to, resetUrl }) {
       </html>
     `;
 
-    // TODO: Implement actual email sending
-
-  } catch (error) {
-    logger.error('Failed to send password reset email:', error);
-    throw error;
-  }
+		// TODO: Implement actual email sending
+	} catch (error) {
+		logger.error('Failed to send password reset email:', error);
+		throw error;
+	}
 }
 
 /**
@@ -347,12 +354,18 @@ export async function sendPasswordResetEmail({ to, resetUrl }) {
  * @param {string} params.changedBy - Name of the person who made the change
  * @returns {Promise<void>}
  */
-export async function sendRoleChangeEmail({ to, name, organizationName, newRole, changedBy }) {
-  try {
-    logger.info('Sending role change email', { to, organizationName, newRole });
+export async function sendRoleChangeEmail({
+	to,
+	name,
+	organizationName,
+	newRole,
+	changedBy
+}) {
+	try {
+		logger.info('Sending role change email', { to, organizationName, newRole });
 
-    const subject = `Your role has been updated in ${organizationName}`;
-    const htmlContent = `
+		const subject = `Your role has been updated in ${organizationName}`;
+		const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -374,7 +387,9 @@ export async function sendRoleChangeEmail({ to, name, organizationName, newRole,
               <p>Hi ${name},</p>
               <p>Your role in <strong>${organizationName}</strong> has been updated by ${changedBy}.</p>
               <p>Your new role is: <span class="role-badge">${newRole.toUpperCase()}</span></p>
-              ${newRole === 'admin' ? `
+              ${
+								newRole === 'admin'
+									? `
                 <p>As an admin, you now have the following permissions:</p>
                 <ul>
                   <li>Invite and remove members</li>
@@ -382,14 +397,16 @@ export async function sendRoleChangeEmail({ to, name, organizationName, newRole,
                   <li>Manage organization settings</li>
                   <li>Delete the organization</li>
                 </ul>
-              ` : `
+              `
+									: `
                 <p>As a member, you can:</p>
                 <ul>
                   <li>View all organization projects</li>
                   <li>Create and manage tasks</li>
                   <li>Collaborate with other members</li>
                 </ul>
-              `}
+              `
+							}
             </div>
             <div class="footer">
               <p>&copy; ${new Date().getFullYear()} Task Master. All rights reserved.</p>
@@ -399,12 +416,11 @@ export async function sendRoleChangeEmail({ to, name, organizationName, newRole,
       </html>
     `;
 
-    // TODO: Implement actual email sending
-
-  } catch (error) {
-    logger.error('Failed to send role change email:', error);
-    throw error;
-  }
+		// TODO: Implement actual email sending
+	} catch (error) {
+		logger.error('Failed to send role change email:', error);
+		throw error;
+	}
 }
 
 /**
@@ -416,12 +432,17 @@ export async function sendRoleChangeEmail({ to, name, organizationName, newRole,
  * @param {string} params.removedBy - Name of the person who removed them
  * @returns {Promise<void>}
  */
-export async function sendRemovalEmail({ to, name, organizationName, removedBy }) {
-  try {
-    logger.info('Sending removal notification email', { to, organizationName });
+export async function sendRemovalEmail({
+	to,
+	name,
+	organizationName,
+	removedBy
+}) {
+	try {
+		logger.info('Sending removal notification email', { to, organizationName });
 
-    const subject = `You have been removed from ${organizationName}`;
-    const htmlContent = `
+		const subject = `You have been removed from ${organizationName}`;
+		const htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -457,12 +478,11 @@ export async function sendRemovalEmail({ to, name, organizationName, removedBy }
       </html>
     `;
 
-    // TODO: Implement actual email sending
-
-  } catch (error) {
-    logger.error('Failed to send removal email:', error);
-    throw error;
-  }
+		// TODO: Implement actual email sending
+	} catch (error) {
+		logger.error('Failed to send removal email:', error);
+		throw error;
+	}
 }
 
 /**
@@ -472,33 +492,35 @@ export async function sendRemovalEmail({ to, name, organizationName, removedBy }
  * @returns {Promise<void>}
  */
 export async function initializeEmailService(config = {}) {
-  try {
-    // Initialize your email service provider here
-    // Example: SendGrid, AWS SES, Resend, etc.
-    
-    if (process.env.SENDGRID_API_KEY) {
-      // Example SendGrid initialization
-      // const sgMail = require('@sendgrid/mail');
-      // sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-      logger.info('Email service initialized with SendGrid');
-    } else if (process.env.AWS_SES_REGION) {
-      // Example AWS SES initialization
-      logger.info('Email service initialized with AWS SES');
-    } else {
-      logger.warn('No email service provider configured. Emails will be logged only.');
-    }
-  } catch (error) {
-    logger.error('Failed to initialize email service:', error);
-    throw error;
-  }
+	try {
+		// Initialize your email service provider here
+		// Example: SendGrid, AWS SES, Resend, etc.
+
+		if (process.env.SENDGRID_API_KEY) {
+			// Example SendGrid initialization
+			// const sgMail = require('@sendgrid/mail');
+			// sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+			logger.info('Email service initialized with SendGrid');
+		} else if (process.env.AWS_SES_REGION) {
+			// Example AWS SES initialization
+			logger.info('Email service initialized with AWS SES');
+		} else {
+			logger.warn(
+				'No email service provider configured. Emails will be logged only.'
+			);
+		}
+	} catch (error) {
+		logger.error('Failed to initialize email service:', error);
+		throw error;
+	}
 }
 
 // Export all email functions
 export default {
-  sendInvitationEmail,
-  sendWelcomeEmail,
-  sendPasswordResetEmail,
-  sendRoleChangeEmail,
-  sendRemovalEmail,
-  initializeEmailService
+	sendInvitationEmail,
+	sendWelcomeEmail,
+	sendPasswordResetEmail,
+	sendRoleChangeEmail,
+	sendRemovalEmail,
+	initializeEmailService
 };

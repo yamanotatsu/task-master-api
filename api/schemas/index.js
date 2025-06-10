@@ -9,9 +9,15 @@ export * from './project-task.schemas.js';
 
 // Combined schema validation middleware creator
 import { getAuthSchema, validateAuthRequest } from './auth.schemas.js';
-import { getOrganizationSchema, validateOrganizationRequest } from './organization.schemas.js';
+import {
+	getOrganizationSchema,
+	validateOrganizationRequest
+} from './organization.schemas.js';
 import { getUserSchema, validateUserRequest } from './user.schemas.js';
-import { getProjectTaskSchema, validateProjectTaskRequest } from './project-task.schemas.js';
+import {
+	getProjectTaskSchema,
+	validateProjectTaskRequest
+} from './project-task.schemas.js';
 
 /**
  * Create validation middleware for a specific schema
@@ -20,45 +26,45 @@ import { getProjectTaskSchema, validateProjectTaskRequest } from './project-task
  * @returns {Function} Express middleware
  */
 export function createValidationMiddleware(schemaType, endpoint) {
-  return (req, res, next) => {
-    let validationResult;
+	return (req, res, next) => {
+		let validationResult;
 
-    switch (schemaType) {
-      case 'auth':
-        validationResult = validateAuthRequest(endpoint, req);
-        break;
-      case 'organization':
-        validationResult = validateOrganizationRequest(endpoint, req);
-        break;
-      case 'user':
-        validationResult = validateUserRequest(endpoint, req);
-        break;
-      case 'project-task':
-        validationResult = validateProjectTaskRequest(endpoint, req);
-        break;
-      default:
-        validationResult = { valid: true, errors: [] };
-    }
+		switch (schemaType) {
+			case 'auth':
+				validationResult = validateAuthRequest(endpoint, req);
+				break;
+			case 'organization':
+				validationResult = validateOrganizationRequest(endpoint, req);
+				break;
+			case 'user':
+				validationResult = validateUserRequest(endpoint, req);
+				break;
+			case 'project-task':
+				validationResult = validateProjectTaskRequest(endpoint, req);
+				break;
+			default:
+				validationResult = { valid: true, errors: [] };
+		}
 
-    if (!validationResult.valid) {
-      return res.status(400).json({
-        error: 'Validation failed',
-        errors: validationResult.errors
-      });
-    }
+		if (!validationResult.valid) {
+			return res.status(400).json({
+				error: 'Validation failed',
+				errors: validationResult.errors
+			});
+		}
 
-    next();
-  };
+		next();
+	};
 }
 
 /**
  * Schema registry for dynamic lookup
  */
 export const schemaRegistry = {
-  auth: getAuthSchema,
-  organization: getOrganizationSchema,
-  user: getUserSchema,
-  'project-task': getProjectTaskSchema
+	auth: getAuthSchema,
+	organization: getOrganizationSchema,
+	user: getUserSchema,
+	'project-task': getProjectTaskSchema
 };
 
 /**
@@ -68,6 +74,6 @@ export const schemaRegistry = {
  * @returns {Object|null} Schema definition
  */
 export function getSchema(type, endpoint) {
-  const getter = schemaRegistry[type];
-  return getter ? getter(endpoint) : null;
+	const getter = schemaRegistry[type];
+	return getter ? getter(endpoint) : null;
 }

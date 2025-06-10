@@ -5,6 +5,7 @@
 ### 必要な環境変数の設定
 
 1. **バックエンド環境変数** (`api/.env`)
+
 ```bash
 # Supabase
 SUPABASE_URL=your_supabase_url
@@ -23,6 +24,7 @@ SENDGRID_API_KEY=your_sendgrid_key  # SendGrid使用時
 ```
 
 2. **フロントエンド環境変数** (`frontend/task-master-ui/.env.local`)
+
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:8080
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
@@ -32,6 +34,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 ## 2. サービスの起動
 
 ### バックエンドの起動
+
 ```bash
 # APIサーバーの起動
 cd api
@@ -43,6 +46,7 @@ npm run api:db:dev
 ```
 
 ### フロントエンドの起動
+
 ```bash
 # 別のターミナルで
 cd frontend/task-master-ui
@@ -61,9 +65,11 @@ npm run dev
 ### 3.2 招待メールの送信テスト
 
 1. **メンバー管理画面へ移動**
+
    - 左サイドバーの「設定」→「メンバー管理」
 
 2. **新規メンバーを招待**
+
    - 「メンバーを招待」ボタンをクリック
    - メールアドレスを入力（例: `newuser@example.com`）
    - 権限を選択（管理者/メンバー）
@@ -94,6 +100,7 @@ npm run dev
 ## 4. APIの直接テスト
 
 ### 認証トークンの取得
+
 ```bash
 # ログイン
 curl -X POST http://localhost:8080/api/v1/auth/login \
@@ -103,6 +110,7 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
 ```
 
 ### 招待の送信
+
 ```bash
 TOKEN="your_access_token"
 ORG_ID="your_organization_id"
@@ -114,6 +122,7 @@ curl -X POST "http://localhost:8080/api/v1/organizations/$ORG_ID/invites" \
 ```
 
 ### 招待の再送信
+
 ```bash
 INVITE_ID="invitation_id"
 
@@ -126,14 +135,17 @@ curl -X POST "http://localhost:8080/api/v1/organizations/$ORG_ID/invites/$INVITE
 ### よくある問題と解決方法
 
 1. **メールが送信されない**
+
    - 開発環境では実際のメール送信は行われません
    - コンソールログとdev-emailsフォルダを確認
 
 2. **招待URLが無効**
+
    - FRONTEND_URLが正しく設定されているか確認
    - 招待トークンの有効期限（7日間）を確認
 
 3. **権限エラー**
+
    - 招待送信は管理者権限が必要
    - JWTトークンが有効か確認
 

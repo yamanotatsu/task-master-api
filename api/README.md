@@ -57,11 +57,12 @@ The server will start on port 8080 by default (or the port specified in `API_POR
 Check if the API server is running and healthy.
 
 **Response:**
+
 ```json
 {
-  "status": "healthy",
-  "timestamp": "2024-01-20T10:30:00.000Z",
-  "database": "supabase"
+	"status": "healthy",
+	"timestamp": "2024-01-20T10:30:00.000Z",
+	"database": "supabase"
 }
 ```
 
@@ -74,25 +75,27 @@ Check if the API server is running and healthy.
 Register a new user account.
 
 **Request Body:**
+
 ```json
 {
-  "fullName": "John Doe",
-  "email": "john@example.com",
-  "password": "SecurePassword123!"
+	"fullName": "John Doe",
+	"email": "john@example.com",
+	"password": "SecurePassword123!"
 }
 ```
 
 **Response (201):**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "message": "Registration successful. Please check your email to verify your account.",
-    "user": {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "email": "john@example.com"
-    }
-  }
+	"success": true,
+	"data": {
+		"message": "Registration successful. Please check your email to verify your account.",
+		"user": {
+			"id": "550e8400-e29b-41d4-a716-446655440000",
+			"email": "john@example.com"
+		}
+	}
 }
 ```
 
@@ -103,29 +106,31 @@ Register a new user account.
 Authenticate and receive access tokens.
 
 **Request Body:**
+
 ```json
 {
-  "email": "john@example.com",
-  "password": "SecurePassword123!"
+	"email": "john@example.com",
+	"password": "SecurePassword123!"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "user": {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "email": "john@example.com",
-      "fullName": "John Doe"
-    },
-    "tokens": {
-      "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-      "expiresIn": 3600
-    }
-  }
+	"success": true,
+	"data": {
+		"user": {
+			"id": "550e8400-e29b-41d4-a716-446655440000",
+			"email": "john@example.com",
+			"fullName": "John Doe"
+		},
+		"tokens": {
+			"accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+			"refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+			"expiresIn": 3600
+		}
+	}
 }
 ```
 
@@ -138,34 +143,37 @@ Authenticate and receive access tokens.
 Create a new organization. The authenticated user becomes the admin.
 
 **Headers:**
+
 ```
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
-  "name": "Acme Corporation",
-  "description": "Building awesome products"
+	"name": "Acme Corporation",
+	"description": "Building awesome products"
 }
 ```
 
 **Response (201):**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "organization": {
-      "id": "650e8400-e29b-41d4-a716-446655440001",
-      "name": "Acme Corporation",
-      "description": "Building awesome products",
-      "createdAt": "2024-01-01T00:00:00Z"
-    },
-    "membership": {
-      "role": "admin",
-      "joinedAt": "2024-01-01T00:00:00Z"
-    }
-  }
+	"success": true,
+	"data": {
+		"organization": {
+			"id": "650e8400-e29b-41d4-a716-446655440001",
+			"name": "Acme Corporation",
+			"description": "Building awesome products",
+			"createdAt": "2024-01-01T00:00:00Z"
+		},
+		"membership": {
+			"role": "admin",
+			"joinedAt": "2024-01-01T00:00:00Z"
+		}
+	}
 }
 ```
 
@@ -176,38 +184,41 @@ Authorization: Bearer <access_token>
 Get all organizations the user is a member of.
 
 **Headers:**
+
 ```
 Authorization: Bearer <access_token>
 ```
 
 **Query Parameters:**
+
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 20, max: 100)
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "organizations": [
-      {
-        "id": "650e8400-e29b-41d4-a716-446655440001",
-        "name": "Acme Corporation",
-        "description": "Building awesome products",
-        "role": "admin",
-        "memberCount": 5,
-        "projectCount": 3,
-        "joinedAt": "2024-01-01T00:00:00Z"
-      }
-    ]
-  },
-  "meta": {
-    "pagination": {
-      "page": 1,
-      "limit": 20,
-      "total": 1
-    }
-  }
+	"success": true,
+	"data": {
+		"organizations": [
+			{
+				"id": "650e8400-e29b-41d4-a716-446655440001",
+				"name": "Acme Corporation",
+				"description": "Building awesome products",
+				"role": "admin",
+				"memberCount": 5,
+				"projectCount": 3,
+				"joinedAt": "2024-01-01T00:00:00Z"
+			}
+		]
+	},
+	"meta": {
+		"pagination": {
+			"page": 1,
+			"limit": 20,
+			"total": 1
+		}
+	}
 }
 ```
 
@@ -218,32 +229,34 @@ Authorization: Bearer <access_token>
 Get detailed information about a specific organization (members only).
 
 **Headers:**
+
 ```
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "organization": {
-      "id": "650e8400-e29b-41d4-a716-446655440001",
-      "name": "Acme Corporation",
-      "description": "Building awesome products",
-      "createdAt": "2024-01-01T00:00:00Z",
-      "updatedAt": "2024-01-01T00:00:00Z"
-    },
-    "membership": {
-      "role": "admin",
-      "joinedAt": "2024-01-01T00:00:00Z"
-    },
-    "statistics": {
-      "memberCount": 5,
-      "projectCount": 3,
-      "activeTaskCount": 25
-    }
-  }
+	"success": true,
+	"data": {
+		"organization": {
+			"id": "650e8400-e29b-41d4-a716-446655440001",
+			"name": "Acme Corporation",
+			"description": "Building awesome products",
+			"createdAt": "2024-01-01T00:00:00Z",
+			"updatedAt": "2024-01-01T00:00:00Z"
+		},
+		"membership": {
+			"role": "admin",
+			"joinedAt": "2024-01-01T00:00:00Z"
+		},
+		"statistics": {
+			"memberCount": 5,
+			"projectCount": 3,
+			"activeTaskCount": 25
+		}
+	}
 }
 ```
 
@@ -254,31 +267,34 @@ Authorization: Bearer <access_token>
 Update organization details (admins only).
 
 **Headers:**
+
 ```
 Authorization: Bearer <access_token>
 ```
 
 **Request Body:**
+
 ```json
 {
-  "name": "Acme Corp (Updated)",
-  "description": "Updated description"
+	"name": "Acme Corp (Updated)",
+	"description": "Updated description"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "organization": {
-      "id": "650e8400-e29b-41d4-a716-446655440001",
-      "name": "Acme Corp (Updated)",
-      "description": "Updated description",
-      "createdAt": "2024-01-01T00:00:00Z",
-      "updatedAt": "2024-01-10T00:00:00Z"
-    }
-  }
+	"success": true,
+	"data": {
+		"organization": {
+			"id": "650e8400-e29b-41d4-a716-446655440001",
+			"name": "Acme Corp (Updated)",
+			"description": "Updated description",
+			"createdAt": "2024-01-01T00:00:00Z",
+			"updatedAt": "2024-01-10T00:00:00Z"
+		}
+	}
 }
 ```
 
@@ -289,17 +305,19 @@ Authorization: Bearer <access_token>
 Delete an organization (admins only). Organization must have no projects.
 
 **Headers:**
+
 ```
 Authorization: Bearer <access_token>
 ```
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "message": "Organization has been permanently deleted"
-  }
+	"success": true,
+	"data": {
+		"message": "Organization has been permanently deleted"
+	}
 }
 ```
 
@@ -308,83 +326,88 @@ Authorization: Bearer <access_token>
 **Endpoint:** `POST /api/v1/generate-tasks-from-prd`
 
 **Request Body:**
+
 ```json
 {
-  "prd_content": "Your full PRD text here...",
-  "target_task_count": 15,        // Optional, default: 10
-  "use_research_mode": false      // Optional, default: false
+	"prd_content": "Your full PRD text here...",
+	"target_task_count": 15, // Optional, default: 10
+	"use_research_mode": false // Optional, default: false
 }
 ```
 
 **Parameters:**
+
 - `prd_content` (string, required): The full text of your Product Requirements Document
 - `target_task_count` (number, optional): Number of tasks to generate (1-100, default: 10)
 - `use_research_mode` (boolean, optional): Whether to use research mode for enhanced analysis
 
 **Success Response (200 OK):**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "tasks": [
-      {
-        "id": 1,
-        "title": "Initialize project structure",
-        "description": "Set up the basic project structure with necessary folders and configuration files",
-        "status": "pending",
-        "dependencies": [],
-        "priority": "high",
-        "details": "Create src/, tests/, docs/ directories. Initialize package.json, .gitignore, README.md...",
-        "testStrategy": "Verify all directories exist and configuration files are properly formatted",
-        "subtasks": []
-      }
-    ],
-    "metadata": {
-      "projectName": "My Project",
-      "totalTasks": 15,
-      "sourceLength": 12345,
-      "generatedAt": "2024-01-20T10:30:00.000Z"
-    },
-    "telemetryData": {
-      "timestamp": "2024-01-20T10:30:00.000Z",
-      "userId": "api-user",
-      "commandName": "api_generate_tasks_from_prd",
-      "modelUsed": "claude-3-5-sonnet-20241022",
-      "providerName": "anthropic",
-      "inputTokens": 1500,
-      "outputTokens": 2000,
-      "totalTokens": 3500,
-      "totalCost": 0.0525,
-      "currency": "USD",
-      "processingTime": 5432
-    }
-  }
+	"success": true,
+	"data": {
+		"tasks": [
+			{
+				"id": 1,
+				"title": "Initialize project structure",
+				"description": "Set up the basic project structure with necessary folders and configuration files",
+				"status": "pending",
+				"dependencies": [],
+				"priority": "high",
+				"details": "Create src/, tests/, docs/ directories. Initialize package.json, .gitignore, README.md...",
+				"testStrategy": "Verify all directories exist and configuration files are properly formatted",
+				"subtasks": []
+			}
+		],
+		"metadata": {
+			"projectName": "My Project",
+			"totalTasks": 15,
+			"sourceLength": 12345,
+			"generatedAt": "2024-01-20T10:30:00.000Z"
+		},
+		"telemetryData": {
+			"timestamp": "2024-01-20T10:30:00.000Z",
+			"userId": "api-user",
+			"commandName": "api_generate_tasks_from_prd",
+			"modelUsed": "claude-3-5-sonnet-20241022",
+			"providerName": "anthropic",
+			"inputTokens": 1500,
+			"outputTokens": 2000,
+			"totalTokens": 3500,
+			"totalCost": 0.0525,
+			"currency": "USD",
+			"processingTime": 5432
+		}
+	}
 }
 ```
 
 **Error Response:**
+
 ```json
 {
-  "success": false,
-  "error": {
-    "code": "INVALID_INPUT",
-    "message": "Invalid request body",
-    "details": [
-      {
-        "code": "too_small",
-        "minimum": 1,
-        "type": "string",
-        "inclusive": true,
-        "exact": false,
-        "message": "PRD content is required",
-        "path": ["prd_content"]
-      }
-    ]
-  }
+	"success": false,
+	"error": {
+		"code": "INVALID_INPUT",
+		"message": "Invalid request body",
+		"details": [
+			{
+				"code": "too_small",
+				"minimum": 1,
+				"type": "string",
+				"inclusive": true,
+				"exact": false,
+				"message": "PRD content is required",
+				"path": ["prd_content"]
+			}
+		]
+	}
 }
 ```
 
 **Error Codes:**
+
 - `INVALID_INPUT` (400): Invalid request body or parameters
 - `PRD_PARSE_ERROR` (400): Error parsing the PRD content
 - `MISSING_API_KEY` (401): No valid API keys configured
@@ -401,28 +424,30 @@ Authorization: Bearer <access_token>
 Get a list of all tasks in the project.
 
 **Query Parameters:**
+
 - `filter` (optional): Filter tasks by status. Values: `all`, `pending`, `in-progress`, `completed`, `blocked`
 - `withSubtasks` (optional): Include subtasks in response. Default: `false`
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "tasks": [
-      {
-        "id": 1,
-        "title": "Setup project infrastructure",
-        "description": "Initialize the project with necessary dependencies",
-        "status": "pending",
-        "priority": "high",
-        "dependencies": [],
-        "subtasks": []
-      }
-    ],
-    "totalTasks": 1,
-    "filteredBy": "all"
-  }
+	"success": true,
+	"data": {
+		"tasks": [
+			{
+				"id": 1,
+				"title": "Setup project infrastructure",
+				"description": "Initialize the project with necessary dependencies",
+				"status": "pending",
+				"priority": "high",
+				"dependencies": [],
+				"subtasks": []
+			}
+		],
+		"totalTasks": 1,
+		"filteredBy": "all"
+	}
 }
 ```
 
@@ -433,36 +458,39 @@ Get a list of all tasks in the project.
 Get details of a specific task by its ID.
 
 **Path Parameters:**
+
 - `id`: Task ID (number)
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "task": {
-      "id": 1,
-      "title": "Setup project infrastructure",
-      "description": "Initialize the project with necessary dependencies",
-      "details": "Create project structure, install dependencies, setup build tools",
-      "testStrategy": "Verify all dependencies are installed correctly",
-      "status": "pending",
-      "priority": "high",
-      "dependencies": [],
-      "subtasks": []
-    }
-  }
+	"success": true,
+	"data": {
+		"task": {
+			"id": 1,
+			"title": "Setup project infrastructure",
+			"description": "Initialize the project with necessary dependencies",
+			"details": "Create project structure, install dependencies, setup build tools",
+			"testStrategy": "Verify all dependencies are installed correctly",
+			"status": "pending",
+			"priority": "high",
+			"dependencies": [],
+			"subtasks": []
+		}
+	}
 }
 ```
 
 **Error Response (404):**
+
 ```json
 {
-  "success": false,
-  "error": {
-    "code": "TASK_NOT_FOUND",
-    "message": "Task with ID 999 not found"
-  }
+	"success": false,
+	"error": {
+		"code": "TASK_NOT_FOUND",
+		"message": "Task with ID 999 not found"
+	}
 }
 ```
 
@@ -473,21 +501,24 @@ Get details of a specific task by its ID.
 Create a new task manually (without AI).
 
 **Request Body:**
+
 ```json
 {
-  "title": "Implement user authentication",
-  "description": "Add JWT-based authentication system",
-  "priority": "high",
-  "details": "Implement login, logout, and token refresh endpoints",
-  "testStrategy": "Unit tests for auth logic and integration tests for endpoints",
-  "dependencies": []
+	"title": "Implement user authentication",
+	"description": "Add JWT-based authentication system",
+	"priority": "high",
+	"details": "Implement login, logout, and token refresh endpoints",
+	"testStrategy": "Unit tests for auth logic and integration tests for endpoints",
+	"dependencies": []
 }
 ```
 
 **Required Fields:**
+
 - `title` (string): Task title
 
 **Optional Fields:**
+
 - `description` (string): Brief description
 - `priority` (string): `high`, `medium`, or `low`. Default: `medium`
 - `details` (string): Detailed implementation notes
@@ -495,17 +526,18 @@ Create a new task manually (without AI).
 - `dependencies` (array): Array of task IDs this task depends on
 
 **Response (201):**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "task": {
-      "id": 2,
-      "title": "Implement user authentication",
-      "status": "pending"
-    },
-    "message": "Task #2 created successfully"
-  }
+	"success": true,
+	"data": {
+		"task": {
+			"id": 2,
+			"title": "Implement user authentication",
+			"status": "pending"
+		},
+		"message": "Task #2 created successfully"
+	}
 }
 ```
 
@@ -516,34 +548,37 @@ Create a new task manually (without AI).
 Update an existing task's properties.
 
 **Path Parameters:**
+
 - `id`: Task ID to update
 
 **Request Body:**
+
 ```json
 {
-  "title": "Updated task title",
-  "description": "Updated description",
-  "priority": "medium",
-  "details": "Updated details",
-  "testStrategy": "Updated test strategy"
+	"title": "Updated task title",
+	"description": "Updated description",
+	"priority": "medium",
+	"details": "Updated details",
+	"testStrategy": "Updated test strategy"
 }
 ```
 
 All fields are optional - only include fields you want to update.
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "task": {
-      "id": 1,
-      "title": "Updated task title",
-      "description": "Updated description",
-      "priority": "medium"
-    },
-    "message": "Task #1 updated successfully"
-  }
+	"success": true,
+	"data": {
+		"task": {
+			"id": 1,
+			"title": "Updated task title",
+			"description": "Updated description",
+			"priority": "medium"
+		},
+		"message": "Task #1 updated successfully"
+	}
 }
 ```
 
@@ -554,15 +589,17 @@ All fields are optional - only include fields you want to update.
 Delete a task and all its subtasks.
 
 **Path Parameters:**
+
 - `id`: Task ID to delete
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "message": "Task #1 deleted successfully"
-  }
+	"success": true,
+	"data": {
+		"message": "Task #1 deleted successfully"
+	}
 }
 ```
 
@@ -573,32 +610,36 @@ Delete a task and all its subtasks.
 Update only the status of a task.
 
 **Path Parameters:**
+
 - `id`: Task ID
 
 **Request Body:**
+
 ```json
 {
-  "status": "in-progress"
+	"status": "in-progress"
 }
 ```
 
 **Valid Status Values:**
+
 - `pending`
 - `in-progress`
 - `completed`
 - `blocked`
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "task": {
-      "id": 1,
-      "status": "in-progress"
-    },
-    "message": "Task #1 status updated to in-progress"
-  }
+	"success": true,
+	"data": {
+		"task": {
+			"id": 1,
+			"status": "in-progress"
+		},
+		"message": "Task #1 status updated to in-progress"
+	}
 }
 ```
 
@@ -611,30 +652,33 @@ Update only the status of a task.
 Add a new subtask to an existing task.
 
 **Path Parameters:**
+
 - `id`: Parent task ID
 
 **Request Body:**
+
 ```json
 {
-  "title": "Create database schema",
-  "description": "Design and implement the database tables"
+	"title": "Create database schema",
+	"description": "Design and implement the database tables"
 }
 ```
 
 **Response (201):**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "subtask": {
-      "id": 1,
-      "title": "Create database schema",
-      "description": "Design and implement the database tables",
-      "parentTaskId": 1,
-      "status": "pending"
-    },
-    "message": "Subtask added successfully"
-  }
+	"success": true,
+	"data": {
+		"subtask": {
+			"id": 1,
+			"title": "Create database schema",
+			"description": "Design and implement the database tables",
+			"parentTaskId": 1,
+			"status": "pending"
+		},
+		"message": "Subtask added successfully"
+	}
 }
 ```
 
@@ -645,24 +689,27 @@ Add a new subtask to an existing task.
 Update an existing subtask.
 
 **Path Parameters:**
+
 - `id`: Parent task ID
 - `subtaskId`: Subtask ID to update
 
 **Request Body:**
+
 ```json
 {
-  "title": "Updated subtask title",
-  "description": "Updated description"
+	"title": "Updated subtask title",
+	"description": "Updated description"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "message": "Subtask updated successfully"
-  }
+	"success": true,
+	"data": {
+		"message": "Subtask updated successfully"
+	}
 }
 ```
 
@@ -673,16 +720,18 @@ Update an existing subtask.
 Remove a specific subtask.
 
 **Path Parameters:**
+
 - `id`: Parent task ID
 - `subtaskId`: Subtask ID to delete
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "message": "Subtask removed successfully"
-  }
+	"success": true,
+	"data": {
+		"message": "Subtask removed successfully"
+	}
 }
 ```
 
@@ -693,16 +742,18 @@ Remove a specific subtask.
 Remove all subtasks from a task.
 
 **Path Parameters:**
+
 - `id`: Parent task ID
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "message": "All subtasks cleared successfully",
-    "clearedCount": 3
-  }
+	"success": true,
+	"data": {
+		"message": "All subtasks cleared successfully",
+		"clearedCount": 3
+	}
 }
 ```
 
@@ -715,43 +766,47 @@ Remove all subtasks from a task.
 Use AI to automatically generate subtasks for a task.
 
 **Path Parameters:**
+
 - `id`: Task ID to expand
 
 **Request Body:**
+
 ```json
 {
-  "numSubtasks": 5,
-  "useResearch": false
+	"numSubtasks": 5,
+	"useResearch": false
 }
 ```
 
 **Parameters:**
+
 - `numSubtasks` (optional): Number of subtasks to generate. Default: 5
 - `useResearch` (optional): Use research mode for more detailed analysis. Default: false
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "task": {
-      "id": 1,
-      "title": "Setup project infrastructure",
-      "subtasks": [
-        {
-          "id": 1,
-          "title": "Initialize package.json",
-          "description": "Create package.json with project metadata"
-        },
-        {
-          "id": 2,
-          "title": "Setup build tools",
-          "description": "Configure webpack/vite for bundling"
-        }
-      ]
-    },
-    "message": "Task expanded with 5 subtasks"
-  }
+	"success": true,
+	"data": {
+		"task": {
+			"id": 1,
+			"title": "Setup project infrastructure",
+			"subtasks": [
+				{
+					"id": 1,
+					"title": "Initialize package.json",
+					"description": "Create package.json with project metadata"
+				},
+				{
+					"id": 2,
+					"title": "Setup build tools",
+					"description": "Configure webpack/vite for bundling"
+				}
+			]
+		},
+		"message": "Task expanded with 5 subtasks"
+	}
 }
 ```
 
@@ -762,22 +817,24 @@ Use AI to automatically generate subtasks for a task.
 Expand all pending tasks that don't have subtasks yet.
 
 **Request Body:**
+
 ```json
 {
-  "numSubtasks": 3,
-  "useResearch": false
+	"numSubtasks": 3,
+	"useResearch": false
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "expandedTasks": 5,
-    "totalSubtasksCreated": 15,
-    "message": "Expanded 5 tasks"
-  }
+	"success": true,
+	"data": {
+		"expandedTasks": 5,
+		"totalSubtasksCreated": 15,
+		"message": "Expanded 5 tasks"
+	}
 }
 ```
 
@@ -790,33 +847,37 @@ Expand all pending tasks that don't have subtasks yet.
 Add a dependency to a task.
 
 **Path Parameters:**
+
 - `id`: Task ID that will have the dependency
 
 **Request Body:**
+
 ```json
 {
-  "dependencyId": 3
+	"dependencyId": 3
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "message": "Dependency added: Task 5 now depends on Task 3"
-  }
+	"success": true,
+	"data": {
+		"message": "Dependency added: Task 5 now depends on Task 3"
+	}
 }
 ```
 
 **Error Response (Circular Dependency):**
+
 ```json
 {
-  "success": false,
-  "error": {
-    "code": "CIRCULAR_DEPENDENCY",
-    "message": "Cannot add dependency: would create circular dependency"
-  }
+	"success": false,
+	"error": {
+		"code": "CIRCULAR_DEPENDENCY",
+		"message": "Cannot add dependency: would create circular dependency"
+	}
 }
 ```
 
@@ -827,16 +888,18 @@ Add a dependency to a task.
 Remove a dependency from a task.
 
 **Path Parameters:**
+
 - `id`: Task ID
 - `depId`: Dependency task ID to remove
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "message": "Dependency removed successfully"
-  }
+	"success": true,
+	"data": {
+		"message": "Dependency removed successfully"
+	}
 }
 ```
 
@@ -847,29 +910,32 @@ Remove a dependency from a task.
 Check all tasks for dependency issues.
 
 **Request Body:**
+
 ```json
 {
-  "autoFix": false
+	"autoFix": false
 }
 ```
 
 **Parameters:**
+
 - `autoFix` (optional): Automatically fix issues if possible. Default: false
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "issues": [
-      {
-        "taskId": 5,
-        "type": "missing_dependency",
-        "message": "Task 5 depends on non-existent task 99"
-      }
-    ],
-    "fixed": 0
-  }
+	"success": true,
+	"data": {
+		"issues": [
+			{
+				"taskId": 5,
+				"type": "missing_dependency",
+				"message": "Task 5 depends on non-existent task 99"
+			}
+		],
+		"fixed": 0
+	}
 }
 ```
 
@@ -880,13 +946,14 @@ Check all tasks for dependency issues.
 Automatically fix all dependency issues.
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "issuesFixed": 3,
-    "message": "Fixed 3 dependency issues"
-  }
+	"success": true,
+	"data": {
+		"issuesFixed": 3,
+		"message": "Fixed 3 dependency issues"
+	}
 }
 ```
 
@@ -899,31 +966,33 @@ Automatically fix all dependency issues.
 Get the next recommended task to work on based on dependencies and priority.
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "task": {
-      "id": 3,
-      "title": "Setup database connection",
-      "priority": "high",
-      "dependencies": []
-    },
-    "recommendation": "This task has no dependencies and high priority",
-    "reasoning": "High priority tasks with no blockers should be completed first"
-  }
+	"success": true,
+	"data": {
+		"task": {
+			"id": 3,
+			"title": "Setup database connection",
+			"priority": "high",
+			"dependencies": []
+		},
+		"recommendation": "This task has no dependencies and high priority",
+		"reasoning": "High priority tasks with no blockers should be completed first"
+	}
 }
 ```
 
 **Response (No tasks available):**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "task": null,
-    "message": "No pending tasks found",
-    "recommendation": "All tasks are either completed or blocked"
-  }
+	"success": true,
+	"data": {
+		"task": null,
+		"message": "No pending tasks found",
+		"recommendation": "All tasks are either completed or blocked"
+	}
 }
 ```
 
@@ -934,34 +1003,36 @@ Get the next recommended task to work on based on dependencies and priority.
 Use AI to analyze the complexity of a specific task.
 
 **Request Body:**
+
 ```json
 {
-  "taskId": 1
+	"taskId": 1
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "taskId": 1,
-    "complexity": {
-      "score": 8,
-      "level": "high",
-      "factors": [
-        "Requires integration with multiple systems",
-        "Complex business logic",
-        "High security requirements"
-      ]
-    },
-    "recommendations": [
-      "Break down into smaller subtasks",
-      "Allocate extra time for testing",
-      "Consider pair programming"
-    ],
-    "estimatedHours": 16
-  }
+	"success": true,
+	"data": {
+		"taskId": 1,
+		"complexity": {
+			"score": 8,
+			"level": "high",
+			"factors": [
+				"Requires integration with multiple systems",
+				"Complex business logic",
+				"High security requirements"
+			]
+		},
+		"recommendations": [
+			"Break down into smaller subtasks",
+			"Allocate extra time for testing",
+			"Consider pair programming"
+		],
+		"estimatedHours": 16
+	}
 }
 ```
 
@@ -972,35 +1043,36 @@ Use AI to analyze the complexity of a specific task.
 Get a complexity analysis report for all tasks.
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "report": {
-      "totalTasks": 15,
-      "analyzedTasks": 10,
-      "complexityDistribution": {
-        "low": 3,
-        "medium": 5,
-        "high": 2
-      }
-    },
-    "summary": {
-      "averageComplexity": 5.5,
-      "totalEstimatedHours": 120
-    },
-    "highComplexityTasks": [
-      {
-        "id": 1,
-        "title": "Implement authentication system",
-        "complexity": 9
-      }
-    ],
-    "recommendations": [
-      "Focus on high complexity tasks first",
-      "Consider breaking down tasks with complexity > 7"
-    ]
-  }
+	"success": true,
+	"data": {
+		"report": {
+			"totalTasks": 15,
+			"analyzedTasks": 10,
+			"complexityDistribution": {
+				"low": 3,
+				"medium": 5,
+				"high": 2
+			}
+		},
+		"summary": {
+			"averageComplexity": 5.5,
+			"totalEstimatedHours": 120
+		},
+		"highComplexityTasks": [
+			{
+				"id": 1,
+				"title": "Implement authentication system",
+				"complexity": 9
+			}
+		],
+		"recommendations": [
+			"Focus on high complexity tasks first",
+			"Consider breaking down tasks with complexity > 7"
+		]
+	}
 }
 ```
 
@@ -1013,17 +1085,19 @@ Get a complexity analysis report for all tasks.
 Initialize a new Task Master project.
 
 **Request Body:**
+
 ```json
 {
-  "projectName": "my-awesome-project",
-  "projectPath": "/path/to/project",
-  "template": "web",
-  "aiProvider": "anthropic",
-  "includeRooFiles": true
+	"projectName": "my-awesome-project",
+	"projectPath": "/path/to/project",
+	"template": "web",
+	"aiProvider": "anthropic",
+	"includeRooFiles": true
 }
 ```
 
 **Parameters:**
+
 - `projectName` (required): Name of the project
 - `projectPath` (optional): Where to create the project. Default: current directory
 - `template` (optional): Project template. Values: `basic`, `web`, `api`, `mobile`, `ml`. Default: `basic`
@@ -1031,18 +1105,15 @@ Initialize a new Task Master project.
 - `includeRooFiles` (optional): Include Roo code assistance files. Default: false
 
 **Response (201):**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "projectPath": "/path/to/project",
-    "filesCreated": [
-      "tasks.json",
-      ".taskmaster/config.json",
-      "README.md"
-    ],
-    "message": "Project initialized successfully"
-  }
+	"success": true,
+	"data": {
+		"projectPath": "/path/to/project",
+		"filesCreated": ["tasks.json", ".taskmaster/config.json", "README.md"],
+		"message": "Project initialized successfully"
+	}
 }
 ```
 
@@ -1053,29 +1124,28 @@ Initialize a new Task Master project.
 Generate individual markdown files for each task.
 
 **Request Body:**
+
 ```json
 {
-  "outputDir": "tasks"
+	"outputDir": "tasks"
 }
 ```
 
 **Parameters:**
+
 - `outputDir` (optional): Directory to output task files. Default: "tasks"
 
 **Response:**
+
 ```json
 {
-  "success": true,
-  "data": {
-    "filesGenerated": 15,
-    "outputDirectory": "tasks",
-    "files": [
-      "task_001.md",
-      "task_002.md",
-      "task_003.md"
-    ],
-    "message": "Generated 15 task files"
-  }
+	"success": true,
+	"data": {
+		"filesGenerated": 15,
+		"outputDirectory": "tasks",
+		"files": ["task_001.md", "task_002.md", "task_003.md"],
+		"message": "Generated 15 task files"
+	}
 }
 ```
 
@@ -1085,12 +1155,12 @@ All endpoints return errors in a consistent format:
 
 ```json
 {
-  "success": false,
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "Human-readable error message",
-    "details": {} // Optional additional information
-  }
+	"success": false,
+	"error": {
+		"code": "ERROR_CODE",
+		"message": "Human-readable error message",
+		"details": {} // Optional additional information
+	}
 }
 ```
 
@@ -1106,9 +1176,11 @@ All endpoints return errors in a consistent format:
 ## Complete API Summary
 
 ### Core Endpoints
+
 - `GET /health` - Health check
 
 ### Authentication
+
 - `POST /api/v1/auth/signup` - Register new user
 - `POST /api/v1/auth/login` - User login
 - `POST /api/v1/auth/logout` - User logout
@@ -1118,6 +1190,7 @@ All endpoints return errors in a consistent format:
 - `DELETE /api/v1/auth/user` - Delete user account
 
 ### Organization Management
+
 - `POST /api/v1/organizations` - Create organization
 - `GET /api/v1/organizations` - List user's organizations
 - `GET /api/v1/organizations/:organizationId` - Get organization details
@@ -1125,9 +1198,11 @@ All endpoints return errors in a consistent format:
 - `DELETE /api/v1/organizations/:organizationId` - Delete organization
 
 ### Task Generation
+
 - `POST /api/v1/generate-tasks-from-prd` - Generate tasks from PRD using AI
 
 ### Task Management
+
 - `GET /api/v1/tasks` - List all tasks
 - `GET /api/v1/tasks/:id` - Get specific task
 - `POST /api/v1/tasks` - Create new task
@@ -1136,27 +1211,32 @@ All endpoints return errors in a consistent format:
 - `PATCH /api/v1/tasks/:id/status` - Update task status
 
 ### Subtask Management
+
 - `POST /api/v1/tasks/:id/subtasks` - Add subtask
 - `PUT /api/v1/tasks/:id/subtasks/:subtaskId` - Update subtask
 - `DELETE /api/v1/tasks/:id/subtasks/:subtaskId` - Delete subtask
 - `DELETE /api/v1/tasks/:id/subtasks` - Clear all subtasks
 
 ### Task Expansion (AI-powered)
+
 - `POST /api/v1/tasks/:id/expand` - Expand single task with AI
 - `POST /api/v1/tasks/expand-all` - Expand all eligible tasks
 
 ### Dependency Management
+
 - `POST /api/v1/tasks/:id/dependencies` - Add dependency
 - `DELETE /api/v1/tasks/:id/dependencies/:depId` - Remove dependency
 - `POST /api/v1/tasks/validate-dependencies` - Validate all dependencies
 - `POST /api/v1/tasks/fix-dependencies` - Auto-fix dependency issues
 
 ### Task Analysis
+
 - `GET /api/v1/tasks/next` - Get next recommended task
 - `POST /api/v1/tasks/analyze-complexity` - Analyze task complexity with AI
 - `GET /api/v1/tasks/complexity-report` - Get complexity report
 
 ### Project Management
+
 - `POST /api/v1/projects/initialize` - Initialize new project
 - `POST /api/v1/projects/generate-task-files` - Generate task markdown files
 
@@ -1177,17 +1257,20 @@ curl -X POST http://localhost:8080/api/v1/generate-tasks-from-prd \
 ### Using JavaScript (fetch)
 
 ```javascript
-const response = await fetch('http://localhost:8080/api/v1/generate-tasks-from-prd', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    prd_content: '# My Project\n\nA web application for task management...',
-    target_task_count: 10,
-    use_research_mode: true
-  })
-});
+const response = await fetch(
+	'http://localhost:8080/api/v1/generate-tasks-from-prd',
+	{
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			prd_content: '# My Project\n\nA web application for task management...',
+			target_task_count: 10,
+			use_research_mode: true
+		})
+	}
+);
 
 const result = await response.json();
 console.log(result);
@@ -1215,21 +1298,25 @@ print(result)
 ### Environment Variables
 
 #### Database Configuration
+
 - `SUPABASE_URL`: Your Supabase project URL
 - `SUPABASE_ANON_KEY`: Supabase anonymous/public key
 - `SUPABASE_SERVICE_KEY`: Supabase service role key (for admin operations)
 
 #### Server Configuration
+
 - `API_PORT`: Port for the API server (default: 8080)
 - `FRONTEND_URL`: Frontend application URL for CORS and redirects
 - `ALLOWED_ORIGINS`: Comma-separated list of allowed origins for CORS
 
 #### Security Configuration
+
 - `ENABLE_RATE_LIMIT`: Enable rate limiting (default: false)
 - `RATE_LIMIT_WINDOW_MS`: Rate limit window in milliseconds (default: 900000 / 15 minutes)
 - `RATE_LIMIT_MAX_REQUESTS`: Maximum requests per window (default: 100)
 
 #### AI Provider Keys
+
 - `ANTHROPIC_API_KEY`: Anthropic API key for Claude models
 - `OPENAI_API_KEY`: OpenAI API key
 - `GOOGLE_API_KEY`: Google API key for Gemini models
@@ -1258,13 +1345,17 @@ Rate limits depend on your API provider. The API will return a 429 status code i
 ## Troubleshooting
 
 ### No API keys found
+
 Ensure you have set at least one API key in your environment variables or `.env` file.
 
 ### PRD parse errors
+
 Make sure your PRD content is well-formatted text. The API expects a clear project description with requirements.
 
 ### Rate limit errors
+
 If you encounter rate limits, consider:
+
 - Using a different API provider
 - Implementing request throttling in your client
 - Upgrading your API plan

@@ -5,6 +5,7 @@ This guide explains how to implement the enhanced input validation and sanitizat
 ## Overview
 
 The enhanced validation system provides:
+
 - Comprehensive input sanitization (XSS, SQL injection, path traversal protection)
 - Advanced validation for all data types
 - Automatic request sanitization middleware
@@ -37,11 +38,13 @@ Add the sanitization middleware to your main server file or router:
 import sanitizerMiddleware from './middleware/sanitizer.js';
 
 // Apply to all routes
-app.use(sanitizerMiddleware({
-  maxRequestSize: 10 * 1024 * 1024, // 10MB
-  strictMode: true,
-  skipSanitizationPaths: ['/api/health']
-}));
+app.use(
+	sanitizerMiddleware({
+		maxRequestSize: 10 * 1024 * 1024, // 10MB
+		strictMode: true,
+		skipSanitizationPaths: ['/api/health']
+	})
+);
 ```
 
 ### 2. Use Schema-Based Validation
@@ -53,21 +56,22 @@ import { createValidationMiddleware } from './schemas/index.js';
 
 // Before
 router.post('/signup', async (req, res) => {
-  const errors = validateSignupInput(req.body);
-  if (errors.length > 0) {
-    return res.status(400).json({ errors });
-  }
-  // ... handle request
+	const errors = validateSignupInput(req.body);
+	if (errors.length > 0) {
+		return res.status(400).json({ errors });
+	}
+	// ... handle request
 });
 
 // After
-router.post('/signup', 
-  createValidationMiddleware('auth', 'signup'),
-  async (req, res) => {
-    // Input is already validated and sanitized
-    const { email, password, fullName } = req.body;
-    // ... handle request
-  }
+router.post(
+	'/signup',
+	createValidationMiddleware('auth', 'signup'),
+	async (req, res) => {
+		// Input is already validated and sanitized
+		const { email, password, fullName } = req.body;
+		// ... handle request
+	}
 );
 ```
 
@@ -79,23 +83,23 @@ For specific field requirements:
 import { createFieldSanitizer } from './middleware/sanitizer.js';
 
 const projectFieldSanitizer = createFieldSanitizer({
-  body: {
-    name: {
-      type: 'alphanumeric',
-      required: true,
-      sanitizer: 'html',
-      options: { allowSpaces: true }
-    },
-    budget: {
-      type: 'number',
-      required: false,
-      options: { min: 0 }
-    }
-  }
+	body: {
+		name: {
+			type: 'alphanumeric',
+			required: true,
+			sanitizer: 'html',
+			options: { allowSpaces: true }
+		},
+		budget: {
+			type: 'number',
+			required: false,
+			options: { min: 0 }
+		}
+	}
 });
 
 router.post('/projects', projectFieldSanitizer, async (req, res) => {
-  // Fields are validated and sanitized
+	// Fields are validated and sanitized
 });
 ```
 
@@ -108,7 +112,7 @@ import { validators, sanitizers } from './utils/validation.js';
 
 // Validate individual values
 if (!validators.email(userEmail)) {
-  throw new Error('Invalid email');
+	throw new Error('Invalid email');
 }
 
 // Sanitize user input
@@ -122,16 +126,17 @@ const safeUrl = sanitizers.url(websiteUrl);
 The sanitizer middleware automatically validates file uploads:
 
 ```javascript
-router.post('/upload',
-  upload.single('file'), // multer middleware
-  sanitizerMiddleware({
-    maxFileSize: 50 * 1024 * 1024 // 50MB
-  }),
-  async (req, res) => {
-    // req.file is validated and has sanitizedFilename
-    const filename = req.file.sanitizedFilename;
-    // ... handle file
-  }
+router.post(
+	'/upload',
+	upload.single('file'), // multer middleware
+	sanitizerMiddleware({
+		maxFileSize: 50 * 1024 * 1024 // 50MB
+	}),
+	async (req, res) => {
+		// req.file is validated and has sanitizedFilename
+		const filename = req.file.sanitizedFilename;
+		// ... handle file
+	}
 );
 ```
 
@@ -141,24 +146,24 @@ router.post('/upload',
 
 ```javascript
 const schema = {
-  body: {
-    fieldName: {
-      type: 'string|number|boolean|email|url|uuid|date|etc',
-      required: true|false,
-      sanitizer: 'html|sql|path|url|json',
-      options: {
-        // Type-specific options
-      },
-      validator: (value) => boolean, // Custom validation
-      message: 'Custom error message'
-    }
-  },
-  query: {
-    // Query parameter validation
-  },
-  params: {
-    // Route parameter validation
-  }
+	body: {
+		fieldName: {
+			type: 'string|number|boolean|email|url|uuid|date|etc',
+			required: true | false,
+			sanitizer: 'html|sql|path|url|json',
+			options: {
+				// Type-specific options
+			},
+			validator: (value) => boolean, // Custom validation
+			message: 'Custom error message'
+		}
+	},
+	query: {
+		// Query parameter validation
+	},
+	params: {
+		// Route parameter validation
+	}
 };
 ```
 
@@ -185,6 +190,7 @@ const schema = {
 ### Example Schemas
 
 #### User Registration
+
 ```javascript
 {
   body: {
@@ -213,6 +219,7 @@ const schema = {
 ```
 
 #### Task Creation
+
 ```javascript
 {
   body: {
@@ -249,42 +256,52 @@ const schema = {
 ## Security Features
 
 ### 1. Automatic XSS Prevention
+
 All string inputs are automatically sanitized to prevent XSS attacks:
+
 ```javascript
 // Input: <script>alert('xss')</script>
 // Sanitized: &lt;script&gt;alert('xss')&lt;/script&gt;
 ```
 
 ### 2. SQL Injection Protection
+
 SQL special characters are escaped:
+
 ```javascript
 // Input: "'; DROP TABLE users; --"
 // Sanitized: "''; DROP TABLE users; --"
 ```
 
 ### 3. Path Traversal Protection
+
 File paths are sanitized to prevent directory traversal:
+
 ```javascript
 // Input: "../../../etc/passwd"
 // Sanitized: "etcpasswd"
 ```
 
 ### 4. Request Size Limits
+
 Prevents DoS attacks through large payloads:
+
 ```javascript
 sanitizerMiddleware({
-  maxRequestSize: 10 * 1024 * 1024, // 10MB
-  maxJsonDepth: 10,
-  maxArrayLength: 1000
-})
+	maxRequestSize: 10 * 1024 * 1024, // 10MB
+	maxJsonDepth: 10,
+	maxArrayLength: 1000
+});
 ```
 
 ### 5. Malicious Pattern Detection
+
 Logs and optionally blocks requests with suspicious patterns:
+
 ```javascript
 if (containsSqlInjectionPatterns(input) || containsXssPatterns(input)) {
-  // Log security event
-  // Optionally reject request
+	// Log security event
+	// Optionally reject request
 }
 ```
 
@@ -320,23 +337,23 @@ Example test cases:
 ```javascript
 // Test XSS prevention
 const xssPayloads = [
-  '<script>alert("xss")</script>',
-  '<img src=x onerror=alert("xss")>',
-  'javascript:alert("xss")'
+	'<script>alert("xss")</script>',
+	'<img src=x onerror=alert("xss")>',
+	'javascript:alert("xss")'
 ];
 
 // Test SQL injection prevention
 const sqlPayloads = [
-  "' OR '1'='1",
-  "'; DROP TABLE users; --",
-  "1' UNION SELECT * FROM users--"
+	"' OR '1'='1",
+	"'; DROP TABLE users; --",
+	"1' UNION SELECT * FROM users--"
 ];
 
 // Test path traversal prevention
 const pathPayloads = [
-  '../../../etc/passwd',
-  '..\\..\\..\\windows\\system32',
-  '/etc/passwd'
+	'../../../etc/passwd',
+	'..\\..\\..\\windows\\system32',
+	'/etc/passwd'
 ];
 
 // Each should be properly sanitized without breaking functionality

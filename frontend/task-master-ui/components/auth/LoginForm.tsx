@@ -85,14 +85,17 @@ export function LoginForm() {
 			toast.success('ログインしました');
 		} catch (error: any) {
 			console.error('Login error:', error);
-			
+
 			// メール未確認エラーのチェック
-			if (error.code === 'AUTH_EMAIL_NOT_VERIFIED' || 
-			    error.message?.includes('email not confirmed') ||
-			    error.message?.includes('not verified')) {
+			if (
+				error.code === 'AUTH_EMAIL_NOT_VERIFIED' ||
+				error.message?.includes('email not confirmed') ||
+				error.message?.includes('not verified')
+			) {
 				// メール未確認の場合は専用のエラーメッセージとアクションを表示
 				toast.error('メールアドレスの確認が必要です', {
-					description: '受信トレイを確認して、確認リンクをクリックしてください。',
+					description:
+						'受信トレイを確認して、確認リンクをクリックしてください。',
 					action: {
 						label: '確認メールを再送信',
 						onClick: () => {

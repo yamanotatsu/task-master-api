@@ -3,7 +3,7 @@ info:
   title: Task Master API
   description: |
     The Task Master API provides comprehensive project and task management capabilities with multi-tenant organization support.
-    
+
     ## Features
     - Multi-tenant architecture with organization management
     - JWT-based authentication with refresh tokens
@@ -11,13 +11,13 @@ info:
     - Comprehensive task and project management
     - Real-time capabilities with webhooks
     - Advanced filtering and search
-    
+
     ## Authentication
     All endpoints require authentication using Bearer tokens in the Authorization header:
     ```
     Authorization: Bearer <your_access_token>
     ```
-    
+
     ## Rate Limiting
     - Authentication endpoints: 10 requests per minute per IP
     - General API endpoints: 1000 requests per hour per user
@@ -75,10 +75,10 @@ components:
           properties:
             code:
               type: string
-              example: "VALIDATION_ERROR"
+              example: 'VALIDATION_ERROR'
             message:
               type: string
-              example: "Invalid input data"
+              example: 'Invalid input data'
             details:
               type: array
               items:
@@ -104,37 +104,37 @@ components:
         id:
           type: string
           format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: '550e8400-e29b-41d4-a716-446655440000'
         email:
           type: string
           format: email
-          example: "john.doe@example.com"
+          example: 'john.doe@example.com'
         fullName:
           type: string
-          example: "John Doe"
+          example: 'John Doe'
         avatarUrl:
           type: string
           format: uri
           nullable: true
-          example: "https://example.com/avatar.jpg"
+          example: 'https://example.com/avatar.jpg'
         createdAt:
           type: string
           format: date-time
-          example: "2024-01-01T00:00:00Z"
+          example: '2024-01-01T00:00:00Z'
         updatedAt:
           type: string
           format: date-time
-          example: "2024-01-10T00:00:00Z"
+          example: '2024-01-10T00:00:00Z'
 
     Tokens:
       type: object
       properties:
         accessToken:
           type: string
-          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
         refreshToken:
           type: string
-          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
         expiresIn:
           type: integer
           example: 3600
@@ -146,22 +146,22 @@ components:
         id:
           type: string
           format: uuid
-          example: "650e8400-e29b-41d4-a716-446655440001"
+          example: '650e8400-e29b-41d4-a716-446655440001'
         name:
           type: string
-          example: "Acme Corporation"
+          example: 'Acme Corporation'
         description:
           type: string
           nullable: true
-          example: "A sample organization"
+          example: 'A sample organization'
         createdAt:
           type: string
           format: date-time
-          example: "2024-01-01T00:00:00Z"
+          example: '2024-01-01T00:00:00Z'
         updatedAt:
           type: string
           format: date-time
-          example: "2024-01-01T00:00:00Z"
+          example: '2024-01-01T00:00:00Z'
 
     OrganizationWithMembership:
       allOf:
@@ -171,7 +171,7 @@ components:
             role:
               type: string
               enum: [admin, member]
-              example: "admin"
+              example: 'admin'
             memberCount:
               type: integer
               example: 5
@@ -181,7 +181,7 @@ components:
             joinedAt:
               type: string
               format: date-time
-              example: "2024-01-01T00:00:00Z"
+              example: '2024-01-01T00:00:00Z'
 
     Member:
       type: object
@@ -189,32 +189,32 @@ components:
         id:
           type: string
           format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: '550e8400-e29b-41d4-a716-446655440000'
         email:
           type: string
           format: email
-          example: "john.doe@example.com"
+          example: 'john.doe@example.com'
         fullName:
           type: string
-          example: "John Doe"
+          example: 'John Doe'
         avatarUrl:
           type: string
           format: uri
           nullable: true
-          example: "https://example.com/avatar.jpg"
+          example: 'https://example.com/avatar.jpg'
         role:
           type: string
           enum: [admin, member]
-          example: "admin"
+          example: 'admin'
         joinedAt:
           type: string
           format: date-time
-          example: "2024-01-01T00:00:00Z"
+          example: '2024-01-01T00:00:00Z'
         lastActiveAt:
           type: string
           format: date-time
           nullable: true
-          example: "2024-01-10T12:00:00Z"
+          example: '2024-01-10T12:00:00Z'
 
     Invitation:
       type: object
@@ -222,23 +222,23 @@ components:
         id:
           type: string
           format: uuid
-          example: "750e8400-e29b-41d4-a716-446655440002"
+          example: '750e8400-e29b-41d4-a716-446655440002'
         email:
           type: string
           format: email
-          example: "newmember@example.com"
+          example: 'newmember@example.com'
         role:
           type: string
           enum: [admin, member]
-          example: "member"
+          example: 'member'
         expiresAt:
           type: string
           format: date-time
-          example: "2024-01-08T00:00:00Z"
+          example: '2024-01-08T00:00:00Z'
         inviteUrl:
           type: string
           format: uri
-          example: "https://app.taskmaster.com/invite/unique-token-here"
+          example: 'https://app.taskmaster.com/invite/unique-token-here'
 
     # Project schemas
     Project:
@@ -247,39 +247,39 @@ components:
         id:
           type: string
           format: uuid
-          example: "850e8400-e29b-41d4-a716-446655440003"
+          example: '850e8400-e29b-41d4-a716-446655440003'
         organizationId:
           type: string
           format: uuid
-          example: "650e8400-e29b-41d4-a716-446655440001"
+          example: '650e8400-e29b-41d4-a716-446655440001'
         name:
           type: string
-          example: "Website Redesign"
+          example: 'Website Redesign'
         description:
           type: string
           nullable: true
-          example: "Complete redesign of the company website"
+          example: 'Complete redesign of the company website'
         priority:
           type: string
           enum: [low, medium, high]
-          example: "high"
+          example: 'high'
         status:
           type: string
           enum: [planning, active, completed, cancelled]
-          example: "active"
+          example: 'active'
         dueDate:
           type: string
           format: date-time
           nullable: true
-          example: "2024-06-30T23:59:59Z"
+          example: '2024-06-30T23:59:59Z'
         createdAt:
           type: string
           format: date-time
-          example: "2024-01-01T00:00:00Z"
+          example: '2024-01-01T00:00:00Z'
         updatedAt:
           type: string
           format: date-time
-          example: "2024-01-10T00:00:00Z"
+          example: '2024-01-10T00:00:00Z'
 
     ProjectWithStats:
       allOf:
@@ -307,36 +307,36 @@ components:
         id:
           type: string
           format: uuid
-          example: "950e8400-e29b-41d4-a716-446655440004"
+          example: '950e8400-e29b-41d4-a716-446655440004'
         projectId:
           type: string
           format: uuid
-          example: "850e8400-e29b-41d4-a716-446655440003"
+          example: '850e8400-e29b-41d4-a716-446655440003'
         title:
           type: string
-          example: "Design homepage mockup"
+          example: 'Design homepage mockup'
         description:
           type: string
           nullable: true
-          example: "Create wireframes and high-fidelity mockups"
+          example: 'Create wireframes and high-fidelity mockups'
         status:
           type: string
           enum: [todo, in_progress, completed, cancelled]
-          example: "todo"
+          example: 'todo'
         priority:
           type: string
           enum: [low, medium, high]
-          example: "high"
+          example: 'high'
         assigneeId:
           type: string
           format: uuid
           nullable: true
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: '550e8400-e29b-41d4-a716-446655440000'
         dueDate:
           type: string
           format: date-time
           nullable: true
-          example: "2024-02-15T17:00:00Z"
+          example: '2024-02-15T17:00:00Z'
         estimatedHours:
           type: number
           format: float
@@ -351,20 +351,20 @@ components:
           type: array
           items:
             type: string
-          example: ["design", "homepage", "ui"]
+          example: ['design', 'homepage', 'ui']
         createdAt:
           type: string
           format: date-time
-          example: "2024-01-01T00:00:00Z"
+          example: '2024-01-01T00:00:00Z'
         updatedAt:
           type: string
           format: date-time
-          example: "2024-01-05T10:00:00Z"
+          example: '2024-01-05T10:00:00Z'
         completedAt:
           type: string
           format: date-time
           nullable: true
-          example: "2024-01-15T16:30:00Z"
+          example: '2024-01-15T16:30:00Z'
 
     TaskWithAssignee:
       allOf:
@@ -397,35 +397,35 @@ components:
         id:
           type: string
           format: uuid
-          example: "a50e8400-e29b-41d4-a716-446655440005"
+          example: 'a50e8400-e29b-41d4-a716-446655440005'
         taskId:
           type: string
           format: uuid
-          example: "950e8400-e29b-41d4-a716-446655440004"
+          example: '950e8400-e29b-41d4-a716-446655440004'
         title:
           type: string
-          example: "Create wireframes"
+          example: 'Create wireframes'
         description:
           type: string
           nullable: true
-          example: "Design basic wireframes for layout"
+          example: 'Design basic wireframes for layout'
         status:
           type: string
           enum: [todo, completed]
-          example: "todo"
+          example: 'todo'
         createdAt:
           type: string
           format: date-time
-          example: "2024-01-01T00:00:00Z"
+          example: '2024-01-01T00:00:00Z'
         updatedAt:
           type: string
           format: date-time
-          example: "2024-01-03T14:00:00Z"
+          example: '2024-01-03T14:00:00Z'
         completedAt:
           type: string
           format: date-time
           nullable: true
-          example: "2024-01-03T14:00:00Z"
+          example: '2024-01-03T14:00:00Z'
 
     # Request schemas
     SignupRequest:
@@ -439,15 +439,15 @@ components:
           type: string
           minLength: 1
           maxLength: 100
-          example: "John Doe"
+          example: 'John Doe'
         email:
           type: string
           format: email
-          example: "john.doe@example.com"
+          example: 'john.doe@example.com'
         password:
           type: string
           minLength: 8
-          example: "SecurePassword123!"
+          example: 'SecurePassword123!'
 
     LoginRequest:
       type: object
@@ -458,10 +458,10 @@ components:
         email:
           type: string
           format: email
-          example: "john.doe@example.com"
+          example: 'john.doe@example.com'
         password:
           type: string
-          example: "SecurePassword123!"
+          example: 'SecurePassword123!'
 
     RefreshTokenRequest:
       type: object
@@ -470,7 +470,7 @@ components:
       properties:
         refreshToken:
           type: string
-          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
 
     CreateOrganizationRequest:
       type: object
@@ -480,11 +480,11 @@ components:
         name:
           type: string
           maxLength: 100
-          example: "Acme Corporation"
+          example: 'Acme Corporation'
         description:
           type: string
           maxLength: 500
-          example: "A sample organization"
+          example: 'A sample organization'
 
     UpdateOrganizationRequest:
       type: object
@@ -492,11 +492,11 @@ components:
         name:
           type: string
           maxLength: 100
-          example: "Acme Corporation (Updated)"
+          example: 'Acme Corporation (Updated)'
         description:
           type: string
           maxLength: 500
-          example: "Updated description"
+          example: 'Updated description'
 
     InviteMemberRequest:
       type: object
@@ -506,12 +506,12 @@ components:
         email:
           type: string
           format: email
-          example: "newmember@example.com"
+          example: 'newmember@example.com'
         role:
           type: string
           enum: [admin, member]
           default: member
-          example: "member"
+          example: 'member'
 
     UpdateMemberRoleRequest:
       type: object
@@ -521,7 +521,7 @@ components:
         role:
           type: string
           enum: [admin, member]
-          example: "admin"
+          example: 'admin'
 
     CreateProjectRequest:
       type: object
@@ -531,20 +531,20 @@ components:
         name:
           type: string
           maxLength: 100
-          example: "Website Redesign"
+          example: 'Website Redesign'
         description:
           type: string
           maxLength: 1000
-          example: "Complete redesign of the company website"
+          example: 'Complete redesign of the company website'
         priority:
           type: string
           enum: [low, medium, high]
           default: medium
-          example: "high"
+          example: 'high'
         dueDate:
           type: string
           format: date-time
-          example: "2024-06-30T23:59:59Z"
+          example: '2024-06-30T23:59:59Z'
 
     UpdateProjectRequest:
       type: object
@@ -552,23 +552,23 @@ components:
         name:
           type: string
           maxLength: 100
-          example: "Website Redesign - Phase 2"
+          example: 'Website Redesign - Phase 2'
         description:
           type: string
           maxLength: 1000
-          example: "Updated description"
+          example: 'Updated description'
         priority:
           type: string
           enum: [low, medium, high]
-          example: "medium"
+          example: 'medium'
         status:
           type: string
           enum: [planning, active, completed, cancelled]
-          example: "active"
+          example: 'active'
         dueDate:
           type: string
           format: date-time
-          example: "2024-07-15T23:59:59Z"
+          example: '2024-07-15T23:59:59Z'
 
     CreateTaskRequest:
       type: object
@@ -578,24 +578,24 @@ components:
         title:
           type: string
           maxLength: 200
-          example: "Design homepage mockup"
+          example: 'Design homepage mockup'
         description:
           type: string
           maxLength: 2000
-          example: "Create wireframes and high-fidelity mockups"
+          example: 'Create wireframes and high-fidelity mockups'
         priority:
           type: string
           enum: [low, medium, high]
           default: medium
-          example: "high"
+          example: 'high'
         assigneeId:
           type: string
           format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: '550e8400-e29b-41d4-a716-446655440000'
         dueDate:
           type: string
           format: date-time
-          example: "2024-02-15T17:00:00Z"
+          example: '2024-02-15T17:00:00Z'
         estimatedHours:
           type: number
           format: float
@@ -605,7 +605,7 @@ components:
           type: array
           items:
             type: string
-          example: ["design", "homepage", "ui"]
+          example: ['design', 'homepage', 'ui']
 
     UpdateTaskRequest:
       type: object
@@ -613,27 +613,27 @@ components:
         title:
           type: string
           maxLength: 200
-          example: "Design homepage mockup - Updated"
+          example: 'Design homepage mockup - Updated'
         description:
           type: string
           maxLength: 2000
-          example: "Updated description"
+          example: 'Updated description'
         status:
           type: string
           enum: [todo, in_progress, completed, cancelled]
-          example: "completed"
+          example: 'completed'
         priority:
           type: string
           enum: [low, medium, high]
-          example: "medium"
+          example: 'medium'
         assigneeId:
           type: string
           format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: '550e8400-e29b-41d4-a716-446655440000'
         dueDate:
           type: string
           format: date-time
-          example: "2024-02-20T17:00:00Z"
+          example: '2024-02-20T17:00:00Z'
         estimatedHours:
           type: number
           format: float
@@ -648,7 +648,7 @@ components:
           type: array
           items:
             type: string
-          example: ["design", "homepage", "ui", "completed"]
+          example: ['design', 'homepage', 'ui', 'completed']
 
     CreateSubtaskRequest:
       type: object
@@ -658,11 +658,11 @@ components:
         title:
           type: string
           maxLength: 200
-          example: "Create wireframes"
+          example: 'Create wireframes'
         description:
           type: string
           maxLength: 1000
-          example: "Design basic wireframes for layout"
+          example: 'Design basic wireframes for layout'
 
     UpdateSubtaskRequest:
       type: object
@@ -670,15 +670,15 @@ components:
         title:
           type: string
           maxLength: 200
-          example: "Create wireframes - Updated"
+          example: 'Create wireframes - Updated'
         description:
           type: string
           maxLength: 1000
-          example: "Updated description"
+          example: 'Updated description'
         status:
           type: string
           enum: [todo, completed]
-          example: "completed"
+          example: 'completed'
 
   parameters:
     OrganizationId:
@@ -785,7 +785,7 @@ paths:
                         properties:
                           message:
                             type: string
-                            example: "Registration successful. Please check your email to verify your account."
+                            example: 'Registration successful. Please check your email to verify your account.'
                           user:
                             type: object
                             properties:
@@ -878,7 +878,7 @@ paths:
                         properties:
                           message:
                             type: string
-                            example: "Successfully logged out"
+                            example: 'Successfully logged out'
 
   /auth/refresh:
     post:
@@ -934,7 +934,7 @@ paths:
                 email:
                   type: string
                   format: email
-                  example: "john.doe@example.com"
+                  example: 'john.doe@example.com'
       responses:
         '200':
           description: Password reset email sent (if account exists)
@@ -950,7 +950,7 @@ paths:
                         properties:
                           message:
                             type: string
-                            example: "If an account exists with this email, a password reset link has been sent."
+                            example: 'If an account exists with this email, a password reset link has been sent.'
 
   /auth/reset-password:
     post:
@@ -971,11 +971,11 @@ paths:
               properties:
                 token:
                   type: string
-                  example: "reset-token-from-email"
+                  example: 'reset-token-from-email'
                 newPassword:
                   type: string
                   minLength: 8
-                  example: "NewSecurePassword123!"
+                  example: 'NewSecurePassword123!'
       responses:
         '200':
           description: Password reset successful
@@ -991,7 +991,7 @@ paths:
                         properties:
                           message:
                             type: string
-                            example: "Password has been reset successfully"
+                            example: 'Password has been reset successfully'
 
   # User profile endpoints
   /users/profile:
@@ -1031,11 +1031,11 @@ paths:
                 fullName:
                   type: string
                   maxLength: 100
-                  example: "John Smith"
+                  example: 'John Smith'
                 avatarUrl:
                   type: string
                   format: uri
-                  example: "https://example.com/new-avatar.jpg"
+                  example: 'https://example.com/new-avatar.jpg'
       responses:
         '200':
           description: Profile updated successfully
@@ -1070,11 +1070,11 @@ paths:
               properties:
                 currentPassword:
                   type: string
-                  example: "CurrentPassword123!"
+                  example: 'CurrentPassword123!'
                 newPassword:
                   type: string
                   minLength: 8
-                  example: "NewPassword123!"
+                  example: 'NewPassword123!'
       responses:
         '200':
           description: Password updated successfully
@@ -1090,7 +1090,7 @@ paths:
                         properties:
                           message:
                             type: string
-                            example: "Password updated successfully"
+                            example: 'Password updated successfully'
 
   # Organization endpoints
   /organizations:
@@ -1151,7 +1151,7 @@ paths:
                             properties:
                               role:
                                 type: string
-                                example: "admin"
+                                example: 'admin'
                               joinedAt:
                                 type: string
                                 format: date-time
@@ -1244,7 +1244,7 @@ paths:
               properties:
                 confirmDeletion:
                   type: string
-                  example: "DELETE MY ORGANIZATION"
+                  example: 'DELETE MY ORGANIZATION'
       responses:
         '200':
           description: Organization deleted successfully
@@ -1260,7 +1260,7 @@ paths:
                         properties:
                           message:
                             type: string
-                            example: "Organization has been permanently deleted"
+                            example: 'Organization has been permanently deleted'
 
   # Member management endpoints
   /organizations/{organizationId}/invites:
@@ -1392,7 +1392,7 @@ paths:
                         properties:
                           message:
                             type: string
-                            example: "Member has been removed from the organization"
+                            example: 'Member has been removed from the organization'
 
   # Project endpoints
   /organizations/{organizationId}/projects:
@@ -1566,7 +1566,7 @@ paths:
                         properties:
                           message:
                             type: string
-                            example: "Project has been deleted successfully"
+                            example: 'Project has been deleted successfully'
 
   # Task endpoints
   /projects/{projectId}/tasks:
@@ -1761,7 +1761,7 @@ paths:
                         properties:
                           message:
                             type: string
-                            example: "Task has been deleted successfully"
+                            example: 'Task has been deleted successfully'
 
   # Subtask endpoints
   /tasks/{taskId}/subtasks:
@@ -1846,7 +1846,7 @@ paths:
                         properties:
                           message:
                             type: string
-                            example: "Subtask has been deleted successfully"
+                            example: 'Subtask has been deleted successfully'
 
 tags:
   - name: Authentication

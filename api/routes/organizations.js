@@ -52,7 +52,7 @@ router.post('/', authMiddleware, async (req, res) => {
 		// Try direct approach if RPC fails
 		let organization;
 		let useDirectApproach = false;
-		
+
 		// First try the RPC function
 		const { data, error } = await supabase.rpc(
 			'create_organization_with_admin',
@@ -62,7 +62,7 @@ router.post('/', authMiddleware, async (req, res) => {
 				admin_id: userId
 			}
 		);
-		
+
 		// Log the error for debugging
 		if (error) {
 			logger.error('RPC error details:', {
@@ -72,17 +72,19 @@ router.post('/', authMiddleware, async (req, res) => {
 				code: error.code,
 				userId: userId
 			});
-			
+
 			// Fallback to direct insertion
 			useDirectApproach = true;
 		}
 
 		if (useDirectApproach) {
 			// Generate slug from name
-			const slug = name.trim().toLowerCase()
+			const slug = name
+				.trim()
+				.toLowerCase()
 				.replace(/[^a-z0-9]+/g, '-')
 				.replace(/^-+|-+$/g, '');
-			
+
 			// Try direct insertion with slug if required
 			const { data: orgData, error: orgError } = await supabase
 				.from('organizations')
@@ -93,10 +95,10 @@ router.post('/', authMiddleware, async (req, res) => {
 				})
 				.select()
 				.single();
-				
+
 			if (orgError) {
 				logger.error('Direct org creation failed:', orgError);
-				
+
 				// Try without slug
 				const { data: orgData2, error: orgError2 } = await supabase
 					.from('organizations')
@@ -106,10 +108,13 @@ router.post('/', authMiddleware, async (req, res) => {
 					})
 					.select()
 					.single();
-					
+
 				if (orgError2) {
-					logger.error('Direct org creation without slug also failed:', orgError2);
-					
+					logger.error(
+						'Direct org creation without slug also failed:',
+						orgError2
+					);
+
 					if (
 						orgError2.message.includes('duplicate') ||
 						orgError2.message.includes('already exists')
@@ -122,7 +127,7 @@ router.post('/', authMiddleware, async (req, res) => {
 							}
 						});
 					}
-					
+
 					return res.status(500).json({
 						success: false,
 						error: {
@@ -131,12 +136,12 @@ router.post('/', authMiddleware, async (req, res) => {
 						}
 					});
 				}
-				
+
 				organization = orgData2;
 			} else {
 				organization = orgData;
 			}
-			
+
 			// Add user as admin
 			const { error: memberError } = await supabase
 				.from('organization_members')
@@ -145,13 +150,13 @@ router.post('/', authMiddleware, async (req, res) => {
 					user_id: userId,
 					role: 'admin'
 				});
-				
+
 			if (memberError) {
 				logger.error('Failed to add admin member:', memberError);
-				
+
 				// Try to clean up the organization
 				await supabase.from('organizations').delete().eq('id', organization.id);
-				
+
 				return res.status(500).json({
 					success: false,
 					error: {
@@ -188,7 +193,7 @@ router.post('/', authMiddleware, async (req, res) => {
 					}
 				});
 			}
-			
+
 			organization = orgData;
 		}
 
@@ -1048,7 +1053,8 @@ router.post(
 			// Get invitation details
 			const { data: invitation, error: inviteError } = await supabase
 				.from('invitations')
-				.select(`
+				.select(
+					`
 					id,
 					email,
 					role,
@@ -1064,7 +1070,8 @@ router.post(
 						id,
 						name
 					)
-				`)
+				`
+				)
 				.eq('id', inviteId)
 				.eq('organization_id', organizationId)
 				.single();
@@ -1092,7 +1099,9 @@ router.post(
 
 			// Check if expired and generate new token if needed
 			const isExpired = new Date(invitation.expires_at) < new Date();
-			const newToken = isExpired ? crypto.randomBytes(32).toString('hex') : invitation.token;
+			const newToken = isExpired
+				? crypto.randomBytes(32).toString('hex')
+				: invitation.token;
 			const newExpiresAt = new Date();
 			newExpiresAt.setDate(newExpiresAt.getDate() + 7); // 7 days from now
 
@@ -1120,7 +1129,10 @@ router.post(
 			}
 
 			// Prepare email data
-			const inviterName = invitation.inviter?.full_name || invitation.inviter?.email || 'A team member';
+			const inviterName =
+				invitation.inviter?.full_name ||
+				invitation.inviter?.email ||
+				'A team member';
 
 			const inviteUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/invite/${newToken}`;
 
@@ -1144,7 +1156,9 @@ router.post(
 				data: {
 					message: 'Invitation has been resent',
 					email: invitation.email,
-					expiresAt: isExpired ? newExpiresAt.toISOString() : invitation.expires_at
+					expiresAt: isExpired
+						? newExpiresAt.toISOString()
+						: invitation.expires_at
 				}
 			});
 		} catch (error) {

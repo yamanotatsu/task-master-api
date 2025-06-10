@@ -5,6 +5,7 @@ The API server has been configured for authentication with the following updates
 ## 1. Environment Configuration
 
 Created `/api/.env.example` with all necessary configuration variables:
+
 - Supabase configuration (URL, keys)
 - JWT and encryption settings
 - Frontend URL for CORS
@@ -18,23 +19,27 @@ Created `/api/.env.example` with all necessary configuration variables:
 Updated `/api/server-db.js` with:
 
 ### CORS Configuration
+
 - Dynamic origin validation based on environment variables
 - Support for multiple allowed origins
 - Credentials enabled for cookie/auth support
 - Proper headers configuration
 
 ### Security Headers
+
 - Helmet.js integration with strict CSP
 - HSTS enabled with preload
 - Additional security headers (X-Frame-Options, X-Content-Type-Options, etc.)
 - Removed fingerprinting headers
 
 ### Rate Limiting
+
 - General API rate limiting (100 requests per 15 minutes)
 - Stricter auth endpoint rate limiting (5 requests per 15 minutes)
 - Rate limit headers exposed to clients
 
 ### Request Logging
+
 - Request timing middleware
 - Basic request logging
 - Security header injection
@@ -42,6 +47,7 @@ Updated `/api/server-db.js` with:
 ## 3. Authentication Routes
 
 The following authentication endpoints are available at `/api/v1/auth`:
+
 - POST `/signup` - User registration
 - POST `/login` - User login with JWT tokens
 - POST `/logout` - User logout (requires auth)
@@ -53,6 +59,7 @@ The following authentication endpoints are available at `/api/v1/auth`:
 ## 4. Middleware
 
 Authentication middleware available:
+
 - `authMiddleware` - Verifies JWT tokens and attaches user to request
 - `requireRole` - Role-based access control
 - `optionalAuth` - Optional authentication (doesn't fail if no token)
@@ -61,6 +68,7 @@ Authentication middleware available:
 ## 5. Dependencies
 
 Added required dependencies:
+
 - `express-rate-limit` - For rate limiting functionality
 
 ## Usage

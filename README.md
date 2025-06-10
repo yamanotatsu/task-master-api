@@ -12,18 +12,21 @@ A task management system for AI-driven development with Claude, designed to work
 ## Features
 
 ### Core Task Management
+
 - AI-powered task generation from PRDs (Product Requirements Documents)
 - Intelligent task breakdown and dependency management
 - Multi-user collaboration with role-based access control
 - Real-time project synchronization
 
 ### Authentication & Security
+
 - Complete user authentication system powered by Supabase
 - Multi-organization support with member management
 - Row-level security for data isolation
 - JWT-based authentication with session management
 
 ### AI Integration
+
 - Support for multiple AI providers (Claude, GPT, Gemini, etc.)
 - Configurable model selection for different use cases
 - Intelligent task analysis and complexity assessment
@@ -32,6 +35,7 @@ A task management system for AI-driven development with Claude, designed to work
 ## Requirements
 
 ### AI Provider Keys
+
 Taskmaster utilizes AI across several commands, and those require a separate API key. You can use a variety of models from different AI providers provided you add your API keys.
 
 At least one (1) of the following is required:
@@ -44,6 +48,7 @@ At least one (1) of the following is required:
 - OpenRouter API Key (for research or main model)
 
 ### Database & Authentication
+
 - **Supabase account** - Required for authentication and data storage
 - **PostgreSQL database** - Provided by Supabase
 
@@ -54,6 +59,7 @@ Using the research model is optional but highly recommended. You will need at le
 ### 🚀 New to Task Master? Start Here!
 
 **For the fastest setup with authentication:**
+
 - [**Quick Start Guide**](./QUICKSTART.md) - Get running in 5 minutes
 - [**Full Deployment Guide**](./DEPLOYMENT.md) - Complete production setup
 - [**Environment Configuration**](./ENVIRONMENT.md) - Detailed environment setup
@@ -210,18 +216,21 @@ task-master generate
 ## Documentation
 
 ### Setup & Deployment
+
 - [**Quick Start Guide**](./QUICKSTART.md) - Get running in 5 minutes
 - [**Full Deployment Guide**](./DEPLOYMENT.md) - Complete production setup
 - [**Environment Configuration**](./ENVIRONMENT.md) - Detailed environment variables
 - [**Supabase Setup**](./SUPABASE_SETUP.md) - Database and authentication setup
 
 ### Authentication System
+
 - [**Authentication Overview**](./requirements-docs/authentication/01-authentication-overview.md) - System architecture
 - [**Database Schema**](./requirements-docs/authentication/02-database-schema.md) - Database design
 - [**API Endpoints**](./requirements-docs/authentication/03-api-endpoints.md) - API reference
 - [**Security Guidelines**](./requirements-docs/authentication/05-security-guidelines.md) - Security best practices
 
 ### Usage & Configuration
+
 - [Configuration Guide](docs/configuration.md) - Set up environment variables and customize Task Master
 - [Tutorial](docs/tutorial.md) - Step-by-step guide to getting started with Task Master
 - [Command Reference](docs/command-reference.md) - Complete list of all available commands
