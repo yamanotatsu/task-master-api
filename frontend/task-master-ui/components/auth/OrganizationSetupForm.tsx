@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -93,24 +94,12 @@ export function OrganizationSetupForm({
 
 		try {
 			// Create organization via API
-			const response = await fetch('/api/organizations', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					name: organizationName,
-					description: description || `${organizationName}のワークスペース`,
-					type: organizationType
-				})
+			const result = await api.createOrganization({
+				name: organizationName,
+				description: description || `${organizationName}のワークスペース`
 			});
 
-			if (!response.ok) {
-				throw new Error('組織の作成に失敗しました');
-			}
-
-			const result = await response.json();
-			const organizationId = result.data.organization.id;
+			const organizationId = result.organization.id;
 
 			// Update user's current_organization_id
 			const { error: profileError } = await supabase
