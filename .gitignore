@@ -82,5 +82,8 @@ dev-debug.log
 # Temporary files
 temp/
 
+# Development emails
+dev-emails/
+
 /src/generated/prisma
 repomix-output.xml
