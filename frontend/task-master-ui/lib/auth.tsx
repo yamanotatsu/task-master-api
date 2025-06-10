@@ -186,7 +186,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				password
 			});
 
-			if (error) throw error;
+			if (error) {
+				// Supabaseのエラーを詳細に処理
+				if (error.message?.includes('email not confirmed') || 
+				    error.message?.includes('Email not confirmed')) {
+					const emailNotVerifiedError = new Error('Email not confirmed');
+					(emailNotVerifiedError as any).code = 'AUTH_EMAIL_NOT_VERIFIED';
+					throw emailNotVerifiedError;
+				}
+				throw error;
+			}
 
 			if (data.user) {
 				await loadProfile(data.user.id);
@@ -231,11 +240,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			if (error) throw error;
 
 			if (data.user) {
-				// 認証状態の確立を待つ
-				await new Promise((resolve) => setTimeout(resolve, 1000));
-
-				// 組織作成ページへリダイレクト
-				router.push('/setup/organization');
+				// サインアップ成功 - メール確認は別途SignupFormで処理
+				// ここではリダイレクトしない（SignupFormでverify-emailページへリダイレクト）
 			}
 		} catch (err) {
 			console.error('Signup error:', err);
