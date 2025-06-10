@@ -1,255 +1,292 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/auth'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Spinner } from '@/components/ui/spinner'
-import Link from 'next/link'
-import { toast } from 'sonner'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle
+} from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Spinner } from '@/components/ui/spinner';
+import Link from 'next/link';
+import { toast } from 'sonner';
 
 export function SignupForm() {
-  const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [agreeToTerms, setAgreeToTerms] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState<{
-    fullName?: string
-    email?: string
-    password?: string
-    confirmPassword?: string
-    terms?: string
-  }>({})
-  
-  const { signup } = useAuth()
-  const router = useRouter()
+	const [fullName, setFullName] = useState('');
+	const [email, setEmail] = useState('');
+	const [password, setPassword] = useState('');
+	const [confirmPassword, setConfirmPassword] = useState('');
+	const [agreeToTerms, setAgreeToTerms] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
+	const [errors, setErrors] = useState<{
+		fullName?: string;
+		email?: string;
+		password?: string;
+		confirmPassword?: string;
+		terms?: string;
+	}>({});
 
-  const getPasswordStrength = (password: string) => {
-    let strength = 0
-    if (password.length >= 8) strength++
-    if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++
-    if (password.match(/[0-9]/)) strength++
-    if (password.match(/[^a-zA-Z0-9]/)) strength++
-    
-    return {
-      score: strength,
-      label: strength === 0 ? '弱い' : strength === 1 ? '普通' : strength === 2 ? '良い' : strength === 3 ? '強い' : '非常に強い',
-      color: strength === 0 ? 'bg-red-500' : strength === 1 ? 'bg-orange-500' : strength === 2 ? 'bg-yellow-500' : strength === 3 ? 'bg-green-500' : 'bg-green-600'
-    }
-  }
+	const { signup } = useAuth();
+	const router = useRouter();
 
-  const passwordStrength = getPasswordStrength(password)
+	const getPasswordStrength = (password: string) => {
+		let strength = 0;
+		if (password.length >= 8) strength++;
+		if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+		if (password.match(/[0-9]/)) strength++;
+		if (password.match(/[^a-zA-Z0-9]/)) strength++;
 
-  const validateForm = () => {
-    const newErrors: typeof errors = {}
-    
-    if (!fullName) {
-      newErrors.fullName = '氏名を入力してください'
-    } else if (fullName.length < 2) {
-      newErrors.fullName = '氏名は2文字以上で入力してください'
-    }
-    
-    if (!email) {
-      newErrors.email = 'メールアドレスを入力してください'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = '有効なメールアドレスを入力してください'
-    }
-    
-    if (!password) {
-      newErrors.password = 'パスワードを入力してください'
-    } else if (password.length < 6) {
-      newErrors.password = 'パスワードは6文字以上で入力してください'
-    }
-    
-    if (!confirmPassword) {
-      newErrors.confirmPassword = 'パスワード（確認）を入力してください'
-    } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'パスワードが一致しません'
-    }
-    
-    if (!agreeToTerms) {
-      newErrors.terms = '利用規約に同意してください'
-    }
-    
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+		return {
+			score: strength,
+			label:
+				strength === 0
+					? '弱い'
+					: strength === 1
+						? '普通'
+						: strength === 2
+							? '良い'
+							: strength === 3
+								? '強い'
+								: '非常に強い',
+			color:
+				strength === 0
+					? 'bg-red-500'
+					: strength === 1
+						? 'bg-orange-500'
+						: strength === 2
+							? 'bg-yellow-500'
+							: strength === 3
+								? 'bg-green-500'
+								: 'bg-green-600'
+		};
+	};
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!validateForm()) return
-    
-    setIsLoading(true)
-    setErrors({})
-    
-    try {
-      await signup(email, password, fullName)
-      toast.success('アカウントを作成しました')
-    } catch (error: any) {
-      console.error('Signup error:', error)
-      
-      if (error.message?.includes('already registered')) {
-        setErrors({ email: 'このメールアドレスは既に登録されています' })
-      } else {
-        toast.error('アカウントの作成に失敗しました。もう一度お試しください。')
-      }
-    } finally {
-      setIsLoading(false)
-    }
-  }
+	const passwordStrength = getPasswordStrength(password);
 
-  return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">新規登録</CardTitle>
-        <CardDescription>
-          アカウントを作成してタスク管理を始めましょう
-        </CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="fullName">氏名</Label>
-            <Input
-              id="fullName"
-              type="text"
-              placeholder="山田 太郎"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              disabled={isLoading}
-              className={errors.fullName ? 'border-red-500' : ''}
-            />
-            {errors.fullName && (
-              <p className="text-sm text-red-500 mt-1">{errors.fullName}</p>
-            )}
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="email">メールアドレス</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="example@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
-              className={errors.email ? 'border-red-500' : ''}
-            />
-            {errors.email && (
-              <p className="text-sm text-red-500 mt-1">{errors.email}</p>
-            )}
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="password">パスワード</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-              className={errors.password ? 'border-red-500' : ''}
-            />
-            {errors.password && (
-              <p className="text-sm text-red-500 mt-1">{errors.password}</p>
-            )}
-            {password && (
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                  <div className="flex-1 bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all ${passwordStrength.color}`}
-                      style={{ width: `${(passwordStrength.score / 4) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-medium">{passwordStrength.label}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  パスワードは8文字以上で、大文字・小文字・数字・記号を含めることを推奨します
-                </p>
-              </div>
-            )}
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">パスワード（確認）</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={isLoading}
-              className={errors.confirmPassword ? 'border-red-500' : ''}
-            />
-            {errors.confirmPassword && (
-              <p className="text-sm text-red-500 mt-1">{errors.confirmPassword}</p>
-            )}
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                id="terms"
-                checked={agreeToTerms}
-                onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
-                disabled={isLoading}
-                className="mt-1"
-              />
-              <div className="space-y-1">
-                <Label
-                  htmlFor="terms"
-                  className="text-sm font-normal cursor-pointer leading-relaxed"
-                >
-                  <Link href="/terms" className="text-primary hover:underline">
-                    利用規約
-                  </Link>
-                  {' '}および{' '}
-                  <Link href="/privacy" className="text-primary hover:underline">
-                    プライバシーポリシー
-                  </Link>
-                  {' '}に同意します
-                </Label>
-                {errors.terms && (
-                  <p className="text-sm text-red-500">{errors.terms}</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-        
-        <CardFooter className="flex flex-col space-y-4">
-          <Button 
-            type="submit" 
-            className="w-full"
-            disabled={isLoading || !agreeToTerms}
-          >
-            {isLoading ? (
-              <>
-                <Spinner className="mr-2 h-4 w-4" />
-                アカウント作成中...
-              </>
-            ) : (
-              'アカウントを作成'
-            )}
-          </Button>
-          
-          <div className="text-center text-sm">
-            既にアカウントをお持ちの方は{' '}
-            <Link href="/login" className="text-primary hover:underline">
-              ログイン
-            </Link>
-          </div>
-        </CardFooter>
-      </form>
-    </Card>
-  )
+	const validateForm = () => {
+		const newErrors: typeof errors = {};
+
+		if (!fullName) {
+			newErrors.fullName = '氏名を入力してください';
+		} else if (fullName.length < 2) {
+			newErrors.fullName = '氏名は2文字以上で入力してください';
+		}
+
+		if (!email) {
+			newErrors.email = 'メールアドレスを入力してください';
+		} else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+			newErrors.email = '有効なメールアドレスを入力してください';
+		}
+
+		if (!password) {
+			newErrors.password = 'パスワードを入力してください';
+		} else if (password.length < 6) {
+			newErrors.password = 'パスワードは6文字以上で入力してください';
+		}
+
+		if (!confirmPassword) {
+			newErrors.confirmPassword = 'パスワード（確認）を入力してください';
+		} else if (password !== confirmPassword) {
+			newErrors.confirmPassword = 'パスワードが一致しません';
+		}
+
+		if (!agreeToTerms) {
+			newErrors.terms = '利用規約に同意してください';
+		}
+
+		setErrors(newErrors);
+		return Object.keys(newErrors).length === 0;
+	};
+
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+
+		if (!validateForm()) return;
+
+		setIsLoading(true);
+		setErrors({});
+
+		try {
+			await signup(email, password, fullName);
+			// サインアップ成功後、メール確認ページへリダイレクト
+			router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+		} catch (error: any) {
+			console.error('Signup error:', error);
+
+			if (error.message?.includes('already registered')) {
+				setErrors({ email: 'このメールアドレスは既に登録されています' });
+			} else {
+				toast.error('アカウントの作成に失敗しました。もう一度お試しください。');
+			}
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	return (
+		<Card className="w-full max-w-md">
+			<CardHeader className="space-y-1">
+				<CardTitle className="text-2xl font-bold">新規登録</CardTitle>
+				<CardDescription>
+					アカウントを作成してタスク管理を始めましょう
+				</CardDescription>
+			</CardHeader>
+			<form onSubmit={handleSubmit}>
+				<CardContent className="space-y-4">
+					<div className="space-y-2">
+						<Label htmlFor="fullName">氏名</Label>
+						<Input
+							id="fullName"
+							type="text"
+							placeholder="山田 太郎"
+							value={fullName}
+							onChange={(e) => setFullName(e.target.value)}
+							disabled={isLoading}
+							className={errors.fullName ? 'border-red-500' : ''}
+						/>
+						{errors.fullName && (
+							<p className="text-sm text-red-500 mt-1">{errors.fullName}</p>
+						)}
+					</div>
+
+					<div className="space-y-2">
+						<Label htmlFor="email">メールアドレス</Label>
+						<Input
+							id="email"
+							type="email"
+							placeholder="example@company.com"
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							disabled={isLoading}
+							className={errors.email ? 'border-red-500' : ''}
+						/>
+						{errors.email && (
+							<p className="text-sm text-red-500 mt-1">{errors.email}</p>
+						)}
+					</div>
+
+					<div className="space-y-2">
+						<Label htmlFor="password">パスワード</Label>
+						<Input
+							id="password"
+							type="password"
+							placeholder="••••••••"
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+							disabled={isLoading}
+							className={errors.password ? 'border-red-500' : ''}
+						/>
+						{errors.password && (
+							<p className="text-sm text-red-500 mt-1">{errors.password}</p>
+						)}
+						{password && (
+							<div className="space-y-1">
+								<div className="flex items-center space-x-2">
+									<div className="flex-1 bg-gray-200 rounded-full h-2">
+										<div
+											className={`h-2 rounded-full transition-all ${passwordStrength.color}`}
+											style={{
+												width: `${(passwordStrength.score / 4) * 100}%`
+											}}
+										/>
+									</div>
+									<span className="text-sm font-medium">
+										{passwordStrength.label}
+									</span>
+								</div>
+								<p className="text-xs text-muted-foreground">
+									パスワードは8文字以上で、大文字・小文字・数字・記号を含めることを推奨します
+								</p>
+							</div>
+						)}
+					</div>
+
+					<div className="space-y-2">
+						<Label htmlFor="confirmPassword">パスワード（確認）</Label>
+						<Input
+							id="confirmPassword"
+							type="password"
+							placeholder="••••••••"
+							value={confirmPassword}
+							onChange={(e) => setConfirmPassword(e.target.value)}
+							disabled={isLoading}
+							className={errors.confirmPassword ? 'border-red-500' : ''}
+						/>
+						{errors.confirmPassword && (
+							<p className="text-sm text-red-500 mt-1">
+								{errors.confirmPassword}
+							</p>
+						)}
+					</div>
+
+					<div className="space-y-2">
+						<div className="flex items-start space-x-2">
+							<Checkbox
+								id="terms"
+								checked={agreeToTerms}
+								onCheckedChange={(checked) =>
+									setAgreeToTerms(checked as boolean)
+								}
+								disabled={isLoading}
+								className="mt-1"
+							/>
+							<div className="space-y-1">
+								<Label
+									htmlFor="terms"
+									className="text-sm font-normal cursor-pointer leading-relaxed"
+								>
+									<Link href="/terms" className="text-primary hover:underline">
+										利用規約
+									</Link>{' '}
+									および{' '}
+									<Link
+										href="/privacy"
+										className="text-primary hover:underline"
+									>
+										プライバシーポリシー
+									</Link>{' '}
+									に同意します
+								</Label>
+								{errors.terms && (
+									<p className="text-sm text-red-500">{errors.terms}</p>
+								)}
+							</div>
+						</div>
+					</div>
+				</CardContent>
+
+				<CardFooter className="flex flex-col space-y-4">
+					<Button
+						type="submit"
+						className="w-full"
+						disabled={isLoading || !agreeToTerms}
+					>
+						{isLoading ? (
+							<>
+								<Spinner className="mr-2 h-4 w-4" />
+								アカウント作成中...
+							</>
+						) : (
+							'アカウントを作成'
+						)}
+					</Button>
+
+					<div className="text-center text-sm">
+						既にアカウントをお持ちの方は{' '}
+						<Link href="/login" className="text-primary hover:underline">
+							ログイン
+						</Link>
+					</div>
+				</CardFooter>
+			</form>
+		</Card>
+	);
 }
