@@ -49,7 +49,11 @@ router.post('/', authMiddleware, async (req, res) => {
 			});
 		}
 
-		// Create organization and add user as admin in a transaction
+		// Try direct approach if RPC fails
+		let organization;
+		let useDirectApproach = false;
+		
+		// First try the RPC function
 		const { data, error } = await supabase.rpc(
 			'create_organization_with_admin',
 			{
@@ -58,23 +62,105 @@ router.post('/', authMiddleware, async (req, res) => {
 				admin_id: userId
 			}
 		);
-
+		
+		// Log the error for debugging
 		if (error) {
-			logger.error('Failed to create organization:', error);
+			logger.error('RPC error details:', {
+				message: error.message,
+				details: error.details,
+				hint: error.hint,
+				code: error.code,
+				userId: userId
+			});
+			
+			// Fallback to direct insertion
+			useDirectApproach = true;
+		}
 
-			if (
-				error.message.includes('duplicate') ||
-				error.message.includes('already exists')
-			) {
-				return res.status(409).json({
+		if (useDirectApproach) {
+			// Generate slug from name
+			const slug = name.trim().toLowerCase()
+				.replace(/[^a-z0-9]+/g, '-')
+				.replace(/^-+|-+$/g, '');
+			
+			// Try direct insertion with slug if required
+			const { data: orgData, error: orgError } = await supabase
+				.from('organizations')
+				.insert({
+					name: name.trim(),
+					slug: slug, // Add slug in case it's required
+					description: description?.trim() || null
+				})
+				.select()
+				.single();
+				
+			if (orgError) {
+				logger.error('Direct org creation failed:', orgError);
+				
+				// Try without slug
+				const { data: orgData2, error: orgError2 } = await supabase
+					.from('organizations')
+					.insert({
+						name: name.trim(),
+						description: description?.trim() || null
+					})
+					.select()
+					.single();
+					
+				if (orgError2) {
+					logger.error('Direct org creation without slug also failed:', orgError2);
+					
+					if (
+						orgError2.message.includes('duplicate') ||
+						orgError2.message.includes('already exists')
+					) {
+						return res.status(409).json({
+							success: false,
+							error: {
+								code: 'ORG_NAME_EXISTS',
+								message: 'An organization with this name already exists'
+							}
+						});
+					}
+					
+					return res.status(500).json({
+						success: false,
+						error: {
+							code: 'ORG_CREATE_FAILED',
+							message: 'Failed to create organization'
+						}
+					});
+				}
+				
+				organization = orgData2;
+			} else {
+				organization = orgData;
+			}
+			
+			// Add user as admin
+			const { error: memberError } = await supabase
+				.from('organization_members')
+				.insert({
+					organization_id: organization.id,
+					user_id: userId,
+					role: 'admin'
+				});
+				
+			if (memberError) {
+				logger.error('Failed to add admin member:', memberError);
+				
+				// Try to clean up the organization
+				await supabase.from('organizations').delete().eq('id', organization.id);
+				
+				return res.status(500).json({
 					success: false,
 					error: {
-						code: 'ORG_NAME_EXISTS',
-						message: 'An organization with this name already exists'
+						code: 'ORG_CREATE_FAILED',
+						message: 'Failed to create organization'
 					}
 				});
 			}
-
+		} else if (!data || !data[0]) {
 			return res.status(500).json({
 				success: false,
 				error: {
@@ -84,22 +170,26 @@ router.post('/', authMiddleware, async (req, res) => {
 			});
 		}
 
-		// Get the created organization details
-		const { data: organization, error: orgError } = await supabase
-			.from('organizations')
-			.select('*')
-			.eq('id', data.organization_id)
-			.single();
+		// Get the created organization details if using RPC
+		if (!useDirectApproach) {
+			const { data: orgData, error: orgError } = await supabase
+				.from('organizations')
+				.select('*')
+				.eq('id', data[0].organization_id)
+				.single();
 
-		if (orgError || !organization) {
-			logger.error('Failed to fetch created organization:', orgError);
-			return res.status(500).json({
-				success: false,
-				error: {
-					code: 'ORG_CREATE_FAILED',
-					message: 'Organization created but failed to fetch details'
-				}
-			});
+			if (orgError || !orgData) {
+				logger.error('Failed to fetch created organization:', orgError);
+				return res.status(500).json({
+					success: false,
+					error: {
+						code: 'ORG_CREATE_FAILED',
+						message: 'Organization created but failed to fetch details'
+					}
+				});
+			}
+			
+			organization = orgData;
 		}
 
 		// Update user's current_organization_id
@@ -937,6 +1027,133 @@ router.delete(
 					code: 'INTERNAL_ERROR',
 					message:
 						'An unexpected error occurred while cancelling the invitation'
+				}
+			});
+		}
+	}
+);
+
+/**
+ * POST /api/v1/organizations/:organizationId/invites/:inviteId/resend
+ * Resend invitation email (admins only)
+ */
+router.post(
+	'/:organizationId/invites/:inviteId/resend',
+	authMiddleware,
+	requireRole('admin'),
+	async (req, res) => {
+		try {
+			const { organizationId, inviteId } = req.params;
+
+			// Get invitation details
+			const { data: invitation, error: inviteError } = await supabase
+				.from('invitations')
+				.select(`
+					id,
+					email,
+					role,
+					token,
+					expires_at,
+					accepted_at,
+					inviter:invited_by (
+						id,
+						email,
+						full_name
+					),
+					organization:organizations (
+						id,
+						name
+					)
+				`)
+				.eq('id', inviteId)
+				.eq('organization_id', organizationId)
+				.single();
+
+			if (inviteError || !invitation) {
+				return res.status(404).json({
+					success: false,
+					error: {
+						code: 'INVITATION_NOT_FOUND',
+						message: 'Invitation not found'
+					}
+				});
+			}
+
+			// Check if already accepted
+			if (invitation.accepted_at) {
+				return res.status(409).json({
+					success: false,
+					error: {
+						code: 'INVITATION_ALREADY_ACCEPTED',
+						message: 'This invitation has already been accepted'
+					}
+				});
+			}
+
+			// Check if expired and generate new token if needed
+			const isExpired = new Date(invitation.expires_at) < new Date();
+			const newToken = isExpired ? crypto.randomBytes(32).toString('hex') : invitation.token;
+			const newExpiresAt = new Date();
+			newExpiresAt.setDate(newExpiresAt.getDate() + 7); // 7 days from now
+
+			// Update invitation if expired
+			if (isExpired) {
+				const { error: updateError } = await supabase
+					.from('invitations')
+					.update({
+						token: newToken,
+						expires_at: newExpiresAt.toISOString(),
+						updated_at: new Date().toISOString()
+					})
+					.eq('id', inviteId);
+
+				if (updateError) {
+					logger.error('Failed to update invitation:', updateError);
+					return res.status(500).json({
+						success: false,
+						error: {
+							code: 'INVITATION_UPDATE_FAILED',
+							message: 'Failed to resend invitation'
+						}
+					});
+				}
+			}
+
+			// Prepare email data
+			const inviterName = invitation.inviter?.full_name || invitation.inviter?.email || 'A team member';
+
+			const inviteUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/invite/${newToken}`;
+
+			// Send email
+			try {
+				await sendInvitationEmail({
+					to: invitation.email,
+					organizationName: invitation.organization.name,
+					inviterName,
+					inviteUrl,
+					role: invitation.role,
+					expiresAt: isExpired ? newExpiresAt : new Date(invitation.expires_at)
+				});
+			} catch (emailError) {
+				logger.error('Failed to send invitation email:', emailError);
+				// Don't fail the request if email fails
+			}
+
+			res.status(200).json({
+				success: true,
+				data: {
+					message: 'Invitation has been resent',
+					email: invitation.email,
+					expiresAt: isExpired ? newExpiresAt.toISOString() : invitation.expires_at
+				}
+			});
+		} catch (error) {
+			logger.error('Unexpected error resending invitation:', error);
+			res.status(500).json({
+				success: false,
+				error: {
+					code: 'INTERNAL_ERROR',
+					message: 'An unexpected error occurred while resending the invitation'
 				}
 			});
 		}
