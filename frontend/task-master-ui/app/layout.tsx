@@ -11,18 +11,21 @@ import './globals.css';
 
 const geistSans = Geist({
 	variable: '--font-geist-sans',
-	subsets: ['latin']
+	subsets: ['latin'],
+	display: 'swap'
 });
 
 const geistMono = Geist_Mono({
 	variable: '--font-geist-mono',
-	subsets: ['latin']
+	subsets: ['latin'],
+	display: 'swap'
 });
 
 const notoSansJP = Noto_Sans_JP({
 	variable: '--font-noto-sans-jp',
 	subsets: ['latin'],
-	weight: ['400', '500', '700']
+	weight: ['400', '500', '700'],
+	display: 'swap'
 });
 
 export const metadata: Metadata = {
@@ -39,7 +42,12 @@ export default function RootLayout({
 	return (
 		<html lang="ja" suppressHydrationWarning>
 			<body
-				className={`${geistSans.variable} ${geistMono.variable} ${notoSansJP.variable} antialiased min-h-screen bg-background`}
+				className={`${geistSans.className} ${notoSansJP.className} antialiased min-h-screen bg-background`}
+				style={{
+					'--font-geist-sans': geistSans.style.fontFamily,
+					'--font-geist-mono': geistMono.style.fontFamily,
+					'--font-noto-sans-jp': notoSansJP.style.fontFamily
+				} as React.CSSProperties}
 			>
 				<ErrorBoundary>
 					<ThemeProvider defaultTheme="light" storageKey="task-master-theme">
