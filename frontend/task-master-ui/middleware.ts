@@ -7,7 +7,8 @@ const publicRoutes = [
 	'/login',
 	'/signup',
 	'/forgot-password',
-	'/reset-password'
+	'/reset-password',
+	'/verify-email'
 ];
 
 export async function middleware(request: NextRequest) {
@@ -37,7 +38,8 @@ export async function middleware(request: NextRequest) {
 	}
 
 	// If the user is authenticated and trying to access auth pages
-	if (isPublicRoute && session) {
+	// Allow access to verify-email page even if authenticated
+	if (isPublicRoute && session && pathname !== '/verify-email') {
 		return NextResponse.redirect(new URL('/', request.url));
 	}
 
