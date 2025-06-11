@@ -11,24 +11,24 @@ dotenv.config({ path: join(__dirname, '..', '.env') });
 
 // Define the Zod schema for a SINGLE task object
 const prdSingleTaskSchema = z.object({
-  id: z.number().int().positive(),
-  title: z.string().min(1),
-  description: z.string().min(1),
-  details: z.string().optional().default(''),
-  testStrategy: z.string().optional().default(''),
-  priority: z.enum(['high', 'medium', 'low']).default('medium'),
-  dependencies: z.array(z.number().int().positive()).optional().default([]),
-  status: z.string().optional().default('pending')
+	id: z.number().int().positive(),
+	title: z.string().min(1),
+	description: z.string().min(1),
+	details: z.string().optional().default(''),
+	testStrategy: z.string().optional().default(''),
+	priority: z.enum(['high', 'medium', 'low']).default('medium'),
+	dependencies: z.array(z.number().int().positive()).optional().default([]),
+	status: z.string().optional().default('pending')
 });
 
 // Define the Zod schema for the ENTIRE expected AI response object
 const prdResponseSchema = z.object({
-  tasks: z.array(prdSingleTaskSchema),
-  metadata: z.object({
-    projectName: z.string(),
-    totalTasks: z.number(),
-    generatedAt: z.string()
-  })
+	tasks: z.array(prdSingleTaskSchema),
+	metadata: z.object({
+		projectName: z.string(),
+		totalTasks: z.number(),
+		generatedAt: z.string()
+	})
 });
 
 /**
@@ -38,15 +38,15 @@ const prdResponseSchema = z.object({
  * @returns {Promise<Object>} Generated tasks and metadata
  */
 export async function parsePRDContent(prdContent, options = {}) {
-  const {
-    targetTaskCount = 10,
-    researchMode = false,
-    projectName = 'Generated Project'
-  } = options;
+	const {
+		targetTaskCount = 10,
+		researchMode = false,
+		projectName = 'Generated Project'
+	} = options;
 
-  // Research-specific enhancements to the system prompt
-  const researchPromptAddition = researchMode
-    ? `\nBefore breaking down the PRD into tasks, you will:
+	// Research-specific enhancements to the system prompt
+	const researchPromptAddition = researchMode
+		? `\nBefore breaking down the PRD into tasks, you will:
 1. Research and analyze the latest technologies, libraries, frameworks, and best practices that would be appropriate for this project
 2. Identify any potential technical challenges, security concerns, or scalability issues not explicitly mentioned in the PRD without discarding any explicit requirements or going overboard with complexity -- always aim to provide the most direct path to implementation, avoiding over-engineering or roundabout approaches
 3. Consider current industry standards and evolving trends relevant to this project (this step aims to solve LLM hallucinations and out of date information due to training data cutoff dates)
@@ -55,10 +55,10 @@ export async function parsePRDContent(prdContent, options = {}) {
 6. Always aim to provide the most direct path to implementation, avoiding over-engineering or roundabout approaches
 
 Your task breakdown should incorporate this research, resulting in more detailed implementation guidance, more accurate dependency mapping, and more precise technology recommendations than would be possible from the PRD text alone, while maintaining all explicit requirements and best practices and all details and nuances of the PRD.`
-    : '';
+		: '';
 
-  // Base system prompt for PRD parsing
-  const systemPrompt = `You are an AI assistant specialized in analyzing Product Requirements Documents (PRDs) and generating a structured, logically ordered, dependency-aware and sequenced list of development tasks in JSON format.${researchPromptAddition}
+	// Base system prompt for PRD parsing
+	const systemPrompt = `You are an AI assistant specialized in analyzing Product Requirements Documents (PRDs) and generating a structured, logically ordered, dependency-aware and sequenced list of development tasks in JSON format.${researchPromptAddition}
 
 全てのタスクの内容（title, description, details, testStrategy）は日本語で記述してください。ただし、JSONのキー名とステータス値（pending等）は英語のままにしてください。
 
@@ -93,8 +93,8 @@ Guidelines:
 10. Focus on filling in any gaps left by the PRD or areas that aren't fully specified, while preserving all explicit requirements
 11. Always aim to provide the most direct path to implementation, avoiding over-engineering or roundabout approaches${researchMode ? '\n12. For each task, include specific, actionable guidance based on current industry standards and best practices discovered through research' : ''}`;
 
-  // Build user prompt with PRD content
-  const userPrompt = `Here's the Product Requirements Document (PRD) to break down into approximately ${targetTaskCount} tasks:${researchMode ? '\n\nRemember to thoroughly research current best practices and technologies before task breakdown to provide specific, actionable implementation details.' : ''}\n\n${prdContent}\n\n
+	// Build user prompt with PRD content
+	const userPrompt = `Here's the Product Requirements Document (PRD) to break down into approximately ${targetTaskCount} tasks:${researchMode ? '\n\nRemember to thoroughly research current best practices and technologies before task breakdown to provide specific, actionable implementation details.' : ''}\n\n${prdContent}\n\n
 
 Return your response in this format:
 {
@@ -114,48 +114,51 @@ Return your response in this format:
   }
 }`;
 
-  try {
-    console.log('Calling generateObjectService with role:', researchMode ? 'research' : 'main');
-    
-    // Get project root for config loading
-    const projectRoot = process.cwd();
-    
-    // Call generateObjectService
-    const aiServiceResponse = await generateObjectService({
-      role: researchMode ? 'research' : 'main',
-      schema: prdResponseSchema,
-      objectName: 'tasks_data',
-      systemPrompt: systemPrompt,
-      prompt: userPrompt,
-      commandName: 'parse-prd',
-      outputType: 'api',
-      projectRoot: projectRoot
-    });
+	try {
+		console.log(
+			'Calling generateObjectService with role:',
+			researchMode ? 'research' : 'main'
+		);
 
-    console.log('AI service response:', aiServiceResponse);
+		// Get project root for config loading
+		const projectRoot = process.cwd();
 
-    // The response structure from generateObjectService is different
-    if (!aiServiceResponse.mainResult) {
-      throw new Error('No result from AI service');
-    }
+		// Call generateObjectService
+		const aiServiceResponse = await generateObjectService({
+			role: researchMode ? 'research' : 'main',
+			schema: prdResponseSchema,
+			objectName: 'tasks_data',
+			systemPrompt: systemPrompt,
+			prompt: userPrompt,
+			commandName: 'parse-prd',
+			outputType: 'api',
+			projectRoot: projectRoot
+		});
 
-    return {
-      success: true,
-      tasks: aiServiceResponse.mainResult.tasks,
-      projectInfo: {
-        name: aiServiceResponse.mainResult.metadata.projectName
-      },
-      telemetry: {
-        model: aiServiceResponse.telemetryData?.modelUsed,
-        tokens: aiServiceResponse.telemetryData?.totalTokens,
-        cost: aiServiceResponse.telemetryData?.totalCost
-      }
-    };
-  } catch (error) {
-    console.error('Error parsing PRD:', error);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
+		console.log('AI service response:', aiServiceResponse);
+
+		// The response structure from generateObjectService is different
+		if (!aiServiceResponse.mainResult) {
+			throw new Error('No result from AI service');
+		}
+
+		return {
+			success: true,
+			tasks: aiServiceResponse.mainResult.tasks,
+			projectInfo: {
+				name: aiServiceResponse.mainResult.metadata.projectName
+			},
+			telemetry: {
+				model: aiServiceResponse.telemetryData?.modelUsed,
+				tokens: aiServiceResponse.telemetryData?.totalTokens,
+				cost: aiServiceResponse.telemetryData?.totalCost
+			}
+		};
+	} catch (error) {
+		console.error('Error parsing PRD:', error);
+		return {
+			success: false,
+			error: error.message
+		};
+	}
 }

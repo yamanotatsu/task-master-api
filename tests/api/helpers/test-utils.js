@@ -1,6 +1,7 @@
 import { jest } from '@jest/globals';
 import express from 'express';
 import cors from 'cors';
+import request from 'supertest';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -13,37 +14,37 @@ const __dirname = path.dirname(__filename);
  * @returns {Express} Configured Express app instance
  */
 export const createTestApp = (options = {}) => {
-  const app = express();
-  
-  // Basic middleware
-  app.use(cors());
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
-  
-  // Import routes
-  const apiRouter = express.Router();
-  
-  // Add test-specific middleware if provided
-  if (options.middleware) {
-    options.middleware.forEach(mw => app.use(mw));
-  }
-  
-  // Mount API routes
-  app.use('/api/v1', apiRouter);
-  
-  // Error handling middleware
-  app.use((err, req, res, next) => {
-    res.status(err.status || 500).json({
-      success: false,
-      error: {
-        code: err.code || 'INTERNAL_ERROR',
-        message: err.message || 'Internal server error',
-        details: err.details
-      }
-    });
-  });
-  
-  return { app, apiRouter };
+	const app = express();
+
+	// Basic middleware
+	app.use(cors());
+	app.use(express.json());
+	app.use(express.urlencoded({ extended: true }));
+
+	// Import routes
+	const apiRouter = express.Router();
+
+	// Add test-specific middleware if provided
+	if (options.middleware) {
+		options.middleware.forEach((mw) => app.use(mw));
+	}
+
+	// Mount API routes
+	app.use('/api/v1', apiRouter);
+
+	// Error handling middleware
+	app.use((err, req, res, next) => {
+		res.status(err.status || 500).json({
+			success: false,
+			error: {
+				code: err.code || 'INTERNAL_ERROR',
+				message: err.message || 'Internal server error',
+				details: err.details
+			}
+		});
+	});
+
+	return { app, apiRouter };
 };
 
 /**
@@ -52,12 +53,12 @@ export const createTestApp = (options = {}) => {
  * @returns {Function} Authenticated request function
  */
 export const authenticatedRequest = (app) => {
-  return (method, url) => {
-    const req = request(app)[method.toLowerCase()](url);
-    // Add authentication headers if needed in the future
-    // req.set('Authorization', 'Bearer test-token');
-    return req;
-  };
+	return (method, url) => {
+		const req = request(app)[method.toLowerCase()](url);
+		// Add authentication headers if needed in the future
+		// req.set('Authorization', 'Bearer test-token');
+		return req;
+	};
 };
 
 /**
@@ -67,14 +68,14 @@ export const authenticatedRequest = (app) => {
  * @param {number} statusCode - Expected HTTP status code
  */
 export const expectErrorResponse = (response, code, statusCode = 500) => {
-  expect(response.status).toBe(statusCode);
-  expect(response.body).toMatchObject({
-    success: false,
-    error: expect.objectContaining({
-      code,
-      message: expect.any(String)
-    })
-  });
+	expect(response.status).toBe(statusCode);
+	expect(response.body).toMatchObject({
+		success: false,
+		error: expect.objectContaining({
+			code,
+			message: expect.any(String)
+		})
+	});
 };
 
 /**
@@ -83,10 +84,10 @@ export const expectErrorResponse = (response, code, statusCode = 500) => {
  * @param {number} statusCode - Expected HTTP status code
  */
 export const expectSuccessResponse = (response, statusCode = 200) => {
-  expect(response.status).toBe(statusCode);
-  expect(response.body).toMatchObject({
-    success: true
-  });
+	expect(response.status).toBe(statusCode);
+	expect(response.body).toMatchObject({
+		success: true
+	});
 };
 
 /**
@@ -94,7 +95,7 @@ export const expectSuccessResponse = (response, statusCode = 200) => {
  * @param {number} ms - Milliseconds to wait
  * @returns {Promise}
  */
-export const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+export const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Mock environment variables for testing
@@ -102,25 +103,25 @@ export const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
  * @returns {Function} Cleanup function to restore original values
  */
 export const mockEnv = (envVars) => {
-  const originalEnv = { ...process.env };
-  
-  Object.entries(envVars).forEach(([key, value]) => {
-    if (value === undefined) {
-      delete process.env[key];
-    } else {
-      process.env[key] = value;
-    }
-  });
-  
-  return () => {
-    Object.keys(envVars).forEach(key => {
-      if (originalEnv[key] === undefined) {
-        delete process.env[key];
-      } else {
-        process.env[key] = originalEnv[key];
-      }
-    });
-  };
+	const originalEnv = { ...process.env };
+
+	Object.entries(envVars).forEach(([key, value]) => {
+		if (value === undefined) {
+			delete process.env[key];
+		} else {
+			process.env[key] = value;
+		}
+	});
+
+	return () => {
+		Object.keys(envVars).forEach((key) => {
+			if (originalEnv[key] === undefined) {
+				delete process.env[key];
+			} else {
+				process.env[key] = originalEnv[key];
+			}
+		});
+	};
 };
 
 /**
@@ -129,11 +130,11 @@ export const mockEnv = (envVars) => {
  * @returns {Object} Mock request object
  */
 export const createMockRequest = (overrides = {}) => ({
-  params: {},
-  query: {},
-  body: {},
-  headers: {},
-  ...overrides
+	params: {},
+	query: {},
+	body: {},
+	headers: {},
+	...overrides
 });
 
 /**
@@ -141,14 +142,14 @@ export const createMockRequest = (overrides = {}) => ({
  * @returns {Object} Mock response object
  */
 export const createMockResponse = () => {
-  const res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn().mockReturnThis(),
-    send: jest.fn().mockReturnThis(),
-    set: jest.fn().mockReturnThis(),
-    setHeader: jest.fn().mockReturnThis()
-  };
-  return res;
+	const res = {
+		status: jest.fn().mockReturnThis(),
+		json: jest.fn().mockReturnThis(),
+		send: jest.fn().mockReturnThis(),
+		set: jest.fn().mockReturnThis(),
+		setHeader: jest.fn().mockReturnThis()
+	};
+	return res;
 };
 
 /**
@@ -166,15 +167,15 @@ export const createMockNext = () => jest.fn();
  * @returns {Promise}
  */
 export const testAsyncHandler = async (handler, req, res, next) => {
-  try {
-    await handler(req, res, next);
-  } catch (error) {
-    if (next) {
-      next(error);
-    } else {
-      throw error;
-    }
-  }
+	try {
+		await handler(req, res, next);
+	} catch (error) {
+		if (next) {
+			next(error);
+		} else {
+			throw error;
+		}
+	}
 };
 
 /**
@@ -182,15 +183,15 @@ export const testAsyncHandler = async (handler, req, res, next) => {
  * @param {Object} task - Task object to validate
  */
 export const expectValidTask = (task) => {
-  expect(task).toMatchObject({
-    id: expect.stringMatching(/^task_\d{3}$/),
-    title: expect.any(String),
-    description: expect.any(String),
-    status: expect.stringMatching(/^(pending|in-progress|completed|blocked)$/),
-    priority: expect.stringMatching(/^(low|medium|high|critical)$/),
-    dependencies: expect.any(Array),
-    subtasks: expect.any(Array)
-  });
+	expect(task).toMatchObject({
+		id: expect.stringMatching(/^task_\d{3}$/),
+		title: expect.any(String),
+		description: expect.any(String),
+		status: expect.stringMatching(/^(pending|in-progress|completed|blocked)$/),
+		priority: expect.stringMatching(/^(low|medium|high|critical)$/),
+		dependencies: expect.any(Array),
+		subtasks: expect.any(Array)
+	});
 };
 
 /**
@@ -198,11 +199,11 @@ export const expectValidTask = (task) => {
  * @param {Object} subtask - Subtask object to validate
  */
 export const expectValidSubtask = (subtask) => {
-  expect(subtask).toMatchObject({
-    id: expect.any(String),
-    title: expect.any(String),
-    completed: expect.any(Boolean)
-  });
+	expect(subtask).toMatchObject({
+		id: expect.any(String),
+		title: expect.any(String),
+		completed: expect.any(Boolean)
+	});
 };
 
 /**
@@ -211,10 +212,10 @@ export const expectValidSubtask = (subtask) => {
  * @param {string} expectedCode - Expected error code
  */
 export const expectValidError = (error, expectedCode) => {
-  expect(error).toMatchObject({
-    code: expectedCode,
-    message: expect.any(String)
-  });
+	expect(error).toMatchObject({
+		code: expectedCode,
+		message: expect.any(String)
+	});
 };
 
 /**
@@ -222,30 +223,30 @@ export const expectValidError = (error, expectedCode) => {
  * @returns {Object} Test context
  */
 export const createTestContext = () => {
-  const ctx = {
-    projectPath: '/test/projects/test-project',
-    tasksFile: '/test/projects/test-project/tasks.json',
-    mocks: {
-      fs: {
-        readFile: jest.fn(),
-        writeFile: jest.fn(),
-        mkdir: jest.fn(),
-        access: jest.fn(),
-        unlink: jest.fn()
-      },
-      logger: {
-        info: jest.fn(),
-        error: jest.fn(),
-        warn: jest.fn(),
-        debug: jest.fn()
-      }
-    }
-  };
-  
-  // Setup default mock implementations
-  ctx.mocks.fs.access.mockResolvedValue(undefined);
-  ctx.mocks.fs.mkdir.mockResolvedValue(undefined);
-  ctx.mocks.fs.writeFile.mockResolvedValue(undefined);
-  
-  return ctx;
+	const ctx = {
+		projectPath: '/test/projects/test-project',
+		tasksFile: '/test/projects/test-project/tasks.json',
+		mocks: {
+			fs: {
+				readFile: jest.fn(),
+				writeFile: jest.fn(),
+				mkdir: jest.fn(),
+				access: jest.fn(),
+				unlink: jest.fn()
+			},
+			logger: {
+				info: jest.fn(),
+				error: jest.fn(),
+				warn: jest.fn(),
+				debug: jest.fn()
+			}
+		}
+	};
+
+	// Setup default mock implementations
+	ctx.mocks.fs.access.mockResolvedValue(undefined);
+	ctx.mocks.fs.mkdir.mockResolvedValue(undefined);
+	ctx.mocks.fs.writeFile.mockResolvedValue(undefined);
+
+	return ctx;
 };

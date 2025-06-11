@@ -1,0 +1,1865 @@
+openapi: 3.0.3
+info:
+  title: Task Master API
+  description: |
+    The Task Master API provides comprehensive project and task management capabilities with multi-tenant organization support.
+
+    ## Features
+    - Multi-tenant architecture with organization management
+    - JWT-based authentication with refresh tokens
+    - Role-based access control (RBAC)
+    - Comprehensive task and project management
+    - Real-time capabilities with webhooks
+    - Advanced filtering and search
+
+    ## Authentication
+    All endpoints require authentication using Bearer tokens in the Authorization header:
+    ```
+    Authorization: Bearer <your_access_token>
+    ```
+
+    ## Rate Limiting
+    - Authentication endpoints: 10 requests per minute per IP
+    - General API endpoints: 1000 requests per hour per user
+    - Bulk operations: 100 requests per hour per user
+  version: 1.0.0
+  contact:
+    name: Task Master API Support
+    email: api-support@taskmaster.com
+    url: https://docs.taskmaster.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.taskmaster.com/v1
+    description: Production server
+  - url: http://localhost:3001/api/v1
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token for authentication
+
+  schemas:
+    # Standard response schemas
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+        meta:
+          type: object
+          properties:
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: 'VALIDATION_ERROR'
+            message:
+              type: string
+              example: 'Invalid input data'
+            details:
+              type: array
+              items:
+                type: object
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+
+    # User and authentication schemas
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: '550e8400-e29b-41d4-a716-446655440000'
+        email:
+          type: string
+          format: email
+          example: 'john.doe@example.com'
+        fullName:
+          type: string
+          example: 'John Doe'
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+          example: 'https://example.com/avatar.jpg'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2024-01-10T00:00:00Z'
+
+    Tokens:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        refreshToken:
+          type: string
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        expiresIn:
+          type: integer
+          example: 3600
+
+    # Organization schemas
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: '650e8400-e29b-41d4-a716-446655440001'
+        name:
+          type: string
+          example: 'Acme Corporation'
+        description:
+          type: string
+          nullable: true
+          example: 'A sample organization'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+
+    OrganizationWithMembership:
+      allOf:
+        - $ref: '#/components/schemas/Organization'
+        - type: object
+          properties:
+            role:
+              type: string
+              enum: [admin, member]
+              example: 'admin'
+            memberCount:
+              type: integer
+              example: 5
+            projectCount:
+              type: integer
+              example: 3
+            joinedAt:
+              type: string
+              format: date-time
+              example: '2024-01-01T00:00:00Z'
+
+    Member:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: '550e8400-e29b-41d4-a716-446655440000'
+        email:
+          type: string
+          format: email
+          example: 'john.doe@example.com'
+        fullName:
+          type: string
+          example: 'John Doe'
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+          example: 'https://example.com/avatar.jpg'
+        role:
+          type: string
+          enum: [admin, member]
+          example: 'admin'
+        joinedAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        lastActiveAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2024-01-10T12:00:00Z'
+
+    Invitation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: '750e8400-e29b-41d4-a716-446655440002'
+        email:
+          type: string
+          format: email
+          example: 'newmember@example.com'
+        role:
+          type: string
+          enum: [admin, member]
+          example: 'member'
+        expiresAt:
+          type: string
+          format: date-time
+          example: '2024-01-08T00:00:00Z'
+        inviteUrl:
+          type: string
+          format: uri
+          example: 'https://app.taskmaster.com/invite/unique-token-here'
+
+    # Project schemas
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: '850e8400-e29b-41d4-a716-446655440003'
+        organizationId:
+          type: string
+          format: uuid
+          example: '650e8400-e29b-41d4-a716-446655440001'
+        name:
+          type: string
+          example: 'Website Redesign'
+        description:
+          type: string
+          nullable: true
+          example: 'Complete redesign of the company website'
+        priority:
+          type: string
+          enum: [low, medium, high]
+          example: 'high'
+        status:
+          type: string
+          enum: [planning, active, completed, cancelled]
+          example: 'active'
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2024-06-30T23:59:59Z'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2024-01-10T00:00:00Z'
+
+    ProjectWithStats:
+      allOf:
+        - $ref: '#/components/schemas/Project'
+        - type: object
+          properties:
+            taskCount:
+              type: integer
+              example: 15
+            completedTaskCount:
+              type: integer
+              example: 5
+            memberCount:
+              type: integer
+              example: 3
+            progress:
+              type: number
+              format: float
+              example: 33.33
+
+    # Task schemas
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: '950e8400-e29b-41d4-a716-446655440004'
+        projectId:
+          type: string
+          format: uuid
+          example: '850e8400-e29b-41d4-a716-446655440003'
+        title:
+          type: string
+          example: 'Design homepage mockup'
+        description:
+          type: string
+          nullable: true
+          example: 'Create wireframes and high-fidelity mockups'
+        status:
+          type: string
+          enum: [todo, in_progress, completed, cancelled]
+          example: 'todo'
+        priority:
+          type: string
+          enum: [low, medium, high]
+          example: 'high'
+        assigneeId:
+          type: string
+          format: uuid
+          nullable: true
+          example: '550e8400-e29b-41d4-a716-446655440000'
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2024-02-15T17:00:00Z'
+        estimatedHours:
+          type: number
+          format: float
+          nullable: true
+          example: 8.0
+        actualHours:
+          type: number
+          format: float
+          nullable: true
+          example: 7.5
+        tags:
+          type: array
+          items:
+            type: string
+          example: ['design', 'homepage', 'ui']
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2024-01-05T10:00:00Z'
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2024-01-15T16:30:00Z'
+
+    TaskWithAssignee:
+      allOf:
+        - $ref: '#/components/schemas/Task'
+        - type: object
+          properties:
+            assignee:
+              type: object
+              nullable: true
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                fullName:
+                  type: string
+                avatarUrl:
+                  type: string
+                  format: uri
+                  nullable: true
+            subtaskCount:
+              type: integer
+              example: 3
+            completedSubtaskCount:
+              type: integer
+              example: 1
+
+    Subtask:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 'a50e8400-e29b-41d4-a716-446655440005'
+        taskId:
+          type: string
+          format: uuid
+          example: '950e8400-e29b-41d4-a716-446655440004'
+        title:
+          type: string
+          example: 'Create wireframes'
+        description:
+          type: string
+          nullable: true
+          example: 'Design basic wireframes for layout'
+        status:
+          type: string
+          enum: [todo, completed]
+          example: 'todo'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T00:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2024-01-03T14:00:00Z'
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2024-01-03T14:00:00Z'
+
+    # Request schemas
+    SignupRequest:
+      type: object
+      required:
+        - fullName
+        - email
+        - password
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: 'John Doe'
+        email:
+          type: string
+          format: email
+          example: 'john.doe@example.com'
+        password:
+          type: string
+          minLength: 8
+          example: 'SecurePassword123!'
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: 'john.doe@example.com'
+        password:
+          type: string
+          example: 'SecurePassword123!'
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+
+    CreateOrganizationRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          example: 'Acme Corporation'
+        description:
+          type: string
+          maxLength: 500
+          example: 'A sample organization'
+
+    UpdateOrganizationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          example: 'Acme Corporation (Updated)'
+        description:
+          type: string
+          maxLength: 500
+          example: 'Updated description'
+
+    InviteMemberRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: 'newmember@example.com'
+        role:
+          type: string
+          enum: [admin, member]
+          default: member
+          example: 'member'
+
+    UpdateMemberRoleRequest:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          type: string
+          enum: [admin, member]
+          example: 'admin'
+
+    CreateProjectRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          example: 'Website Redesign'
+        description:
+          type: string
+          maxLength: 1000
+          example: 'Complete redesign of the company website'
+        priority:
+          type: string
+          enum: [low, medium, high]
+          default: medium
+          example: 'high'
+        dueDate:
+          type: string
+          format: date-time
+          example: '2024-06-30T23:59:59Z'
+
+    UpdateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          example: 'Website Redesign - Phase 2'
+        description:
+          type: string
+          maxLength: 1000
+          example: 'Updated description'
+        priority:
+          type: string
+          enum: [low, medium, high]
+          example: 'medium'
+        status:
+          type: string
+          enum: [planning, active, completed, cancelled]
+          example: 'active'
+        dueDate:
+          type: string
+          format: date-time
+          example: '2024-07-15T23:59:59Z'
+
+    CreateTaskRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          maxLength: 200
+          example: 'Design homepage mockup'
+        description:
+          type: string
+          maxLength: 2000
+          example: 'Create wireframes and high-fidelity mockups'
+        priority:
+          type: string
+          enum: [low, medium, high]
+          default: medium
+          example: 'high'
+        assigneeId:
+          type: string
+          format: uuid
+          example: '550e8400-e29b-41d4-a716-446655440000'
+        dueDate:
+          type: string
+          format: date-time
+          example: '2024-02-15T17:00:00Z'
+        estimatedHours:
+          type: number
+          format: float
+          minimum: 0
+          example: 8.0
+        tags:
+          type: array
+          items:
+            type: string
+          example: ['design', 'homepage', 'ui']
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+          example: 'Design homepage mockup - Updated'
+        description:
+          type: string
+          maxLength: 2000
+          example: 'Updated description'
+        status:
+          type: string
+          enum: [todo, in_progress, completed, cancelled]
+          example: 'completed'
+        priority:
+          type: string
+          enum: [low, medium, high]
+          example: 'medium'
+        assigneeId:
+          type: string
+          format: uuid
+          example: '550e8400-e29b-41d4-a716-446655440000'
+        dueDate:
+          type: string
+          format: date-time
+          example: '2024-02-20T17:00:00Z'
+        estimatedHours:
+          type: number
+          format: float
+          minimum: 0
+          example: 8.0
+        actualHours:
+          type: number
+          format: float
+          minimum: 0
+          example: 7.5
+        tags:
+          type: array
+          items:
+            type: string
+          example: ['design', 'homepage', 'ui', 'completed']
+
+    CreateSubtaskRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          maxLength: 200
+          example: 'Create wireframes'
+        description:
+          type: string
+          maxLength: 1000
+          example: 'Design basic wireframes for layout'
+
+    UpdateSubtaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+          example: 'Create wireframes - Updated'
+        description:
+          type: string
+          maxLength: 1000
+          example: 'Updated description'
+        status:
+          type: string
+          enum: [todo, completed]
+          example: 'completed'
+
+  parameters:
+    OrganizationId:
+      name: organizationId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Organization ID
+
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Project ID
+
+    TaskId:
+      name: taskId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Task ID
+
+    SubtaskId:
+      name: subtaskId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Subtask ID
+
+    ProfileId:
+      name: profileId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Profile ID
+
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Page number
+
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Number of items per page
+
+    Search:
+      name: search
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Search term
+
+paths:
+  # Authentication endpoints
+  /auth/signup:
+    post:
+      tags:
+        - Authentication
+      summary: Sign up a new user
+      description: Create a new user account. Email verification is required before the user can sign in.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: 'Registration successful. Please check your email to verify your account.'
+                          user:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                                format: uuid
+                              email:
+                                type: string
+                                format: email
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Sign in user
+      description: Authenticate user and return access and refresh tokens.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: '#/components/schemas/User'
+                          tokens:
+                            $ref: '#/components/schemas/Tokens'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Email not verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Sign out user
+      description: Invalidate the current session and refresh token.
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: 'Successfully logged out'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Get a new access token using a refresh token.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          tokens:
+                            $ref: '#/components/schemas/Tokens'
+        '401':
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/forgot-password:
+    post:
+      tags:
+        - Authentication
+      summary: Request password reset
+      description: Send a password reset email to the user.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: 'john.doe@example.com'
+      responses:
+        '200':
+          description: Password reset email sent (if account exists)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: 'If an account exists with this email, a password reset link has been sent.'
+
+  /auth/reset-password:
+    post:
+      tags:
+        - Authentication
+      summary: Reset password
+      description: Reset user password using the token from email.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - newPassword
+              properties:
+                token:
+                  type: string
+                  example: 'reset-token-from-email'
+                newPassword:
+                  type: string
+                  minLength: 8
+                  example: 'NewSecurePassword123!'
+      responses:
+        '200':
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: 'Password has been reset successfully'
+
+  # User profile endpoints
+  /users/profile:
+    get:
+      tags:
+        - User Profile
+      summary: Get user profile
+      description: Get the current user's profile information.
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          profile:
+                            $ref: '#/components/schemas/User'
+
+    put:
+      tags:
+        - User Profile
+      summary: Update user profile
+      description: Update the current user's profile information.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                  maxLength: 100
+                  example: 'John Smith'
+                avatarUrl:
+                  type: string
+                  format: uri
+                  example: 'https://example.com/new-avatar.jpg'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          profile:
+                            $ref: '#/components/schemas/User'
+
+  /users/password:
+    put:
+      tags:
+        - User Profile
+      summary: Change password
+      description: Change the current user's password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currentPassword
+                - newPassword
+              properties:
+                currentPassword:
+                  type: string
+                  example: 'CurrentPassword123!'
+                newPassword:
+                  type: string
+                  minLength: 8
+                  example: 'NewPassword123!'
+      responses:
+        '200':
+          description: Password updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: 'Password updated successfully'
+
+  # Organization endpoints
+  /organizations:
+    get:
+      tags:
+        - Organizations
+      summary: List organizations
+      description: Get all organizations for the current user.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Organizations retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          organizations:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/OrganizationWithMembership'
+
+    post:
+      tags:
+        - Organizations
+      summary: Create organization
+      description: Create a new organization.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrganizationRequest'
+      responses:
+        '201':
+          description: Organization created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          organization:
+                            $ref: '#/components/schemas/Organization'
+                          membership:
+                            type: object
+                            properties:
+                              role:
+                                type: string
+                                example: 'admin'
+                              joinedAt:
+                                type: string
+                                format: date-time
+
+  /organizations/{organizationId}:
+    get:
+      tags:
+        - Organizations
+      summary: Get organization
+      description: Get detailed information about a specific organization.
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+      responses:
+        '200':
+          description: Organization retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          organization:
+                            $ref: '#/components/schemas/Organization'
+                          membership:
+                            type: object
+                            properties:
+                              role:
+                                type: string
+                              joinedAt:
+                                type: string
+                                format: date-time
+                          statistics:
+                            type: object
+                            properties:
+                              memberCount:
+                                type: integer
+                              projectCount:
+                                type: integer
+                              activeTaskCount:
+                                type: integer
+
+    put:
+      tags:
+        - Organizations
+      summary: Update organization
+      description: Update organization information (admin only).
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrganizationRequest'
+      responses:
+        '200':
+          description: Organization updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          organization:
+                            $ref: '#/components/schemas/Organization'
+
+    delete:
+      tags:
+        - Organizations
+      summary: Delete organization
+      description: Delete an organization (admin only).
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - confirmDeletion
+              properties:
+                confirmDeletion:
+                  type: string
+                  example: 'DELETE MY ORGANIZATION'
+      responses:
+        '200':
+          description: Organization deleted successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: 'Organization has been permanently deleted'
+
+  # Member management endpoints
+  /organizations/{organizationId}/invites:
+    post:
+      tags:
+        - Member Management
+      summary: Invite member
+      description: Invite a new member to the organization (admin only).
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteMemberRequest'
+      responses:
+        '201':
+          description: Member invited successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          invitation:
+                            $ref: '#/components/schemas/Invitation'
+
+  /organizations/{organizationId}/members:
+    get:
+      tags:
+        - Member Management
+      summary: List members
+      description: Get all members of an organization.
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - name: role
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [admin, member]
+          description: Filter by role
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Members retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          members:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Member'
+
+  /organizations/{organizationId}/members/{profileId}:
+    put:
+      tags:
+        - Member Management
+      summary: Update member role
+      description: Update a member's role (admin only).
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - $ref: '#/components/parameters/ProfileId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberRoleRequest'
+      responses:
+        '200':
+          description: Member role updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          member:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                                format: uuid
+                              role:
+                                type: string
+                              updatedAt:
+                                type: string
+                                format: date-time
+
+    delete:
+      tags:
+        - Member Management
+      summary: Remove member
+      description: Remove a member from the organization (admin only).
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - $ref: '#/components/parameters/ProfileId'
+      responses:
+        '200':
+          description: Member removed successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: 'Member has been removed from the organization'
+
+  # Project endpoints
+  /organizations/{organizationId}/projects:
+    get:
+      tags:
+        - Projects
+      summary: List projects
+      description: Get all projects in an organization.
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [planning, active, completed, cancelled]
+          description: Filter by status
+        - name: priority
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [low, medium, high]
+          description: Filter by priority
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Projects retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          projects:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/ProjectWithStats'
+
+    post:
+      tags:
+        - Projects
+      summary: Create project
+      description: Create a new project in an organization.
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '201':
+          description: Project created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          project:
+                            $ref: '#/components/schemas/Project'
+
+  /projects/{projectId}:
+    get:
+      tags:
+        - Projects
+      summary: Get project
+      description: Get detailed information about a specific project.
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: Project retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          project:
+                            $ref: '#/components/schemas/Project'
+                          statistics:
+                            type: object
+                            properties:
+                              taskCount:
+                                type: integer
+                              completedTaskCount:
+                                type: integer
+                              memberCount:
+                                type: integer
+                              progress:
+                                type: number
+                                format: float
+                          members:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  format: uuid
+                                fullName:
+                                  type: string
+                                role:
+                                  type: string
+
+    put:
+      tags:
+        - Projects
+      summary: Update project
+      description: Update project information.
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectRequest'
+      responses:
+        '200':
+          description: Project updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          project:
+                            $ref: '#/components/schemas/Project'
+
+    delete:
+      tags:
+        - Projects
+      summary: Delete project
+      description: Delete a project (admin only).
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: Project deleted successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: 'Project has been deleted successfully'
+
+  # Task endpoints
+  /projects/{projectId}/tasks:
+    get:
+      tags:
+        - Tasks
+      summary: List tasks
+      description: Get all tasks in a project.
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [todo, in_progress, completed, cancelled]
+          description: Filter by status
+        - name: priority
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [low, medium, high]
+          description: Filter by priority
+        - name: assigneeId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: Filter by assignee
+        - name: tags
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by tags (comma-separated)
+        - name: sortBy
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [createdAt, dueDate, priority, title]
+            default: createdAt
+          description: Sort field
+        - name: sortOrder
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Tasks retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          tasks:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/TaskWithAssignee'
+
+    post:
+      tags:
+        - Tasks
+      summary: Create task
+      description: Create a new task in a project.
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          task:
+                            $ref: '#/components/schemas/Task'
+
+  /tasks/{taskId}:
+    get:
+      tags:
+        - Tasks
+      summary: Get task
+      description: Get detailed information about a specific task.
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Task retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          task:
+                            $ref: '#/components/schemas/TaskWithAssignee'
+                          subtasks:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Subtask'
+                          dependencies:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  format: uuid
+                                title:
+                                  type: string
+                                status:
+                                  type: string
+
+    put:
+      tags:
+        - Tasks
+      summary: Update task
+      description: Update task information.
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          task:
+                            $ref: '#/components/schemas/Task'
+
+    delete:
+      tags:
+        - Tasks
+      summary: Delete task
+      description: Delete a task.
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      responses:
+        '200':
+          description: Task deleted successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: 'Task has been deleted successfully'
+
+  # Subtask endpoints
+  /tasks/{taskId}/subtasks:
+    post:
+      tags:
+        - Subtasks
+      summary: Add subtask
+      description: Add a subtask to a task.
+      parameters:
+        - $ref: '#/components/parameters/TaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubtaskRequest'
+      responses:
+        '201':
+          description: Subtask created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          subtask:
+                            $ref: '#/components/schemas/Subtask'
+
+  /subtasks/{subtaskId}:
+    put:
+      tags:
+        - Subtasks
+      summary: Update subtask
+      description: Update a subtask.
+      parameters:
+        - $ref: '#/components/parameters/SubtaskId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSubtaskRequest'
+      responses:
+        '200':
+          description: Subtask updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          subtask:
+                            $ref: '#/components/schemas/Subtask'
+
+    delete:
+      tags:
+        - Subtasks
+      summary: Delete subtask
+      description: Delete a subtask.
+      parameters:
+        - $ref: '#/components/parameters/SubtaskId'
+      responses:
+        '200':
+          description: Subtask deleted successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          message:
+                            type: string
+                            example: 'Subtask has been deleted successfully'
+
+tags:
+  - name: Authentication
+    description: User authentication and session management
+  - name: User Profile
+    description: User profile management
+  - name: Organizations
+    description: Organization management
+  - name: Member Management
+    description: Organization member management
+  - name: Projects
+    description: Project management
+  - name: Tasks
+    description: Task management
+  - name: Subtasks
+    description: Subtask management

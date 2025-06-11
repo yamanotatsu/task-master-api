@@ -4,11 +4,11 @@ export default {
 
 	// Automatically clear mock calls between every test
 	clearMocks: true,
-	
+
 	// Reset all mocks between tests
 	resetMocks: true,
-	
-	// Restore all mocks between tests  
+
+	// Restore all mocks between tests
 	restoreMocks: true,
 
 	// Indicates whether the coverage information should be collected while executing the test
@@ -36,7 +36,7 @@ export default {
 
 	// Setup module aliases
 	moduleDirectories: ['node_modules', '<rootDir>'],
-	
+
 	// Mock directories for automatic mocking
 	modulePathIgnorePatterns: ['<rootDir>/tests/api/__mocks__/'],
 
@@ -58,13 +58,13 @@ export default {
 
 	// Setup file
 	setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
-	
+
 	// ES modules experimental warning suppression
 	silent: false,
-	
+
 	// Better error handling for ES modules
 	preset: undefined,
-	
+
 	// Global setup for mocks
 	globalSetup: undefined,
 	globalTeardown: undefined
