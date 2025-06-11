@@ -63,11 +63,11 @@ BEGIN
     INSERT INTO organizations (name, slug)
     VALUES (org_name, org_slug)
     RETURNING id INTO new_org_id;
-
+    
     -- Add user as admin (bypass RLS)
     INSERT INTO organization_members (organization_id, user_id, role, status)
     VALUES (new_org_id, user_id, 'admin', 'active');
-
+    
     RETURN new_org_id;
 END;
 $$;
