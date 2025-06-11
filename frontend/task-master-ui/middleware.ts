@@ -8,11 +8,27 @@ const publicRoutes = [
 	'/signup',
 	'/forgot-password',
 	'/reset-password',
+	'/auth/reset-password', // Supabase redirect path
+	'/auth/callback', // Supabase callback route
 	'/verify-email'
 ];
 
 export async function middleware(request: NextRequest) {
-	const { pathname } = request.nextUrl;
+	const { pathname, searchParams } = request.nextUrl;
+
+	// Special handling for Supabase auth callbacks
+	if (pathname === '/login' && searchParams.get('redirect')?.includes('reset-password')) {
+		// This is likely a Supabase password reset callback
+		// Extract the hash fragment from the original URL and redirect properly
+		const redirectUrl = new URL('/auth/reset-password', request.url);
+		// Preserve any query parameters
+		searchParams.forEach((value, key) => {
+			if (key !== 'redirect') {
+				redirectUrl.searchParams.set(key, value);
+			}
+		});
+		return NextResponse.redirect(redirectUrl);
+	}
 
 	// Check if the route is public
 	const isPublicRoute = publicRoutes.some((route) =>
@@ -38,8 +54,11 @@ export async function middleware(request: NextRequest) {
 	}
 
 	// If the user is authenticated and trying to access auth pages
-	// Allow access to verify-email page even if authenticated
-	if (isPublicRoute && session && pathname !== '/verify-email') {
+	// Allow access to verify-email and reset-password pages even if authenticated
+	const allowedAuthPages = ['/verify-email', '/reset-password', '/auth/reset-password'];
+	const isAllowedAuthPage = allowedAuthPages.some(page => pathname.startsWith(page));
+	
+	if (isPublicRoute && session && !isAllowedAuthPage) {
 		return NextResponse.redirect(new URL('/', request.url));
 	}
 

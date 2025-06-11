@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +26,7 @@ export function ResetPasswordForm() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [isSuccess, setIsSuccess] = useState(false);
 	const [isTokenValid, setIsTokenValid] = useState(true);
+	const [isCheckingToken, setIsCheckingToken] = useState(true);
 	const [errors, setErrors] = useState<{
 		password?: string;
 		confirmPassword?: string;
@@ -35,14 +37,29 @@ export function ResetPasswordForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 
-	// Validate token on mount
+	// Check if user has session (logged in via reset link)
 	useEffect(() => {
-		const token = searchParams.get('token');
-		if (!token) {
-			setIsTokenValid(false);
-			setErrors({ token: 'リセットトークンが見つかりません' });
-		}
-	}, [searchParams]);
+		const checkSession = async () => {
+			console.log('Checking for session...');
+			
+			// Check if user has an active session
+			const { data: { session }, error } = await supabase.auth.getSession();
+			
+			if (!session) {
+				console.error('No session found');
+				setIsTokenValid(false);
+				setErrors({ token: 'パスワードリセットリンクが無効です。' });
+				setIsCheckingToken(false);
+				return;
+			}
+			
+			console.log('Session found, user is logged in');
+			setIsTokenValid(true);
+			setIsCheckingToken(false);
+		};
+
+		checkSession();
+	}, []);
 
 	const getPasswordStrength = (password: string) => {
 		let strength = 0;
@@ -106,9 +123,21 @@ export function ResetPasswordForm() {
 		setErrors({});
 
 		try {
-			await updatePassword(password);
+			// Update the password using the current session
+			const { error: updateError } = await supabase.auth.updateUser({
+				password: password
+			});
+
+			if (updateError) {
+				console.error('Password update error:', updateError);
+				throw updateError;
+			}
+
+			// Sign out after password update
+			await supabase.auth.signOut();
+
 			setIsSuccess(true);
-			toast.success('パスワードを更新しました');
+			toast.success('パスワードを更新しました。新しいパスワードでログインしてください。');
 
 			// Redirect to login after 3 seconds
 			setTimeout(() => {
@@ -130,6 +159,19 @@ export function ResetPasswordForm() {
 			setIsLoading(false);
 		}
 	};
+
+	if (isCheckingToken) {
+		return (
+			<Card className="w-full max-w-md">
+				<CardContent className="pt-6">
+					<div className="flex justify-center">
+						<Spinner size="lg" />
+					</div>
+					<p className="text-center mt-4 text-gray-600">トークンを検証中...</p>
+				</CardContent>
+			</Card>
+		);
+	}
 
 	if (!isTokenValid) {
 		return (
@@ -174,7 +216,8 @@ export function ResetPasswordForm() {
 						パスワードを更新しました
 					</CardTitle>
 					<CardDescription className="text-base">
-						新しいパスワードでログインできます。
+						パスワードが正常に変更されました。
+						新しいパスワードでログインしてください。
 						3秒後にログインページに移動します。
 					</CardDescription>
 				</CardHeader>

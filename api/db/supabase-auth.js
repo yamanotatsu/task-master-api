@@ -125,7 +125,7 @@ export const refreshSession = async (refreshToken) => {
 export const resetPasswordRequest = async (email) => {
 	try {
 		const { error } = await supabaseAuth.auth.resetPasswordForEmail(email, {
-			redirectTo: `${process.env.FRONTEND_URL}/auth/reset-password`
+			redirectTo: `${process.env.FRONTEND_URL}/auth/callback`
 		});
 		return { error };
 	} catch (error) {
