@@ -114,11 +114,17 @@ router.get('/', authMiddleware, async (req, res) => {
 		if (status) filteredBy.status = status;
 		if (assignee) filteredBy.assignee = assignee;
 
+		// Transform dependencies to simple array
+		const transformedTasks = tasks.map(task => ({
+			...task,
+			dependencies: task.dependencies?.map(dep => dep.depends_on_task_id) || []
+		}));
+
 		res.json({
 			success: true,
 			data: {
-				tasks,
-				totalTasks: tasks.length,
+				tasks: transformedTasks,
+				totalTasks: transformedTasks.length,
 				filteredBy: Object.keys(filteredBy).length > 0 ? filteredBy : 'all'
 			}
 		});
@@ -204,9 +210,15 @@ router.get('/:id', authMiddleware, async (req, res) => {
 			});
 		}
 
+		// Transform dependencies to simple array
+		const transformedTask = {
+			...task,
+			dependencies: task.dependencies?.map(dep => dep.depends_on_task_id) || []
+		};
+
 		res.json({
 			success: true,
-			data: task
+			data: transformedTask
 		});
 	} catch (error) {
 		console.error('Error fetching task:', error);
