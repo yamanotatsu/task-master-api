@@ -81,7 +81,7 @@ router.get('/', authMiddleware, async (req, res) => {
             )
           )
         ),
-        assignee:profiles(id, full_name, email),
+        assignee:profiles!tasks_assignee_id_fkey(id, full_name, email),
         dependencies:task_dependencies!task_id(depends_on_task_id),
         subtasks:subtasks(*)
       `);
@@ -159,7 +159,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
             )
           )
         ),
-        assignee:profiles(id, full_name, email),
+        assignee:profiles!tasks_assignee_id_fkey(id, full_name, email),
         dependencies:task_dependencies!task_id(depends_on_task_id),
         subtasks:subtasks(*)
       `

@@ -225,25 +225,6 @@ CREATE TABLE IF NOT EXISTS "public"."invitations" (
 ALTER TABLE "public"."invitations" OWNER TO "postgres";
 
 
-CREATE TABLE IF NOT EXISTS "public"."members" (
-    "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
-    "name" character varying(255) NOT NULL,
-    "email" character varying(255) NOT NULL,
-    "avatar_url" "text",
-    "role" character varying(50) NOT NULL,
-    "status" character varying(50) DEFAULT 'active'::character varying,
-    "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"(),
-    "organization_id" "uuid",
-    "user_id" "uuid",
-    CONSTRAINT "members_role_check" CHECK ((("role")::"text" = ANY ((ARRAY['admin'::character varying, 'developer'::character varying, 'viewer'::character varying])::"text"[]))),
-    CONSTRAINT "members_status_check" CHECK ((("status")::"text" = ANY ((ARRAY['active'::character varying, 'inactive'::character varying])::"text"[])))
-);
-
-
-ALTER TABLE "public"."members" OWNER TO "postgres";
-
-
 CREATE TABLE IF NOT EXISTS "public"."organization_members" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
     "organization_id" "uuid" NOT NULL,
@@ -323,16 +304,6 @@ CREATE OR REPLACE VIEW "public"."organization_stats" AS
 
 
 ALTER VIEW "public"."organization_stats" OWNER TO "postgres";
-
-
-CREATE TABLE IF NOT EXISTS "public"."project_members" (
-    "project_id" "uuid" NOT NULL,
-    "member_id" "uuid" NOT NULL,
-    "assigned_at" timestamp with time zone DEFAULT "now"()
-);
-
-
-ALTER TABLE "public"."project_members" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."security_events" (
@@ -486,16 +457,6 @@ ALTER TABLE ONLY "public"."invitations"
 
 
 
-ALTER TABLE ONLY "public"."members"
-    ADD CONSTRAINT "members_email_key" UNIQUE ("email");
-
-
-
-ALTER TABLE ONLY "public"."members"
-    ADD CONSTRAINT "members_pkey" PRIMARY KEY ("id");
-
-
-
 ALTER TABLE ONLY "public"."organization_members"
     ADD CONSTRAINT "organization_members_organization_id_user_id_key" UNIQUE ("organization_id", "user_id");
 
@@ -518,11 +479,6 @@ ALTER TABLE ONLY "public"."organizations"
 
 ALTER TABLE ONLY "public"."profiles"
     ADD CONSTRAINT "profiles_pkey" PRIMARY KEY ("id");
-
-
-
-ALTER TABLE ONLY "public"."project_members"
-    ADD CONSTRAINT "project_members_pkey" PRIMARY KEY ("project_id", "member_id");
 
 
 
@@ -575,10 +531,6 @@ CREATE INDEX "idx_invitations_token" ON "public"."invitations" USING "btree" ("t
 
 
 
-CREATE INDEX "idx_members_organization_id" ON "public"."members" USING "btree" ("organization_id");
-
-
-
 CREATE INDEX "idx_organization_members_org_id" ON "public"."organization_members" USING "btree" ("organization_id");
 
 
@@ -592,14 +544,6 @@ CREATE INDEX "idx_organizations_slug" ON "public"."organizations" USING "btree" 
 
 
 CREATE INDEX "idx_profiles_email" ON "public"."profiles" USING "btree" ("email");
-
-
-
-CREATE INDEX "idx_project_members_member_id" ON "public"."project_members" USING "btree" ("member_id");
-
-
-
-CREATE INDEX "idx_project_members_project_id" ON "public"."project_members" USING "btree" ("project_id");
 
 
 
@@ -640,10 +584,6 @@ CREATE OR REPLACE TRIGGER "update_ai_dialogue_sessions_updated_at" BEFORE UPDATE
 
 
 CREATE OR REPLACE TRIGGER "update_failed_login_attempts_updated_at" BEFORE UPDATE ON "public"."failed_login_attempts" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
-
-CREATE OR REPLACE TRIGGER "update_members_updated_at" BEFORE UPDATE ON "public"."members" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
 
 
 
@@ -701,16 +641,6 @@ ALTER TABLE ONLY "public"."invitations"
 
 
 
-ALTER TABLE ONLY "public"."members"
-    ADD CONSTRAINT "members_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."members"
-    ADD CONSTRAINT "members_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id");
-
-
-
 ALTER TABLE ONLY "public"."organization_members"
     ADD CONSTRAINT "organization_members_invited_by_fkey" FOREIGN KEY ("invited_by") REFERENCES "public"."profiles"("id");
 
@@ -736,16 +666,6 @@ ALTER TABLE ONLY "public"."profiles"
 
 
 
-ALTER TABLE ONLY "public"."project_members"
-    ADD CONSTRAINT "project_members_member_id_fkey" FOREIGN KEY ("member_id") REFERENCES "public"."members"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."project_members"
-    ADD CONSTRAINT "project_members_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE CASCADE;
-
-
-
 ALTER TABLE ONLY "public"."projects"
     ADD CONSTRAINT "projects_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."profiles"("id");
 
@@ -762,7 +682,7 @@ ALTER TABLE ONLY "public"."security_events"
 
 
 ALTER TABLE ONLY "public"."subtasks"
-    ADD CONSTRAINT "subtasks_assignee_id_fkey" FOREIGN KEY ("assignee_id") REFERENCES "public"."members"("id") ON DELETE SET NULL;
+    ADD CONSTRAINT "subtasks_assignee_id_fkey" FOREIGN KEY ("assignee_id") REFERENCES "public"."profiles"("id") ON DELETE SET NULL;
 
 
 
@@ -782,7 +702,7 @@ ALTER TABLE ONLY "public"."task_dependencies"
 
 
 ALTER TABLE ONLY "public"."tasks"
-    ADD CONSTRAINT "tasks_assignee_id_fkey" FOREIGN KEY ("assignee_id") REFERENCES "public"."members"("id") ON DELETE SET NULL;
+    ADD CONSTRAINT "tasks_assignee_id_fkey" FOREIGN KEY ("assignee_id") REFERENCES "public"."profiles"("id") ON DELETE SET NULL;
 
 
 
@@ -812,14 +732,6 @@ CREATE POLICY "Allow all operations on ai_dialogue_messages" ON "public"."ai_dia
 
 
 CREATE POLICY "Allow all operations on ai_dialogue_sessions" ON "public"."ai_dialogue_sessions" USING (true);
-
-
-
-CREATE POLICY "Allow all operations on members" ON "public"."members" USING (true);
-
-
-
-CREATE POLICY "Allow all operations on project_members" ON "public"."project_members" USING (true);
 
 
 
@@ -898,9 +810,6 @@ ALTER TABLE "public"."failed_login_attempts" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."invitations" ENABLE ROW LEVEL SECURITY;
 
 
-ALTER TABLE "public"."members" ENABLE ROW LEVEL SECURITY;
-
-
 ALTER TABLE "public"."organization_members" ENABLE ROW LEVEL SECURITY;
 
 
@@ -908,9 +817,6 @@ ALTER TABLE "public"."organizations" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE "public"."project_members" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."projects" ENABLE ROW LEVEL SECURITY;
@@ -1159,12 +1065,6 @@ GRANT ALL ON TABLE "public"."invitations" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."members" TO "anon";
-GRANT ALL ON TABLE "public"."members" TO "authenticated";
-GRANT ALL ON TABLE "public"."members" TO "service_role";
-
-
-
 GRANT ALL ON TABLE "public"."organization_members" TO "anon";
 GRANT ALL ON TABLE "public"."organization_members" TO "authenticated";
 GRANT ALL ON TABLE "public"."organization_members" TO "service_role";
@@ -1192,12 +1092,6 @@ GRANT ALL ON TABLE "public"."projects" TO "service_role";
 GRANT ALL ON TABLE "public"."organization_stats" TO "anon";
 GRANT ALL ON TABLE "public"."organization_stats" TO "authenticated";
 GRANT ALL ON TABLE "public"."organization_stats" TO "service_role";
-
-
-
-GRANT ALL ON TABLE "public"."project_members" TO "anon";
-GRANT ALL ON TABLE "public"."project_members" TO "authenticated";
-GRANT ALL ON TABLE "public"."project_members" TO "service_role";
 
 
 

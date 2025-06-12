@@ -81,17 +81,17 @@ export async function getAllProjects() {
 export async function getTasksWithDetails(projectId = null, filters = {}) {
 	let query = supabase.from('tasks').select(`
       *,
-      assignee:members!tasks_assignee_id_fkey (
+      assignee:profiles!tasks_assignee_id_fkey (
         id,
-        name,
+        full_name,
         email,
         avatar_url
       ),
       subtasks (
         *,
-        assignee:members!subtasks_assignee_id_fkey (
+        assignee:profiles!subtasks_assignee_id_fkey (
           id,
-          name,
+          full_name,
           email
         )
       ),
@@ -139,17 +139,17 @@ export async function getTaskById(taskId) {
 		.select(
 			`
       *,
-      assignee:members!tasks_assignee_id_fkey (
+      assignee:profiles!tasks_assignee_id_fkey (
         id,
-        name,
+        full_name,
         email,
         avatar_url
       ),
       subtasks (
         *,
-        assignee:members!subtasks_assignee_id_fkey (
+        assignee:profiles!subtasks_assignee_id_fkey (
           id,
-          name,
+          full_name,
           email
         )
       ),

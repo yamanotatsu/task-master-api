@@ -18,9 +18,10 @@ import { applySecurityMiddleware } from './middleware/security.js';
 
 // Import new database-backed routes
 import projectsRouter from './routes/projects-db.js';
-import membersRouter from './routes/members.js';
 import tasksRouter from './routes/tasks-db.js';
 import generateTasksRouter from './routes/generate-tasks-db.js';
+import generateTasksPreviewRouter from './routes/generate-tasks-preview.js';
+import tasksBatchCreateRouter from './routes/tasks-batch-create.js';
 import statisticsRouter from './routes/statistics.js';
 import authRouter from './routes/auth.js';
 import organizationsRouter from './routes/organizations.js';
@@ -99,9 +100,10 @@ app.use(auditRateLimitMiddleware);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/organizations', organizationsRouter);
 app.use('/api/v1/projects', projectsRouter);
-app.use('/api/v1/members', membersRouter);
 app.use('/api/v1/tasks', tasksRouter);
 app.use('/api/v1/generate-tasks-from-prd', generateTasksRouter);
+app.use('/api/v1/generate-tasks-preview', generateTasksPreviewRouter);
+app.use('/api/v1/tasks/batch-create', tasksBatchCreateRouter);
 app.use('/api/v1/audit', auditRouter);
 app.use('/api/v1', statisticsRouter);
 
