@@ -15,13 +15,12 @@ import {
 } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { useAuth, withAuth } from '@/lib/auth';
-import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { User, Lock, Trash2 } from 'lucide-react';
 
 function ProfilePage() {
 	const router = useRouter();
-	const { user, updateUser } = useAuth();
+	const { user, profile, updateProfile, changePassword, deleteAccount } = useAuth();
 	const [loading, setLoading] = useState(false);
 	const [profileData, setProfileData] = useState({
 		fullName: '',
@@ -38,28 +37,22 @@ function ProfilePage() {
 	});
 
 	useEffect(() => {
-		if (user) {
+		if (user && profile) {
 			setProfileData({
-				fullName: user.fullName || '',
+				fullName: profile.full_name || '',
 				email: user.email || ''
 			});
 		}
-	}, [user]);
+	}, [user, profile]);
 
 	const handleProfileUpdate = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setLoading(true);
 
 		try {
-			const updatedProfile = await api.updateUserProfile({
-				name: profileData.fullName,
-				email: profileData.email
-			});
-
-			updateUser({
-				...user!,
-				fullName: updatedProfile.name,
-				email: updatedProfile.email
+			// Update user profile via Supabase
+			await updateProfile({
+				full_name: profileData.fullName
 			});
 
 			toast.success('プロフィールを更新しました');
@@ -87,7 +80,7 @@ function ProfilePage() {
 		setLoading(true);
 
 		try {
-			await api.updatePassword(
+			await changePassword(
 				passwordData.currentPassword,
 				passwordData.newPassword
 			);
@@ -103,7 +96,9 @@ function ProfilePage() {
 		} catch (error) {
 			console.error('Password change error:', error);
 			toast.error(
-				'パスワードの変更に失敗しました。現在のパスワードを確認してください。'
+				error instanceof Error 
+					? error.message 
+					: 'パスワードの変更に失敗しました。現在のパスワードを確認してください。'
 			);
 		} finally {
 			setLoading(false);
@@ -121,12 +116,16 @@ function ProfilePage() {
 		setLoading(true);
 
 		try {
-			await api.deleteAccount(deleteData.password, deleteData.confirmText);
+			await deleteAccount(deleteData.password);
 			toast.success('アカウントを削除しました');
-			router.push('/login');
+			// router.push will be handled by the deleteAccount function
 		} catch (error) {
 			console.error('Account deletion error:', error);
-			toast.error('アカウントの削除に失敗しました');
+			toast.error(
+				error instanceof Error 
+					? error.message 
+					: 'アカウントの削除に失敗しました'
+			);
 		} finally {
 			setLoading(false);
 		}
