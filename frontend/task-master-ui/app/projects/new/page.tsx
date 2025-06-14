@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
 	ArrowLeft,
@@ -8,7 +8,8 @@ import {
 	Check,
 	MessageSquare,
 	FileText,
-	Settings2
+	Settings2,
+	ListChecks
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,8 +28,11 @@ import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useAuth, withAuth } from '@/lib/auth';
+import { TaskCandidateEditor } from '@/components/project/TaskCandidateEditor';
+import { taskCandidateStorage } from '@/lib/localStorage';
+import type { TaskCandidate } from '@/components/project/TaskCandidateCard';
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
 type ConversationMode = 'interactive' | 'guided';
 
 interface Message {
@@ -50,7 +54,9 @@ function NewProjectPage() {
 	const router = useRouter();
 	const { currentOrganization } = useAuth();
 	const [currentStep, setCurrentStep] = useState<Step>(1);
+	console.log('currentStep', currentStep);
 	const [loading, setLoading] = useState(false);
+	const [sessionId] = useState(() => `session_${Date.now()}_${Math.random()}`);
 
 	// Step 1 State
 	const [projectName, setProjectName] = useState('');
@@ -76,6 +82,15 @@ function NewProjectPage() {
 	const [taskCount, setTaskCount] = useState(10);
 	const [includeResearch, setIncludeResearch] = useState(false);
 	const [estimatedTime, setEstimatedTime] = useState('2-3週間');
+
+	// Step 4 State
+	const [taskCandidates, setTaskCandidates] = useState<TaskCandidate[]>([]);
+
+	// Initialize from localStorage on mount
+	useEffect(() => {
+		// Clear old sessions when starting new project
+		taskCandidateStorage.clearOldSessions();
+	}, []);
 
 	const updateEstimatedTime = (count: number) => {
 		if (count <= 5) setEstimatedTime('1週間');
@@ -105,7 +120,7 @@ function NewProjectPage() {
 		setPrdQuality(quality);
 	};
 
-	const handleNextStep = () => {
+	const handleNextStep = async () => {
 		if (currentStep === 1) {
 			if (!projectName.trim() || !prdContent.trim()) {
 				toast.error('プロジェクト名とPRDを入力してください');
@@ -126,7 +141,38 @@ function NewProjectPage() {
 			setMessages([initialMessage]);
 		}
 
-		if (currentStep < 3) {
+		if (currentStep === 3) {
+			console.log('hey generate tasks');
+			// Generate task candidates
+			try {
+				setLoading(true);
+				// APIメソッドの直前にログ追加
+				console.log('About to call API with:', {
+					prd_content: prdContent,
+					target_task_count: taskCount,
+					use_research_mode: includeResearch,
+					projectName
+				});
+				const result = await api.generateTasksPreview({
+					prd_content: prdContent,
+					target_task_count: taskCount,
+					use_research_mode: includeResearch,
+					projectName
+				});
+
+				if (result && result.tasks) {
+					setTaskCandidates(result.tasks);
+					setCurrentStep(4);
+				} else {
+					throw new Error('Invalid response structure');
+				}
+			} catch (error) {
+				console.error('Failed to generate tasks:', error);
+				toast.error('タスクの生成に失敗しました');
+			} finally {
+				setLoading(false);
+			}
+		} else if (currentStep < 4) {
 			setCurrentStep((prev) => (prev + 1) as Step);
 		}
 	};
@@ -206,33 +252,32 @@ function NewProjectPage() {
 		}
 	};
 
-	const handleCreateProject = async () => {
+	const handleConfirmTasks = async (finalTasks: TaskCandidate[]) => {
 		try {
 			setLoading(true);
 
-			// Create project with AI dialogue session
-			const projectPath = `/tmp/task-master-projects/${Date.now()}`;
-			const { projectId, sessionId } = await api.createProject({
-				name: projectName,
-				projectPath,
+			// Create project and tasks in batch
+			const result = await api.createProjectWithTasks({
+				projectName,
+				projectDescription: '',
 				prdContent,
 				deadline: undefined,
-				organizationId: currentOrganization?.id
+				tasks: finalTasks.map((task) => ({
+					tempId: task.tempId,
+					title: task.title,
+					description: task.description,
+					details: task.details,
+					test_strategy: task.test_strategy,
+					priority: task.priority,
+					order: task.order
+				}))
 			});
 
-			// Store session ID for future use
-			sessionStorage.setItem('currentSessionId', sessionId);
-
-			// Generate tasks from PRD
-			await api.generateTasksFromPRD({
-				prd_content: prdContent,
-				target_task_count: taskCount,
-				use_research_mode: includeResearch,
-				projectId
-			});
+			// Clear localStorage after successful creation
+			taskCandidateStorage.remove(sessionId);
 
 			toast.success('プロジェクトが作成されました');
-			router.push(`/projects/${projectId}`);
+			router.push(`/projects/${result.project.id}`);
 		} catch (error) {
 			console.error('Failed to create project:', error);
 			toast.error('プロジェクトの作成に失敗しました');
@@ -253,15 +298,26 @@ function NewProjectPage() {
 			description: 'AIと対話して要件を詳細化します'
 		},
 		3: {
-			title: '確認・生成',
+			title: '設定',
 			icon: Settings2,
 			description: 'タスク生成の設定を確認します'
+		},
+		4: {
+			title: 'タスク確認',
+			icon: ListChecks,
+			description: 'タスクを確認・編集します'
 		}
 	};
 
 	return (
 		<div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
-			{loading && <LoadingOverlay message="プロジェクトを作成中..." />}
+			{loading && (
+				<LoadingOverlay
+					message={
+						currentStep === 3 ? 'タスクを生成中...' : 'プロジェクトを作成中...'
+					}
+				/>
+			)}
 
 			{/* Header with Steps */}
 			<div className="mb-8">
@@ -279,7 +335,7 @@ function NewProjectPage() {
 
 				{/* Step Indicator */}
 				<div className="flex items-center justify-between mb-8">
-					{[1, 2, 3].map((step) => {
+					{[1, 2, 3, 4].map((step) => {
 						const config = stepConfig[step as Step];
 						const Icon = config.icon;
 						const isActive = step === currentStep;
@@ -317,7 +373,7 @@ function NewProjectPage() {
 										</p>
 									</div>
 								</div>
-								{step < 3 && (
+								{step < 4 && (
 									<div
 										className={cn(
 											'flex-1 h-1 mx-4',
@@ -579,10 +635,8 @@ function NewProjectPage() {
 			{currentStep === 3 && (
 				<Card>
 					<CardHeader>
-						<CardTitle>Step 3: 確認・生成</CardTitle>
-						<CardDescription>
-							タスク生成の設定を確認してプロジェクトを作成します
-						</CardDescription>
+						<CardTitle>Step 3: タスク生成設定</CardTitle>
+						<CardDescription>タスク生成の設定を確認します</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-6">
 						<div>
@@ -649,33 +703,49 @@ function NewProjectPage() {
 				</Card>
 			)}
 
-			{/* Navigation Buttons */}
-			<div className="flex justify-between mt-8">
-				<Button
-					variant="outline"
-					onClick={handlePrevStep}
-					disabled={currentStep === 1}
-				>
-					<ArrowLeft className="mr-2 h-4 w-4" />
-					戻る
-				</Button>
+			{/* Step 4: Task Candidate Editor */}
+			{currentStep === 4 && (
+				<TaskCandidateEditor
+					sessionId={sessionId}
+					projectName={projectName}
+					projectDescription=""
+					prdContent={prdContent}
+					deadline={undefined}
+					initialTasks={taskCandidates}
+					onConfirm={handleConfirmTasks}
+					onBack={() => setCurrentStep(3)}
+				/>
+			)}
 
-				{currentStep < 3 ? (
-					<Button onClick={handleNextStep}>
-						次へ
-						<ArrowRight className="ml-2 h-4 w-4" />
-					</Button>
-				) : (
+			{/* Navigation Buttons */}
+			{currentStep < 4 && (
+				<div className="flex justify-between mt-8">
 					<Button
-						onClick={handleCreateProject}
-						disabled={loading}
-						className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+						variant="outline"
+						onClick={handlePrevStep}
+						disabled={currentStep === 1}
 					>
-						プロジェクトを生成
-						<Check className="ml-2 h-4 w-4" />
+						<ArrowLeft className="mr-2 h-4 w-4" />
+						戻る
 					</Button>
-				)}
-			</div>
+
+					{currentStep < 3 ? (
+						<Button onClick={handleNextStep}>
+							次へ
+							<ArrowRight className="ml-2 h-4 w-4" />
+						</Button>
+					) : (
+						<Button
+							onClick={handleNextStep}
+							disabled={loading}
+							className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+						>
+							タスクを生成
+							<ArrowRight className="ml-2 h-4 w-4" />
+						</Button>
+					)}
+				</div>
+			)}
 		</div>
 	);
 }
