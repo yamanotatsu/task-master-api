@@ -25,7 +25,7 @@ interface AuthContextType {
 	currentOrganization: Organization | null;
 	loading: boolean;
 	error: string | null;
-	login: (email: string, password: string) => Promise<void>;
+	login: (email: string, password: string, redirectTo?: string) => Promise<void>;
 	signup: (email: string, password: string, fullName: string) => Promise<void>;
 	logout: () => Promise<void>;
 	resetPassword: (email: string) => Promise<void>;
@@ -179,8 +179,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		return () => subscription.unsubscribe();
 	}, [loadProfile, loadOrganizations]);
 
-	// Login function
-	const login = async (email: string, password: string) => {
+	// Login function with optional redirect
+	const login = async (email: string, password: string, redirectTo?: string) => {
 		try {
 			setError(null);
 			const { data, error } = await supabase.auth.signInWithPassword({
@@ -204,6 +204,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			if (data.user) {
 				await loadProfile(data.user.id);
 				await loadOrganizations(data.user.id);
+
+				// Check if there's a redirect URL (e.g., from invitation)
+				if (redirectTo) {
+					router.push(redirectTo);
+					return;
+				}
 
 				// current_organization_idをチェック
 				const { data: profileData } = await supabase
