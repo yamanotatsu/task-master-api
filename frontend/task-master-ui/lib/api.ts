@@ -147,10 +147,17 @@ export interface ExpandTaskRequest {
 
 class ApiClient {
 	private async getAuthToken(): Promise<string | null> {
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
-		return session?.access_token || null;
+		try {
+			const {
+				data: { session }
+			} = await supabase.auth.getSession();
+			const token = session?.access_token || null;
+			console.log('[API] getAuthToken result:', token ? 'token found' : 'no token');
+			return token;
+		} catch (error) {
+			console.error('[API] getAuthToken error:', error);
+			return null;
+		}
 	}
 
 	private async fetchAPI<T>(
@@ -158,7 +165,12 @@ class ApiClient {
 		options?: RequestInit
 	): Promise<T> {
 		const url = `${API_BASE_URL}${endpoint}`;
+		
+		// デバッグログ追加
+		console.log('[API] Fetching:', url);
+		
 		const token = await this.getAuthToken();
+		console.log('[API] Auth token:', token ? 'present' : 'missing');
 
 		const headers: Record<string, string> = {
 			'Content-Type': 'application/json'
@@ -183,45 +195,57 @@ class ApiClient {
 			headers['Authorization'] = `Bearer ${token}`;
 		}
 
-		const response = await fetch(url, {
-			...options,
-			headers
-		});
+		try {
+			console.log('[API] Request headers:', headers);
+			console.log('[API] Request body:', options?.body);
+			
+			const response = await fetch(url, {
+				...options,
+				headers
+			});
 
-		const data = await response.json();
+			console.log('[API] Response status:', response.status);
+			
+			const data = await response.json();
+			console.log('[API] Response data:', data);
 
-		// Handle token refresh if needed
-		if (response.status === 401) {
-			const { error } = await supabase.auth.refreshSession();
-			if (!error) {
-				// Retry the request with new token
-				const newToken = await this.getAuthToken();
-				if (newToken) {
-					headers['Authorization'] = `Bearer ${newToken}`;
-					const retryResponse = await fetch(url, {
-						...options,
-						headers
-					});
-					const retryData = await retryResponse.json();
-					if (!retryResponse.ok || retryData.success === false) {
-						throw new Error(
-							retryData.error?.message ||
-								`API Error: ${retryResponse.statusText}`
-						);
+			// Handle token refresh if needed
+			if (response.status === 401) {
+				console.log('[API] 401 Unauthorized, attempting token refresh...');
+				const { error } = await supabase.auth.refreshSession();
+				if (!error) {
+					// Retry the request with new token
+					const newToken = await this.getAuthToken();
+					if (newToken) {
+						headers['Authorization'] = `Bearer ${newToken}`;
+						const retryResponse = await fetch(url, {
+							...options,
+							headers
+						});
+						const retryData = await retryResponse.json();
+						if (!retryResponse.ok || retryData.success === false) {
+							throw new Error(
+								retryData.error?.message ||
+									`API Error: ${retryResponse.statusText}`
+							);
+						}
+						return retryData.data || retryData;
 					}
-					return retryData.data || retryData;
 				}
 			}
-		}
 
-		if (!response.ok || data.success === false) {
-			throw new Error(
-				data.error?.message || `API Error: ${response.statusText}`
-			);
-		}
+			if (!response.ok || data.success === false) {
+				const errorMessage = data.error?.message || `API Error: ${response.statusText}`;
+				console.error('[API] Error:', errorMessage);
+				throw new Error(errorMessage);
+			}
 
-		// API returns data wrapped in { success: true, data: {...} }
-		return data.data || data;
+			// API returns data wrapped in { success: true, data: {...} }
+			return data.data || data;
+		} catch (error) {
+			console.error('[API] Fetch error:', error);
+			throw error;
+		}
 	}
 
 	// Task endpoints
@@ -532,64 +556,15 @@ class ApiClient {
 		);
 	}
 
-	// Authentication endpoints
-	async login(email: string, password: string): Promise<LoginResponse> {
-		return this.fetchAPI<LoginResponse>('/api/v1/auth/login', {
-			method: 'POST',
-			body: JSON.stringify({ email, password })
-		});
-	}
-
-	async signup(
-		email: string,
-		password: string,
-		fullName: string
-	): Promise<any> {
-		return this.fetchAPI('/api/v1/auth/signup', {
-			method: 'POST',
-			body: JSON.stringify({ email, password, fullName })
-		});
-	}
-
-	async logout(): Promise<void> {
-		await this.fetchAPI('/api/v1/auth/logout', {
-			method: 'POST'
-		});
-	}
-
-	async forgotPassword(email: string): Promise<void> {
-		await this.fetchAPI('/api/v1/auth/forgot-password', {
-			method: 'POST',
-			body: JSON.stringify({ email })
-		});
-	}
-
-	async resetPassword(token: string, newPassword: string): Promise<void> {
-		await this.fetchAPI('/api/v1/auth/reset-password', {
-			method: 'POST',
-			body: JSON.stringify({ token, newPassword })
-		});
-	}
-
-	async updatePassword(
-		currentPassword: string,
-		newPassword: string
-	): Promise<void> {
-		await this.fetchAPI('/api/v1/users/password', {
-			method: 'PUT',
-			body: JSON.stringify({ currentPassword, newPassword })
-		});
-	}
-
-	async deleteAccount(
-		password: string,
-		confirmDeletion: string
-	): Promise<void> {
-		await this.fetchAPI('/api/v1/auth/user', {
-			method: 'DELETE',
-			body: JSON.stringify({ password, confirmDeletion })
-		});
-	}
+	// Note: Authentication is now handled directly via Supabase
+	// The following methods have been removed and replaced with direct Supabase calls:
+	// - login() -> use supabase.auth.signInWithPassword()
+	// - signup() -> use supabase.auth.signUp()
+	// - logout() -> use supabase.auth.signOut()
+	// - forgotPassword() -> use supabase.auth.resetPasswordForEmail()
+	// - resetPassword() -> use supabase.auth.updateUser()
+	// - updatePassword() -> use auth context's changePassword()
+	// - deleteAccount() -> use auth context's deleteAccount()
 
 	// User profile endpoints
 	async getUserProfile(): Promise<Member> {
@@ -864,6 +839,85 @@ class ApiClient {
 			}
 		);
 		return response.tokens;
+	}
+
+	// Task preview and batch creation endpoints
+	async generateTasksPreview(data: {
+		prd_content: string;
+		target_task_count?: number;
+		use_research_mode?: boolean;
+		projectName?: string;
+	}): Promise<{
+		tasks: Array<{
+			tempId: string;
+			title: string;
+			description: string;
+			details: string;
+			test_strategy: string;
+			priority: 'high' | 'medium' | 'low';
+			order: number;
+			dependencies: string[];
+		}>;
+		metadata: {
+			projectName: string;
+			totalTasks: number;
+			generatedAt: string;
+		};
+		telemetryData: {
+			modelUsed: string;
+			totalTokens: number;
+			totalCost: number;
+			processingTime: number;
+		};
+	}> {
+		return this.fetchAPI('/api/v1/generate-tasks-preview', {
+			method: 'POST',
+			body: JSON.stringify(data)
+		});
+	}
+
+	async createProjectWithTasks(data: {
+		projectName: string;
+		projectDescription?: string;
+		prdContent?: string;
+		deadline?: string;
+		tasks: Array<{
+			tempId?: string;
+			title: string;
+			description: string;
+			details: string;
+			test_strategy: string;
+			priority: 'high' | 'medium' | 'low';
+			order: number;
+		}>;
+	}): Promise<{
+		project: {
+			id: number;
+			name: string;
+			description?: string;
+			deadline?: string;
+			status: string;
+		};
+		tasks: Array<{
+			id: number;
+			tempId?: string;
+			title: string;
+			description: string;
+			details: string;
+			test_strategy: string;
+			priority: string;
+			status: string;
+			order: number;
+		}>;
+		metadata: {
+			totalTasksCreated: number;
+			createdAt: string;
+		};
+	}> {
+		return this.fetchAPI('/api/v1/tasks/batch-create', {
+			method: 'POST',
+			body: JSON.stringify(data)
+		});
 	}
 }
 
