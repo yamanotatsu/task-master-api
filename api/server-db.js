@@ -23,7 +23,6 @@ import generateTasksRouter from './routes/generate-tasks-db.js';
 import generateTasksPreviewRouter from './routes/generate-tasks-preview.js';
 import tasksBatchCreateRouter from './routes/tasks-batch-create.js';
 import statisticsRouter from './routes/statistics.js';
-import authRouter from './routes/auth.js';
 import organizationsRouter from './routes/organizations.js';
 import auditRouter from './routes/audit.js';
 
@@ -97,7 +96,6 @@ app.use(
 app.use(auditRateLimitMiddleware);
 
 // Mount routers
-app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/organizations', organizationsRouter);
 app.use('/api/v1/projects', projectsRouter);
 app.use('/api/v1/tasks', tasksRouter);

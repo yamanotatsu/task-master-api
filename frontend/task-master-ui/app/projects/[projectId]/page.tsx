@@ -22,12 +22,9 @@ import { Progress } from '@/components/ui/progress';
 import { SkeletonLoader } from '@/components/common/SkeletonLoader';
 import { ErrorMessage } from '@/components/common/ErrorMessage';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
-import { TaskTable } from '@/components/dashboard/TaskTable';
-import { TaskDetailPanel } from '@/components/task-detail/TaskDetailPanel';
+import { ProjectTaskTable } from '@/components/projects/ProjectTaskTable';
 import { SearchBar } from '@/components/dashboard/SearchBar';
 import { FilterDropdown } from '@/components/dashboard/FilterDropdown';
-import { useTaskSelection } from '@/hooks/useTaskSelection';
-import { useTaskDetail } from '@/hooks/useTaskDetail';
 import { useSearch } from '@/hooks/useSearch';
 import { useFilter } from '@/hooks/useFilter';
 import {
@@ -37,7 +34,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { api, Project, Task } from '@/lib/api';
+import { api, Project, Task, Subtask } from '@/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -50,13 +47,12 @@ export default function ProjectDetailPage() {
 
 	const [project, setProject] = useState<Project | null>(null);
 	const [tasks, setTasks] = useState<Task[]>([]);
+	const [subtasks, setSubtasks] = useState<Subtask[]>([]);
+	const [users, setUsers] = useState<Array<{ id: string; name: string; avatar?: string }>>([]);
 	const [loading, setLoading] = useState(true);
 	const { error, handleError, clearError, withErrorHandling } =
 		useErrorHandler();
 	const [viewMode, setViewMode] = useState<ViewMode>('list');
-	const { selectedTasks, setSelectedTasks } = useTaskSelection();
-	const { selectedTaskId, isOpen, openTaskDetail, closeTaskDetail } =
-		useTaskDetail();
 	const { searchQuery, setSearchQuery, searchResults } = useSearch(tasks);
 	const { filters, setFilters, filteredResults, activeFilterCount } =
 		useFilter(searchResults);
@@ -78,6 +74,19 @@ export default function ProjectDetailPage() {
 
 				setProject(projectData);
 				setTasks(tasksData.tasks);
+				
+				// サブタスクをすべてのタスクから取得し、taskIdを付与
+				const allSubtasks = tasksData.tasks.flatMap(task => 
+					(task.subtasks || []).map(subtask => ({
+						...subtask,
+						taskId: task.id
+					}))
+				);
+				setSubtasks(allSubtasks);
+				
+				// プロジェクトのassigneesからユーザーリストを作成
+				const usersList = projectData.assignees || [];
+				setUsers(usersList);
 			},
 			{
 				customMessage: 'プロジェクトの読み込みに失敗しました'
@@ -87,43 +96,107 @@ export default function ProjectDetailPage() {
 		setLoading(false);
 	};
 
-	const handleTaskClick = (taskId: number) => {
-		openTaskDetail(taskId);
+	const handleTaskClick = (taskId: string) => {
+		router.push(`/projects/${projectId}/tasks/${taskId}`);
+	};
+	
+	const handleSubtaskClick = (taskId: string, subtaskId: string) => {
+		router.push(`/projects/${projectId}/tasks/${taskId}/subtasks/${subtaskId}`);
 	};
 
-	const handleTaskUpdateFromPanel = (updatedTask: Task) => {
-		setTasks(
-			tasks.map((task) => (task.id === updatedTask.id ? updatedTask : task))
-		);
-	};
-
-	const handleTaskStatusChange = async (
-		taskId: number,
-		newStatus: Task['status']
-	) => {
+	const handleTaskUpdate = async (taskId: string, updates: Partial<Task>) => {
 		await withErrorHandling(
 			async () => {
-				await api.updateTaskStatus(taskId, newStatus);
+				await api.updateTask(taskId, updates);
 				setTasks(
-					tasks.map((task) =>
-						task.id === taskId ? { ...task, status: newStatus } : task
+					tasks.map((task) => 
+						task.id === taskId ? { ...task, ...updates } : task
 					)
 				);
-				toast.success('ステータスを更新しました');
+				toast.success('タスクを更新しました');
 			},
 			{
-				customMessage: 'ステータスの更新に失敗しました'
+				customMessage: 'タスクの更新に失敗しました'
 			}
 		);
 	};
 
-	const handleDeleteTask = async (taskId: number) => {
+	const handleSubtaskUpdate = async (subtaskId: string, updates: Partial<Subtask>) => {
+		await withErrorHandling(
+			async () => {
+				// 対象のサブタスクを見つける
+				const subtask = subtasks.find(s => s.id === subtaskId);
+				if (!subtask) return;
+				
+				await api.updateSubtask(subtask.taskId, subtaskId, updates);
+				setSubtasks(
+					subtasks.map((s) => 
+						s.id === subtaskId ? { ...s, ...updates } : s
+					)
+				);
+				toast.success('サブタスクを更新しました');
+			},
+			{
+				customMessage: 'サブタスクの更新に失敗しました'
+			}
+		);
+	};
+
+	const handleAddTask = async () => {
+		await withErrorHandling(
+			async () => {
+				const newTask = await api.createTask({
+					projectId: projectId,
+					title: '新しいタスク',
+					description: '',
+					status: 'not-started',
+					priority: 'medium'
+				});
+				setTasks([...tasks, newTask]);
+				toast.success('タスクを作成しました');
+			},
+			{
+				customMessage: 'タスクの作成に失敗しました'
+			}
+		);
+	};
+
+	const handleAddSubtask = async (taskId: string) => {
+		await withErrorHandling(
+			async () => {
+				const newSubtask = await api.addSubtask(taskId, {
+					title: '新しいサブタスク',
+					status: 'pending'
+				});
+				setSubtasks([...subtasks, { ...newSubtask, taskId: taskId }]);
+				toast.success('サブタスクを作成しました');
+			},
+			{
+				customMessage: 'サブタスクの作成に失敗しました'
+			}
+		);
+	};
+
+	const handleTasksReorder = async (reorderedTasks: Task[]) => {
+		// ローカルで即座に更新
+		setTasks(reorderedTasks);
+		// APIコールは非同期で実行（エラーは通知のみ）
+		try {
+			// await api.updateTasksOrder(reorderedTasks.map(t => t.id));
+		} catch {
+			toast.error('並び順の保存に失敗しました');
+		}
+	};
+
+	const handleDeleteTask = async (taskId: string) => {
 		if (!confirm('このタスクを削除してもよろしいですか？')) return;
 
 		await withErrorHandling(
 			async () => {
 				await api.deleteTask(taskId);
 				setTasks(tasks.filter((task) => task.id !== taskId));
+				// 関連するサブタスクも削除
+				setSubtasks(subtasks.filter((s) => s.taskId !== taskId));
 				toast.success('タスクを削除しました');
 			},
 			{
@@ -132,8 +205,25 @@ export default function ProjectDetailPage() {
 		);
 	};
 
-	// Final filtered tasks
-	const filteredTasks = filteredResults;
+	// Final filtered tasks with string IDs for the table
+	const filteredTasks = filteredResults.map(task => ({
+		...task,
+		id: task.id.toString(),
+		title: task.title,
+		status: task.status,
+		assignee: undefined, // TODO: assignee情報の変換
+		deadline: task.deadline,
+		priority: task.priority
+	}));
+	
+	// サブタスクもstring IDに変換
+	const mappedSubtasks = subtasks.map(subtask => ({
+		id: subtask.id.toString(),
+		taskId: subtask.taskId ? subtask.taskId.toString() : '',
+		title: subtask.title,
+		status: subtask.status || 'pending',
+		assignee: undefined // TODO: assignee情報の変換
+	}));
 
 	const calculateProgress = () => {
 		if (tasks.length === 0) return 0;
@@ -220,31 +310,10 @@ export default function ProjectDetailPage() {
 			<div className="bg-white border-b px-6 py-3">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center space-x-3">
-						<Button>
+						<Button onClick={handleAddTask}>
 							<Plus className="mr-2 h-4 w-4" />
 							新規タスク
 						</Button>
-
-						{selectedTasks.length > 0 && (
-							<>
-								<div className="h-6 w-px bg-gray-300" />
-								<div className="flex items-center space-x-2">
-									<span className="text-sm text-gray-600">
-										{selectedTasks.length}件選択中
-									</span>
-									<Button variant="outline" size="sm">
-										一括更新
-									</Button>
-									<Button
-										variant="ghost"
-										size="sm"
-										onClick={() => setSelectedTasks([])}
-									>
-										<X className="h-4 w-4" />
-									</Button>
-								</div>
-							</>
-						)}
 					</div>
 
 					<div className="flex items-center space-x-3">
@@ -335,15 +404,22 @@ export default function ProjectDetailPage() {
 					) : loading ? (
 						<SkeletonLoader type="task-table" count={10} />
 					) : viewMode === 'list' ? (
-						<TaskTable
-							tasks={filteredTasks}
-							projectId={projectId}
-							onTaskClick={handleTaskClick}
-							onTaskStatusChange={handleTaskStatusChange}
-							onTaskDelete={handleDeleteTask}
-							selectedTasks={selectedTasks}
-							onTaskSelectionChange={setSelectedTasks}
-						/>
+						<div className="bg-white rounded-lg shadow-sm">
+							<ProjectTaskTable
+								tasks={filteredTasks}
+								subtasks={mappedSubtasks}
+								users={users}
+								onTaskUpdate={handleTaskUpdate}
+								onSubtaskUpdate={handleSubtaskUpdate}
+								onAddTask={handleAddTask}
+								onAddSubtask={handleAddSubtask}
+								onDeleteTask={handleDeleteTask}
+								onTaskClick={handleTaskClick}
+								onSubtaskClick={handleSubtaskClick}
+								onTasksReorder={handleTasksReorder}
+								projectId={projectId}
+							/>
+						</div>
 					) : null}
 
 					{viewMode === 'dependencies' && (
@@ -393,14 +469,6 @@ export default function ProjectDetailPage() {
 				</div>
 			</div>
 
-			{/* Task Detail Panel */}
-			<TaskDetailPanel
-				taskId={selectedTaskId}
-				projectId={projectId}
-				isOpen={isOpen}
-				onClose={closeTaskDetail}
-				onTaskUpdate={handleTaskUpdateFromPanel}
-			/>
 		</div>
 	);
 }

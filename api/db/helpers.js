@@ -226,9 +226,9 @@ export async function updateTask(taskId, updates) {
 	const { dependencies, subtasks, ...taskUpdates } = updates;
 
 	// Convert camelCase to snake_case for database
-	if (taskUpdates.testStrategy !== undefined) {
-		taskUpdates.test_strategy = taskUpdates.testStrategy;
-		delete taskUpdates.testStrategy;
+	if (task.testStrategy !== undefined) {
+		task.test_strategy = task.testStrategy;
+		delete task.testStrategy;
 	}
 
 	// Update the task
