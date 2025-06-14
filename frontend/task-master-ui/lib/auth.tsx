@@ -30,6 +30,8 @@ interface AuthContextType {
 	logout: () => Promise<void>;
 	resetPassword: (email: string) => Promise<void>;
 	updatePassword: (newPassword: string) => Promise<void>;
+	changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+	deleteAccount: (password: string) => Promise<void>;
 	updateProfile: (updates: Partial<Profile>) => Promise<void>;
 	setCurrentOrganization: (org: Organization | null) => void;
 	refreshSession: () => Promise<void>;
@@ -302,6 +304,74 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		}
 	};
 
+	// Change password (with current password verification)
+	const changePassword = async (currentPassword: string, newPassword: string) => {
+		try {
+			setError(null);
+			if (!user?.email) throw new Error('No user logged in');
+
+			// Verify current password
+			const { error: signInError } = await supabase.auth.signInWithPassword({
+				email: user.email,
+				password: currentPassword
+			});
+
+			if (signInError) {
+				throw new Error('Current password is incorrect');
+			}
+
+			// Update to new password
+			const { error: updateError } = await supabase.auth.updateUser({
+				password: newPassword
+			});
+
+			if (updateError) throw updateError;
+		} catch (err) {
+			console.error('Change password error:', err);
+			setError(
+				err instanceof Error ? err.message : 'Failed to change password'
+			);
+			throw err;
+		}
+	};
+
+	// Delete account
+	const deleteAccount = async (password: string) => {
+		try {
+			setError(null);
+			if (!user?.email) throw new Error('No user logged in');
+
+			// Verify password before deletion
+			const { error: signInError } = await supabase.auth.signInWithPassword({
+				email: user.email,
+				password: password
+			});
+
+			if (signInError) {
+				throw new Error('Password is incorrect');
+			}
+
+			// Delete user account
+			// Note: This requires service role key on the server side
+			// For now, we'll mark the account for deletion and handle it server-side
+			const { error: deleteError } = await supabase
+				.from('profiles')
+				.update({ deleted_at: new Date().toISOString() })
+				.eq('id', user.id);
+
+			if (deleteError) throw deleteError;
+
+			// Sign out after marking for deletion
+			await logout();
+		} catch (err) {
+			console.error('Delete account error:', err);
+			setError(
+				err instanceof Error ? err.message : 'Failed to delete account'
+			);
+			throw err;
+		}
+	};
+
 	// Update profile
 	const updateProfile = async (updates: Partial<Profile>) => {
 		try {
@@ -366,6 +436,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		logout,
 		resetPassword,
 		updatePassword,
+		changePassword,
+		deleteAccount,
 		updateProfile,
 		setCurrentOrganization: handleSetCurrentOrganization,
 		refreshSession
