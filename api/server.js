@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import { getSecurityConfig } from './config/security.js';
 import { generateTasksFromPRDHandler } from './routes/generate-tasks.js';
 import {
 	listTasksHandler,
@@ -37,16 +38,19 @@ import {
 	removeSubtaskHandler
 } from './routes/subtasks.js';
 import userRoutes from './routes/users.js';
-import authRoutes from './routes/auth.js';
 import { rateLimiters } from './middleware/rateLimiter.js';
+import generateTasksPreviewRouter from './routes/generate-tasks-preview.js';
+import tasksBatchCreateRouter from './routes/tasks-batch-create.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.API_PORT || 3000;
 
+const securityConfig = getSecurityConfig();
+
 app.use(helmet());
-app.use(cors());
+app.use(cors(securityConfig.cors));
 app.use(express.json({ limit: '10mb' }));
 
 app.use((req, res, next) => {
@@ -54,14 +58,15 @@ app.use((req, res, next) => {
 	next();
 });
 
-// Authentication routes (with specific rate limiting)
-app.use('/api/v1/auth', authRoutes);
-
-// Apply general API rate limiting to all other routes
+// Apply general API rate limiting to all routes
 app.use('/api/v1', rateLimiters.api);
 
-// PRD parsing endpoint
+// PRD parsing endpoints
 app.post('/api/v1/generate-tasks-from-prd', generateTasksFromPRDHandler);
+
+// New API endpoints for task preview and batch creation
+app.use('/api/v1/generate-tasks-preview', generateTasksPreviewRouter);
+app.use('/api/v1/tasks/batch-create', tasksBatchCreateRouter);
 
 // Task management endpoints (read operations with lenient rate limiting)
 app.get('/api/v1/tasks', rateLimiters.read, listTasksHandler);
@@ -100,13 +105,11 @@ app.post('/api/v1/projects/generate-task-files', generateTaskFilesHandler);
 // Analysis endpoints
 app.post('/api/v1/tasks/analyze-complexity', analyzeTaskComplexityHandler);
 
-// User profile management endpoints
+// User profile management endpoints (password and account deletion now handled by Supabase)
 app.get('/api/v1/users/profile', ...userRoutes.getProfileHandler);
 app.put('/api/v1/users/profile', ...userRoutes.updateProfileHandler);
-app.put('/api/v1/users/password', ...userRoutes.changePasswordHandler);
 app.get('/api/v1/users/organizations', ...userRoutes.getOrganizationsHandler);
 app.get('/api/v1/users/activities', ...userRoutes.getActivitiesHandler);
-app.delete('/api/v1/users/account', ...userRoutes.deleteAccountHandler);
 
 // Health check
 app.get('/health', (req, res) => {
