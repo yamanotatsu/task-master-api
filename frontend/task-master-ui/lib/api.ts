@@ -17,7 +17,7 @@ export interface Project {
 }
 
 export interface Task {
-	id: number;
+	id: string;
 	title: string;
 	description?: string;
 	status:
@@ -31,7 +31,7 @@ export interface Task {
 		| 'deferred'
 		| 'cancelled';
 	priority: 'high' | 'medium' | 'low';
-	dependencies: number[];
+	dependencies: string[];
 	subtasks: Subtask[];
 	estimatedEffort?: string;
 	actualEffort?: string;
@@ -43,7 +43,8 @@ export interface Task {
 }
 
 export interface Subtask {
-	id: number | string;
+	id: string;
+	taskId?: string;
 	title: string;
 	description?: string;
 	completed?: boolean;
@@ -262,7 +263,7 @@ class ApiClient {
 		return this.fetchAPI<TasksResponse>(`/api/v1/tasks${queryString}`);
 	}
 
-	async getTask(id: number): Promise<Task> {
+	async getTask(id: string): Promise<Task> {
 		return this.fetchAPI<Task>(`/api/v1/tasks/${id}`);
 	}
 
@@ -273,21 +274,21 @@ class ApiClient {
 		});
 	}
 
-	async updateTask(id: number, updates: Partial<Task>): Promise<Task> {
+	async updateTask(id: string, updates: Partial<Task>): Promise<Task> {
 		return this.fetchAPI<Task>(`/api/v1/tasks/${id}`, {
 			method: 'PUT',
 			body: JSON.stringify(updates)
 		});
 	}
 
-	async updateTaskStatus(id: number, status: Task['status']): Promise<Task> {
+	async updateTaskStatus(id: string, status: Task['status']): Promise<Task> {
 		return this.fetchAPI<Task>(`/api/v1/tasks/${id}/status`, {
 			method: 'PATCH',
 			body: JSON.stringify({ status })
 		});
 	}
 
-	async deleteTask(id: number): Promise<{ message: string }> {
+	async deleteTask(id: string): Promise<{ message: string }> {
 		return this.fetchAPI<{ message: string }>(`/api/v1/tasks/${id}`, {
 			method: 'DELETE'
 		});
@@ -317,7 +318,7 @@ class ApiClient {
 	}
 
 	// Subtask management
-	async addSubtask(taskId: number, subtask: Partial<Subtask>): Promise<Task> {
+	async addSubtask(taskId: string, subtask: Partial<Subtask>): Promise<Task> {
 		return this.fetchAPI<Task>(`/api/v1/tasks/${taskId}/subtasks`, {
 			method: 'POST',
 			body: JSON.stringify(subtask)
@@ -325,8 +326,8 @@ class ApiClient {
 	}
 
 	async updateSubtask(
-		taskId: number,
-		subtaskId: number,
+		taskId: string,
+		subtaskId: string,
 		updates: Partial<Subtask>
 	): Promise<Task> {
 		return this.fetchAPI<Task>(
