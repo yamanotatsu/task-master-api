@@ -82,17 +82,17 @@ router.get('/:id', authMiddleware, async (req, res) => {
 		const projectId = req.params.id;
 		const userId = req.user.id;
 
-		// Get project with organization info
+		// First get the project with organization info
 		const { data: project, error: projectError } = await supabase
 			.from('projects')
 			.select(
 				`
         *,
-        organization:organizations (id, name),
-        tasks:tasks(count),
-        members:organization_members!inner(
-          user_id
-        )
+        organization:organizations(
+          id,
+          name
+        ),
+        tasks:tasks(count)
       `
 			)
 			.eq('id', projectId)
@@ -108,10 +108,15 @@ router.get('/:id', authMiddleware, async (req, res) => {
 			});
 		}
 
-		// Check if user is a member of the project's organization
-		const isMember = project.members.some((m) => m.user_id === userId);
+		// Check if user has access to the project's organization
+		const { data: memberCheck, error: memberError } = await supabase
+			.from('organization_members')
+			.select('user_id')
+			.eq('organization_id', project.organization_id)
+			.eq('user_id', userId)
+			.single();
 
-		if (!isMember) {
+		if (memberError || !memberCheck) {
 			return res.status(403).json({
 				success: false,
 				error: {
@@ -120,9 +125,6 @@ router.get('/:id', authMiddleware, async (req, res) => {
 				}
 			});
 		}
-
-		// Remove members array from response
-		delete project.members;
 
 		if (!project) {
 			return res.status(404).json({
