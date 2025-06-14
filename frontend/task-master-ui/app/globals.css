@@ -26,12 +26,6 @@
 		--ring: 217 91% 60%;
 		--radius: 0.5rem;
 
-		/* Status colors */
-		--status-pending: 217 91% 60%;
-		--status-in-progress: 38 92% 50%;
-		--status-done: 160 84% 39%;
-		--status-blocked: 0 84% 60%;
-
 		/* Chart colors */
 		--chart-1: 217 91% 60%;
 		--chart-2: 160 84% 39%;
@@ -95,31 +89,9 @@
 
 /* Custom utility classes */
 @layer utilities {
-	/* Status badge styles */
-	.badge-pending {
-		@apply bg-blue-500 text-white;
-	}
-
-	.badge-in-progress {
-		@apply bg-yellow-500 text-white;
-	}
-
-	.badge-done {
-		@apply bg-green-500 text-white;
-	}
-
-	.badge-blocked {
-		@apply bg-red-500 text-white;
-	}
-
 	/* Card hover effect */
 	.card-hover {
 		@apply transition-all duration-200 hover:-translate-y-1 hover:shadow-xl;
-	}
-
-	/* Loading spinner */
-	.spinner {
-		@apply border-2 border-gray-200 rounded-full border-t-primary w-6 h-6 animate-spin;
 	}
 }
 
