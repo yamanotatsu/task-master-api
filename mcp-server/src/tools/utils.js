@@ -29,13 +29,13 @@ function getProjectRoot(projectRootRaw, log) {
 	// 5. Current directory with warning
 
 	// 1. Check for environment variable override
-	if (process.env.TASK_MASTER_PROJECT_ROOT) {
-		const envRoot = process.env.TASK_MASTER_PROJECT_ROOT;
+	if (process.env.TASK_PROJECT_ROOT) {
+		const envRoot = process.env.TASK_PROJECT_ROOT;
 		const absolutePath = path.isAbsolute(envRoot)
 			? envRoot
 			: path.resolve(process.cwd(), envRoot);
 		log.info(
-			`Using project root from TASK_MASTER_PROJECT_ROOT environment variable: ${absolutePath}`
+			`Using project root from TASK_PROJECT_ROOT environment variable: ${absolutePath}`
 		);
 		return absolutePath;
 	}
@@ -77,7 +77,7 @@ function getProjectRoot(projectRootRaw, log) {
 		`No task-master project detected in current directory. Using ${currentDir} as project root.`
 	);
 	log.warn(
-		'Consider using --project-root to specify the correct project location or set TASK_MASTER_PROJECT_ROOT environment variable.'
+		'Consider using --project-root to specify the correct project location or set TASK_PROJECT_ROOT environment variable.'
 	);
 	return currentDir;
 }
