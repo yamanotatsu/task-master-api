@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import { api } from '@/lib/api';
+import { JoinOrganizationConfirmation } from '@/components/organization/JoinOrganizationConfirmation';
 import { Button } from '@/components/ui/button';
 import {
 	Card,
@@ -19,14 +19,11 @@ import { toast } from 'sonner';
 import { CheckCircle, XCircle, Users } from 'lucide-react';
 
 interface InvitationDetails {
-	id: string;
-	organizationName: string;
-	inviterName: string;
-	inviterEmail: string;
 	email: string;
 	role: string;
-	expiresAt: string;
-	status: 'pending' | 'accepted' | 'expired';
+	organizationId: string;
+	organizationName: string;
+	isExistingUser: boolean;
 }
 
 export default function InvitationAcceptPage() {
@@ -37,8 +34,8 @@ export default function InvitationAcceptPage() {
 
 	const [invitation, setInvitation] = useState<InvitationDetails | null>(null);
 	const [loading, setLoading] = useState(true);
-	const [accepting, setAccepting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [showConfirmation, setShowConfirmation] = useState(false);
 
 	useEffect(() => {
 		if (token) {
@@ -46,65 +43,110 @@ export default function InvitationAcceptPage() {
 		}
 	}, [token]);
 
+	useEffect(() => {
+		// Check if user needs to accept the invitation after login
+		if (user && invitation && !error) {
+			tryAcceptInvitation();
+		}
+	}, [user, invitation]);
+
 	const validateInvitation = async () => {
 		try {
 			setLoading(true);
-			const data = await api.validateInvitation(token);
-			setInvitation(data);
+			const response = await fetch(
+				`${process.env.NEXT_PUBLIC_API_URL}/api/v1/invitations/${token}/validate`,
+				{
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				}
+			);
 
-			// Check if invitation is expired
-			if (new Date(data.expiresAt) < new Date()) {
-				setError('この招待リンクは有効期限が切れています');
-				setInvitation({ ...data, status: 'expired' });
+			const data = await response.json();
+
+			if (!response.ok) {
+				throw new Error(data.error?.message || 'Invalid invitation');
 			}
-		} catch (err) {
+
+			setInvitation(data.data.invitation);
+		} catch (err: any) {
 			console.error('Failed to validate invitation:', err);
-			setError('無効な招待リンクです');
+			setError(err.message || '無効な招待リンクです');
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	const handleAccept = async () => {
-		if (!invitation || invitation.status !== 'pending') return;
-
-		setAccepting(true);
+	const tryAcceptInvitation = async () => {
 		try {
-			// If user is not logged in, redirect to signup with invitation token
-			if (!user) {
-				router.push(`/signup?invitation=${token}`);
-				return;
+			const response = await fetch(
+				`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organizations/${invitation!.organizationId}/invites/${token}/accept`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					credentials: 'include'
+				}
+			);
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				// Check if user needs to confirm
+				if (data.data?.requiresConfirmation) {
+					setShowConfirmation(true);
+					return;
+				}
+				throw new Error(data.error?.message || 'Failed to accept invitation');
 			}
 
-			// If user is logged in, accept the invitation
-			await api.acceptInvitation(token);
-			toast.success(`${invitation.organizationName}に参加しました`);
+			// Successfully joined
+			toast.success('組織に参加しました');
 			router.push('/');
-		} catch (err) {
+		} catch (err: any) {
 			console.error('Failed to accept invitation:', err);
-			toast.error('招待の承認に失敗しました');
-		} finally {
-			setAccepting(false);
+			setError(err.message);
 		}
 	};
 
-	const handleDecline = async () => {
+	const handleAccept = async () => {
 		if (!invitation) return;
 
-		try {
-			await api.declineInvitation(token);
-			toast.info('招待を辞退しました');
-			router.push(user ? '/' : '/login');
-		} catch (err) {
-			console.error('Failed to decline invitation:', err);
-			toast.error('招待の辞退に失敗しました');
+		// If user is not logged in, redirect based on whether they have an account
+		if (!user) {
+			if (invitation.isExistingUser) {
+				router.push(`/login?invite=${token}`);
+			} else {
+				router.push(`/signup?invite=${token}&email=${encodeURIComponent(invitation.email)}`);
+			}
+			return;
 		}
+
+		// If logged in, show confirmation
+		setShowConfirmation(true);
 	};
 
 	if (loading || authLoading) {
 		return (
 			<div className="min-h-screen flex items-center justify-center bg-gray-50">
 				<Spinner size="lg" />
+			</div>
+		);
+	}
+
+	// Show confirmation component if needed
+	if (showConfirmation && invitation) {
+		return (
+			<div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+				<JoinOrganizationConfirmation
+					organizationName={invitation.organizationName}
+					invitationId=""
+					token={token}
+					organizationId={invitation.organizationId}
+					onDecline={() => router.push('/')}
+				/>
 			</div>
 		);
 	}
@@ -155,7 +197,7 @@ export default function InvitationAcceptPage() {
 								</div>
 								<CardTitle className="text-xl">組織への招待</CardTitle>
 								<CardDescription>
-									{invitation.inviterName}さんから組織への参加招待が届いています
+									{invitation.organizationName}への参加招待が届いています
 								</CardDescription>
 							</CardHeader>
 							<CardContent className="space-y-6">
@@ -166,14 +208,8 @@ export default function InvitationAcceptPage() {
 										<p className="font-medium">{invitation.organizationName}</p>
 									</div>
 									<div>
-										<p className="text-sm text-gray-500">招待者</p>
-										<p className="font-medium">
-											{invitation.inviterName} ({invitation.inviterEmail})
-										</p>
-									</div>
-									<div>
 										<p className="text-sm text-gray-500">役割</p>
-										<p className="font-medium">{invitation.role}</p>
+										<p className="font-medium">{invitation.role === 'admin' ? '管理者' : 'メンバー'}</p>
 									</div>
 									{!user && (
 										<div>
@@ -186,80 +222,44 @@ export default function InvitationAcceptPage() {
 								</div>
 
 								{/* Action Buttons */}
-								{invitation.status === 'pending' && (
-									<div className="space-y-3">
-										<Button
-											onClick={handleAccept}
-											disabled={accepting}
-											className="w-full"
-										>
-											{accepting ? (
-												<>
-													<Spinner className="mr-2 h-4 w-4" />
-													処理中...
-												</>
-											) : (
-												<>
-													<CheckCircle className="mr-2 h-4 w-4" />
-													招待を承認する
-												</>
-											)}
-										</Button>
-										<Button
-											variant="outline"
-											onClick={handleDecline}
-											disabled={accepting}
-											className="w-full"
-										>
-											辞退する
-										</Button>
-									</div>
-								)}
-
-								{invitation.status === 'accepted' && (
-									<div className="text-center">
-										<p className="text-green-600 font-medium mb-4">
-											既にこの招待を承認済みです
-										</p>
-										<Button
-											variant="outline"
-											onClick={() => router.push('/')}
-											className="w-full"
-										>
-											ダッシュボードへ
-										</Button>
-									</div>
-								)}
-
-								{invitation.status === 'expired' && (
-									<div className="text-center">
-										<p className="text-red-600 font-medium mb-4">
-											この招待リンクは有効期限が切れています
-										</p>
-										<Button
-											variant="outline"
-											onClick={() => router.push(user ? '/' : '/login')}
-											className="w-full"
-										>
-											{user ? 'ダッシュボードへ' : 'ログイン画面へ'}
-										</Button>
-									</div>
-								)}
+								<div className="space-y-3">
+									<Button
+										onClick={handleAccept}
+										className="w-full"
+									>
+										<CheckCircle className="mr-2 h-4 w-4" />
+										{user ? '招待を承認する' : invitation.isExistingUser ? 'ログインして参加' : 'アカウントを作成して参加'}
+									</Button>
+								</div>
 							</CardContent>
 						</>
 					) : null}
 				</Card>
 
 				{/* Additional Links */}
-				{!user && invitation?.status === 'pending' && (
+				{!user && invitation && (
 					<div className="text-center text-sm text-gray-600">
-						既にアカウントをお持ちですか？
-						<Link
-							href={`/login?redirect=/invite/${token}`}
-							className="ml-1 font-medium text-primary hover:text-primary/90"
-						>
-							ログインして続ける
-						</Link>
+						{invitation.isExistingUser ? (
+							<>
+								アカウントをお持ちでない場合は
+								<Link
+									href={`/signup?invite=${token}&email=${encodeURIComponent(invitation.email)}`}
+									className="ml-1 font-medium text-primary hover:text-primary/90"
+								>
+									新規登録
+								</Link>
+							</>
+						) : (
+							<>
+								既にアカウントをお持ちですか？
+								<Link
+									href={`/login?invite=${token}`}
+									className="ml-1 font-medium text-primary hover:text-primary/90"
+								>
+									ログインして続ける
+								</Link>
+							</>
+						)}
 					</div>
 				)}
 			</div>

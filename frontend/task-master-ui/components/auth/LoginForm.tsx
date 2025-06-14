@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,9 @@ export function LoginForm() {
 
 	const { login } = useAuth();
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const inviteToken = searchParams.get('invite');
+	const redirectUrl = searchParams.get('redirect');
 
 	// Load remembered email on mount
 	useEffect(() => {
@@ -71,7 +74,15 @@ export function LoginForm() {
 		setErrors({});
 
 		try {
-			await login(email, password);
+			// Determine redirect URL
+			let loginRedirect: string | undefined;
+			if (inviteToken) {
+				loginRedirect = `/invite/${inviteToken}`;
+			} else if (redirectUrl) {
+				loginRedirect = redirectUrl;
+			}
+
+			await login(email, password, loginRedirect);
 
 			// Handle remember me - ブラウザ環境でのみlocalStorageにアクセス
 			if (typeof window !== 'undefined') {

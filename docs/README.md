@@ -7,10 +7,16 @@ Welcome to the Task Master documentation. Use the links below to navigate to the
 - [Configuration Guide](configuration.md) - Set up environment variables and customize Task Master
 - [Tutorial](tutorial.md) - Step-by-step guide to getting started with Task Master
 
+## User Guides
+
+- [Organization Membership Guide](organization-membership-guide.md) - How to join and manage organizations
+- [Admin Guide](admin-guide.md) - Guide for organization administrators
+
 ## Reference
 
 - [Command Reference](command-reference.md) - Complete list of all available commands
 - [Task Structure](task-structure.md) - Understanding the task format and features
+- [API Documentation](openapi.yaml) - OpenAPI specification for the Task Master API
 
 ## Examples & Licensing
 

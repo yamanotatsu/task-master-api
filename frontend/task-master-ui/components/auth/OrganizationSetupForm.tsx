@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
-import { Building2, Users, Briefcase, Rocket } from 'lucide-react';
+import { Building2, Users, Briefcase, Rocket, ArrowLeft, Mail } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface OrganizationSetupFormProps {
@@ -30,6 +30,7 @@ export function OrganizationSetupForm({
 	onComplete,
 	isFirstSetup = true
 }: OrganizationSetupFormProps) {
+	const [selectedOption, setSelectedOption] = useState<'create' | 'join' | null>(null);
 	const [organizationName, setOrganizationName] = useState('');
 	const [description, setDescription] = useState('');
 	const [organizationType, setOrganizationType] = useState<
@@ -127,14 +128,129 @@ export function OrganizationSetupForm({
 		}
 	};
 
+	// 選択画面を表示
+	if (selectedOption === null) {
+		return (
+			<Card className="w-full max-w-2xl">
+				<CardHeader className="space-y-1">
+					<div className="flex items-center space-x-2 mb-2">
+						<Rocket className="h-6 w-6 text-primary" />
+						<CardTitle className="text-2xl font-bold">
+							ワークスペースへの参加方法を選択
+						</CardTitle>
+					</div>
+					<CardDescription>
+						新しい組織を作成するか、既存の組織からの招待を受けるかを選択してください
+					</CardDescription>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					<button
+						type="button"
+						onClick={() => setSelectedOption('create')}
+						className="w-full p-6 rounded-lg border-2 border-border hover:border-primary/50 text-left transition-all group"
+					>
+						<div className="flex items-start space-x-4">
+							<div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+								<Building2 className="h-6 w-6 text-primary" />
+							</div>
+							<div className="flex-1 space-y-1">
+								<h3 className="font-semibold text-lg">新しい組織を作成する</h3>
+								<p className="text-sm text-muted-foreground">
+									あなたが管理者となる新しい組織を作成し、メンバーを招待できます
+								</p>
+							</div>
+						</div>
+					</button>
+
+					<button
+						type="button"
+						onClick={() => setSelectedOption('join')}
+						className="w-full p-6 rounded-lg border-2 border-border hover:border-primary/50 text-left transition-all group"
+					>
+						<div className="flex items-start space-x-4">
+							<div className="p-3 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+								<Mail className="h-6 w-6 text-primary" />
+							</div>
+							<div className="flex-1 space-y-1">
+								<h3 className="font-semibold text-lg">招待を受ける</h3>
+								<p className="text-sm text-muted-foreground">
+									既存の組織から招待を受けて参加します
+								</p>
+							</div>
+						</div>
+					</button>
+				</CardContent>
+			</Card>
+		);
+	}
+
+	// 「招待を受ける」選択時のメッセージ画面
+	if (selectedOption === 'join') {
+		return (
+			<Card className="w-full max-w-2xl">
+				<CardHeader className="space-y-1">
+					<div className="flex items-center space-x-2 mb-2">
+						<Mail className="h-6 w-6 text-primary" />
+						<CardTitle className="text-2xl font-bold">
+							組織への招待を受ける
+						</CardTitle>
+					</div>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					<div className="rounded-lg bg-muted p-6 space-y-3">
+						<p className="text-base">
+							組織の管理者にメールで招待を送ってもらってください。
+						</p>
+						<p className="text-sm text-muted-foreground">
+							招待メールに記載されているリンクから組織に参加できます。
+						</p>
+					</div>
+					<div className="rounded-lg border p-4 space-y-2">
+						<h4 className="text-sm font-medium">招待を受ける際の流れ</h4>
+						<ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+							<li>組織の管理者があなたのメールアドレスに招待を送信</li>
+							<li>受信した招待メールのリンクをクリック</li>
+							<li>組織への参加を確認</li>
+						</ol>
+					</div>
+				</CardContent>
+				<CardFooter>
+					<Button
+						type="button"
+						variant="outline"
+						className="w-full"
+						onClick={() => setSelectedOption(null)}
+					>
+						<ArrowLeft className="mr-2 h-4 w-4" />
+						戻る
+					</Button>
+				</CardFooter>
+			</Card>
+		);
+	}
+
+	// 「新しい組織を作成する」選択時の既存フォーム
 	return (
 		<Card className="w-full max-w-2xl">
 			<CardHeader className="space-y-1">
-				<div className="flex items-center space-x-2 mb-2">
-					<Rocket className="h-6 w-6 text-primary" />
-					<CardTitle className="text-2xl font-bold">
-						{isFirstSetup ? 'ワークスペースを作成' : '新しい組織を作成'}
-					</CardTitle>
+				<div className="flex items-center justify-between mb-2">
+					<div className="flex items-center space-x-2">
+						<Rocket className="h-6 w-6 text-primary" />
+						<CardTitle className="text-2xl font-bold">
+							{isFirstSetup ? 'ワークスペースを作成' : '新しい組織を作成'}
+						</CardTitle>
+					</div>
+					{isFirstSetup && (
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							onClick={() => setSelectedOption(null)}
+							disabled={isLoading}
+						>
+							<ArrowLeft className="h-4 w-4" />
+						</Button>
+					)}
 				</div>
 				<CardDescription>
 					{isFirstSetup

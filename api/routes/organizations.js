@@ -745,29 +745,29 @@ router.post(
 			}
 
 			// Check if user is already a member
-			const { data: existingMember } = await supabase
-				.from('organization_members')
-				.select('user_id')
-				.eq('organization_id', organizationId)
-				.eq(
-					'user_id',
-					(
-						await supabase
-							.from('profiles')
-							.select('id')
-							.eq('email', email.trim())
-							.single()
-					).data?.id
-				);
+			const { data: profile } = await supabase
+				.from('profiles')
+				.select('id')
+				.eq('email', email.trim())
+				.single();
 
-			if (existingMember && existingMember.length > 0) {
-				return res.status(409).json({
-					success: false,
-					error: {
-						code: 'MEMBER_ALREADY_EXISTS',
-						message: 'This user is already a member of the organization'
-					}
-				});
+			if (profile) {
+				const { data: existingMember } = await supabase
+					.from('organization_members')
+					.select('user_id')
+					.eq('organization_id', organizationId)
+					.eq('user_id', profile.id)
+					.single();
+
+				if (existingMember) {
+					return res.status(409).json({
+						success: false,
+						error: {
+							code: 'MEMBER_ALREADY_EXISTS',
+							message: 'This user is already a member of the organization'
+						}
+					});
+				}
 			}
 
 			// Check for existing pending invitation
@@ -1175,6 +1175,97 @@ router.post(
 );
 
 /**
+ * GET /api/v1/invitations/:token/validate
+ * Validate invitation token (public endpoint)
+ */
+router.get('/invitations/:token/validate', async (req, res) => {
+	try {
+		const { token } = req.params;
+
+		// Get invitation details
+		const { data: invitation, error: inviteError } = await supabase
+			.from('invitations')
+			.select(
+				`
+        id,
+        email,
+        role,
+        expires_at,
+        accepted_at,
+        organization_id,
+        organization:organizations (
+          id,
+          name
+        )
+      `
+			)
+			.eq('token', token)
+			.single();
+
+		if (inviteError || !invitation) {
+			return res.status(404).json({
+				success: false,
+				error: {
+					code: 'INVITATION_NOT_FOUND',
+					message: 'Invalid invitation token'
+				}
+			});
+		}
+
+		// Check if already accepted
+		if (invitation.accepted_at) {
+			return res.status(409).json({
+				success: false,
+				error: {
+					code: 'INVITATION_ALREADY_ACCEPTED',
+					message: 'This invitation has already been accepted'
+				}
+			});
+		}
+
+		// Check if expired
+		if (new Date(invitation.expires_at) < new Date()) {
+			return res.status(410).json({
+				success: false,
+				error: {
+					code: 'INVITATION_EXPIRED',
+					message: 'This invitation has expired'
+				}
+			});
+		}
+
+		// Check if the invited email belongs to an existing user
+		const { data: existingUser } = await supabase
+			.from('profiles')
+			.select('id')
+			.eq('email', invitation.email.toLowerCase())
+			.single();
+
+		res.status(200).json({
+			success: true,
+			data: {
+				invitation: {
+					email: invitation.email,
+					role: invitation.role,
+					organizationId: invitation.organization_id,
+					organizationName: invitation.organization.name,
+					isExistingUser: !!existingUser
+				}
+			}
+		});
+	} catch (error) {
+		logger.error('Unexpected error validating invitation:', error);
+		res.status(500).json({
+			success: false,
+			error: {
+				code: 'INTERNAL_ERROR',
+				message: 'An unexpected error occurred while validating the invitation'
+			}
+		});
+	}
+});
+
+/**
  * POST /api/v1/organizations/:organizationId/invites/:token/accept
  * Accept invitation (public endpoint)
  */
@@ -1237,29 +1328,75 @@ router.post(
 				});
 			}
 
-			// If user is not authenticated, redirect to signup
+			// Check if the email belongs to an existing user
+			const { data: existingUser } = await supabase
+				.from('profiles')
+				.select('id, email')
+				.eq('email', invitation.email.toLowerCase())
+				.single();
+
+			// If user is not authenticated
 			if (!req.user) {
+				if (existingUser) {
+					// Existing user - redirect to login
+					return res.status(200).json({
+						success: true,
+						data: {
+							requiresAuth: true,
+							isExistingUser: true,
+							invitation: {
+								email: invitation.email,
+								organizationName: invitation.organization.name,
+								role: invitation.role
+							},
+							redirectUrl: `/auth/login?invite=${token}`
+						}
+					});
+				} else {
+					// New user - redirect to signup
+					return res.status(200).json({
+						success: true,
+						data: {
+							requiresAuth: true,
+							isExistingUser: false,
+							invitation: {
+								email: invitation.email,
+								organizationName: invitation.organization.name,
+								role: invitation.role
+							},
+							redirectUrl: `/auth/signup?invite=${token}&email=${encodeURIComponent(invitation.email)}`
+						}
+					});
+				}
+			}
+
+			// If authenticated user is not the invited user, check if they are already a member
+			if (req.user.email.toLowerCase() !== invitation.email.toLowerCase()) {
+				// Check if the authenticated user is already a member
+				const { data: existingMembership } = await supabase
+					.from('organization_members')
+					.select('id')
+					.eq('organization_id', organizationId)
+					.eq('user_id', req.user.id)
+					.single();
+
+				if (existingMembership) {
+					return res.status(409).json({
+						success: false,
+						error: {
+							code: 'ALREADY_MEMBER',
+							message: 'You are already a member of this organization'
+						}
+					});
+				}
+
+				// Return confirmation required response
 				return res.status(200).json({
 					success: true,
 					data: {
-						requiresAuth: true,
-						invitation: {
-							email: invitation.email,
-							organizationName: invitation.organization.name,
-							role: invitation.role
-						},
-						redirectUrl: `/auth/signup?invite=${token}&email=${encodeURIComponent(invitation.email)}`
-					}
-				});
-			}
-
-			// Check if authenticated user's email matches invitation
-			if (req.user.email.toLowerCase() !== invitation.email.toLowerCase()) {
-				return res.status(403).json({
-					success: false,
-					error: {
-						code: 'EMAIL_MISMATCH',
-						message: 'This invitation was sent to a different email address'
+						requiresConfirmation: true,
+						organizationName: invitation.organization.name,
+						invitationId: invitation.id
 					}
 				});
 			}
