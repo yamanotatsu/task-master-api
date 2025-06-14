@@ -17,6 +17,7 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import { CheckCircle, XCircle, Users } from 'lucide-react';
+import { JoinOrganizationConfirmation } from '@/components/organization/JoinOrganizationConfirmation';
 
 interface InvitationDetails {
 	id: string;
@@ -27,6 +28,8 @@ interface InvitationDetails {
 	role: string;
 	expiresAt: string;
 	status: 'pending' | 'accepted' | 'expired';
+	requiresConfirmation?: boolean;
+	invitationId?: string;
 }
 
 export default function InvitationAcceptPage() {
@@ -39,6 +42,7 @@ export default function InvitationAcceptPage() {
 	const [loading, setLoading] = useState(true);
 	const [accepting, setAccepting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [showConfirmation, setShowConfirmation] = useState(false);
 
 	useEffect(() => {
 		if (token) {
@@ -76,8 +80,22 @@ export default function InvitationAcceptPage() {
 				return;
 			}
 
-			// If user is logged in, accept the invitation
-			await api.acceptInvitation(token);
+			// If user is logged in, try to accept the invitation
+			const response = await api.acceptInvitation(token);
+			
+			// Check if confirmation is required for existing users
+			if (response.requiresConfirmation) {
+				setInvitation({
+					...invitation,
+					requiresConfirmation: true,
+					organizationName: response.organizationName,
+					invitationId: response.invitationId
+				});
+				setShowConfirmation(true);
+				setAccepting(false);
+				return;
+			}
+
 			toast.success(`${invitation.organizationName}に参加しました`);
 			router.push('/');
 		} catch (err) {
@@ -105,6 +123,33 @@ export default function InvitationAcceptPage() {
 		return (
 			<div className="min-h-screen flex items-center justify-center bg-gray-50">
 				<Spinner size="lg" />
+			</div>
+		);
+	}
+
+	// Show confirmation component for existing users
+	if (showConfirmation && invitation) {
+		return (
+			<div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+				<div className="w-full max-w-md space-y-8">
+					{/* Logo */}
+					<div className="text-center">
+						<Link href="/" className="inline-flex items-center space-x-2">
+							<div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+								<span className="text-white font-bold text-2xl">T</span>
+							</div>
+							<span className="text-3xl font-bold text-gray-900">
+								Task Master
+							</span>
+						</Link>
+					</div>
+
+					<JoinOrganizationConfirmation
+						organizationName={invitation.organizationName}
+						invitationId={invitation.invitationId || invitation.id}
+						token={token}
+					/>
+				</div>
 			</div>
 		);
 	}

@@ -1293,6 +1293,92 @@ paths:
                           invitation:
                             $ref: '#/components/schemas/Invitation'
 
+  /organizations/{organizationId}/invites/{token}/accept:
+    post:
+      tags:
+        - Member Management
+      summary: Accept invitation
+      description: |
+        Accept an invitation to join an organization. This endpoint can be accessed by both authenticated and unauthenticated users.
+        
+        - For unauthenticated users: Returns a redirect URL to the signup page
+        - For authenticated existing users: Adds them to the organization if their email matches
+        - For authenticated new users: Shows confirmation dialog before joining
+      security: []  # Public endpoint
+      parameters:
+        - $ref: '#/components/parameters/OrganizationId'
+        - name: token
+          in: path
+          required: true
+          description: The invitation token
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invitation accepted successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - description: Success response for authenticated users
+                    allOf:
+                      - $ref: '#/components/schemas/SuccessResponse'
+                      - type: object
+                        properties:
+                          data:
+                            type: object
+                            properties:
+                              organization:
+                                $ref: '#/components/schemas/Organization'
+                              membership:
+                                type: object
+                                properties:
+                                  role:
+                                    type: string
+                                    enum: [admin, member]
+                                  joinedAt:
+                                    type: string
+                                    format: date-time
+                  - description: Confirmation required for existing users
+                    type: object
+                    properties:
+                      requiresConfirmation:
+                        type: boolean
+                        example: true
+                      organizationName:
+                        type: string
+                        example: 'Acme Corporation'
+                      invitationId:
+                        type: string
+                        format: uuid
+        '401':
+          description: Redirect to signup for unauthenticated users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redirectUrl:
+                    type: string
+                    example: '/signup?invitation=token123'
+                  invitation:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+                        format: email
+                      organizationName:
+                        type: string
+                      role:
+                        type: string
+                        enum: [admin, member]
+        '404':
+          description: Invitation not found
+        '409':
+          description: User is already a member or invitation already accepted
+        '410':
+          description: Invitation has expired
+
   /organizations/{organizationId}/members:
     get:
       tags:
