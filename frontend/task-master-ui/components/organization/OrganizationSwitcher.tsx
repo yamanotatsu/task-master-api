@@ -56,8 +56,9 @@ export function OrganizationSwitcher({ className }: OrganizationSwitcherProps) {
 			setCurrentOrg(org);
 			localStorage.setItem('currentOrgId', org.id);
 
-			// Reload the page to refresh context
-			window.location.reload();
+			// Use Next.js router to refresh the page
+			router.refresh();
+			router.push('/');
 		} catch (error) {
 			console.error('Failed to switch organization:', error);
 			toast.error('組織の切り替えに失敗しました');

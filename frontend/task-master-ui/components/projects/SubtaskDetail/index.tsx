@@ -6,6 +6,7 @@ import { PropertyPanel } from '../TaskDetail/PropertyPanel';
 import { ContentEditor } from '../TaskDetail/ContentEditor';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useRouter } from 'next/navigation';
 
 interface SubtaskDetailProps {
   subtask: {
@@ -41,6 +42,8 @@ export const SubtaskDetail: React.FC<SubtaskDetailProps> = ({
   onSubtaskUpdate,
   disabled,
 }) => {
+  const router = useRouter();
+  
   const handlePropertyChange = (key: string, value: any) => {
     onSubtaskUpdate({ [key]: value });
   };
@@ -74,7 +77,7 @@ export const SubtaskDetail: React.FC<SubtaskDetailProps> = ({
             variant="ghost"
             size="sm"
             className="text-gray-500 hover:text-gray-700"
-            onClick={() => window.location.href = `/projects/${parentTask.projectId}/tasks/${parentTask.id}`}
+            onClick={() => router.push(`/projects/${parentTask.projectId}/tasks/${parentTask.id}`)}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             親タスク: {parentTask.title}

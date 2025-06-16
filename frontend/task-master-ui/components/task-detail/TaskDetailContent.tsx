@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { SubtaskManager } from './SubtaskManager';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 interface TaskDetailContentProps {
 	task: Task;
@@ -30,6 +31,7 @@ export const TaskDetailContent: React.FC<TaskDetailContentProps> = ({
 	onSubtaskUpdate,
 	onSubtaskRemove
 }) => {
+	const router = useRouter();
 	const [description, setDescription] = useState(task.description || '');
 	const [isEditingDescription, setIsEditingDescription] = useState(false);
 	const [details, setDetails] = useState(task.details || '');
@@ -76,7 +78,8 @@ export const TaskDetailContent: React.FC<TaskDetailContentProps> = ({
 
 			// Refresh task data after expansion
 			toast.success('サブタスクを生成しました');
-			window.location.reload(); // Temporary solution
+			// Use Next.js router to refresh the data
+			router.refresh();
 		} catch (error) {
 			console.error('Failed to expand task:', error);
 			toast.error('サブタスクの生成に失敗しました');
