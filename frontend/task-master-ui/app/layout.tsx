@@ -7,6 +7,7 @@ import { ToastProvider } from '@/providers/ToastProvider';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { AuthProvider } from '@/lib/auth';
 import { UserDropdown } from '@/components/common/UserDropdown';
+// import { NavigationProgress } from '@/components/navigation/NavigationProgress';
 import './globals.css';
 
 const geistSans = Geist({
@@ -54,6 +55,7 @@ export default function RootLayout({
 						<QueryProvider>
 							<AuthProvider>
 								<ToastProvider>
+									{/* <NavigationProgress /> */}
 									<div className="relative flex min-h-screen flex-col">
 										<header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
 											<div className="max-w-screen-2xl mx-auto flex h-16 items-center px-4 sm:px-6 lg:px-8">
