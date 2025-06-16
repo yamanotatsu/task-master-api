@@ -722,10 +722,10 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 router.post(
 	'/:id/subtasks',
 	authMiddleware,
-	requireProjectAccess,
 	async (req, res) => {
 		try {
-			const { title, description } = req.body;
+			const taskId = req.params.id;
+			const { title, description, status } = req.body;
 
 			if (!title) {
 				return res.status(400).json({
@@ -737,7 +737,56 @@ router.post(
 				});
 			}
 
-			await addSubtask(req.params.id, { title, description });
+			// Get task with project details to verify access
+			const { data: task, error: taskError } = await supabase
+				.from('tasks')
+				.select(`
+					id,
+					project_id,
+					project:projects!inner(
+						organization_id,
+						organization:organizations!inner(
+							members:organization_members!inner(
+								user_id
+							)
+						)
+					)
+				`)
+				.eq('id', taskId)
+				.single();
+
+			if (taskError || !task) {
+				return res.status(404).json({
+					success: false,
+					error: {
+						code: 'TASK_NOT_FOUND',
+						message: 'Task not found'
+					}
+				});
+			}
+
+			// Check if user is a member of the organization
+			const isMember = task.project.organization.members.some(
+				member => member.user_id === req.user.id
+			);
+
+			if (!isMember) {
+				return res.status(403).json({
+					success: false,
+					error: {
+						code: 'ACCESS_DENIED',
+						message: 'You do not have access to this task'
+					}
+				});
+			}
+
+			// Add subtask with status support
+			const subtaskData = { title, description };
+			if (status) {
+				subtaskData.status = status;
+			}
+
+			await addSubtask(taskId, subtaskData);
 
 			res.json({
 				success: true,
@@ -817,10 +866,54 @@ router.delete(
 router.delete(
 	'/:id/subtasks',
 	authMiddleware,
-	requireProjectAccess,
 	async (req, res) => {
 		try {
-			const updatedTask = await clearSubtasks(req.params.id);
+			const taskId = req.params.id;
+
+			// Get task with project details to verify access
+			const { data: task, error: taskError } = await supabase
+				.from('tasks')
+				.select(`
+					id,
+					project_id,
+					project:projects!inner(
+						organization_id,
+						organization:organizations!inner(
+							members:organization_members!inner(
+								user_id
+							)
+						)
+					)
+				`)
+				.eq('id', taskId)
+				.single();
+
+			if (taskError || !task) {
+				return res.status(404).json({
+					success: false,
+					error: {
+						code: 'TASK_NOT_FOUND',
+						message: 'Task not found'
+					}
+				});
+			}
+
+			// Check if user is a member of the organization
+			const isMember = task.project.organization.members.some(
+				member => member.user_id === req.user.id
+			);
+
+			if (!isMember) {
+				return res.status(403).json({
+					success: false,
+					error: {
+						code: 'ACCESS_DENIED',
+						message: 'You do not have access to this task'
+					}
+				});
+			}
+
+			const updatedTask = await clearSubtasks(taskId);
 
 			res.json({
 				success: true,
@@ -844,9 +937,9 @@ router.delete(
 router.post(
 	'/:id/dependencies',
 	authMiddleware,
-	requireProjectAccess,
 	async (req, res) => {
 		try {
+			const taskId = req.params.id;
 			const { dependencyId } = req.body;
 
 			if (!dependencyId) {
@@ -859,7 +952,50 @@ router.post(
 				});
 			}
 
-			const updatedTask = await addTaskDependency(req.params.id, dependencyId);
+			// Get task with project details to verify access
+			const { data: task, error: taskError } = await supabase
+				.from('tasks')
+				.select(`
+					id,
+					project_id,
+					project:projects!inner(
+						organization_id,
+						organization:organizations!inner(
+							members:organization_members!inner(
+								user_id
+							)
+						)
+					)
+				`)
+				.eq('id', taskId)
+				.single();
+
+			if (taskError || !task) {
+				return res.status(404).json({
+					success: false,
+					error: {
+						code: 'TASK_NOT_FOUND',
+						message: 'Task not found'
+					}
+				});
+			}
+
+			// Check if user is a member of the organization
+			const isMember = task.project.organization.members.some(
+				member => member.user_id === req.user.id
+			);
+
+			if (!isMember) {
+				return res.status(403).json({
+					success: false,
+					error: {
+						code: 'ACCESS_DENIED',
+						message: 'You do not have access to this task'
+					}
+				});
+			}
+
+			const updatedTask = await addTaskDependency(taskId, dependencyId);
 
 			res.json({
 				success: true,
@@ -883,13 +1019,55 @@ router.post(
 router.delete(
 	'/:id/dependencies/:dependencyId',
 	authMiddleware,
-	requireProjectAccess,
 	async (req, res) => {
 		try {
-			const updatedTask = await removeTaskDependency(
-				req.params.id,
-				req.params.dependencyId
+			const taskId = req.params.id;
+			const dependencyId = req.params.dependencyId;
+
+			// Get task with project details to verify access
+			const { data: task, error: taskError } = await supabase
+				.from('tasks')
+				.select(`
+					id,
+					project_id,
+					project:projects!inner(
+						organization_id,
+						organization:organizations!inner(
+							members:organization_members!inner(
+								user_id
+							)
+						)
+					)
+				`)
+				.eq('id', taskId)
+				.single();
+
+			if (taskError || !task) {
+				return res.status(404).json({
+					success: false,
+					error: {
+						code: 'TASK_NOT_FOUND',
+						message: 'Task not found'
+					}
+				});
+			}
+
+			// Check if user is a member of the organization
+			const isMember = task.project.organization.members.some(
+				member => member.user_id === req.user.id
 			);
+
+			if (!isMember) {
+				return res.status(403).json({
+					success: false,
+					error: {
+						code: 'ACCESS_DENIED',
+						message: 'You do not have access to this task'
+					}
+				});
+			}
+
+			const updatedTask = await removeTaskDependency(taskId, dependencyId);
 
 			res.json({
 				success: true,
