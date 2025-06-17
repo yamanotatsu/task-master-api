@@ -1,76 +1,107 @@
-@import 'tailwindcss';
-@import "tw-animate-css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @custom-variant dark (&:is(.dark *));
 
 @layer base {
 	:root {
-		/* Blue color scheme for primary */
-		--primary: 217 91% 60%;
+		/* Modern gradient-friendly primary colors */
+		--primary: 234 89% 64%;
 		--primary-foreground: 0 0% 100%;
+		--primary-dark: 234 89% 54%;
+		--primary-light: 234 89% 74%;
 
-		/* Grayscale colors */
-		--background: 210 20% 98%;
-		--foreground: 222 47% 11%;
+		/* Refined neutral palette */
+		--background: 0 0% 98%;
+		--foreground: 240 10% 3.9%;
 		--card: 0 0% 100%;
-		--card-foreground: 222 47% 11%;
+		--card-foreground: 240 10% 3.9%;
 		--popover: 0 0% 100%;
-		--popover-foreground: 222 47% 11%;
-		--secondary: 210 40% 96%;
-		--secondary-foreground: 222 47% 11%;
-		--muted: 210 40% 96%;
-		--muted-foreground: 215 16% 47%;
-		--accent: 210 40% 96%;
-		--accent-foreground: 222 47% 11%;
-		--destructive: 0 84% 60%;
+		--popover-foreground: 240 10% 3.9%;
+		--secondary: 240 4.8% 95.9%;
+		--secondary-foreground: 240 5.9% 10%;
+		--muted: 240 4.8% 95.9%;
+		--muted-foreground: 240 3.8% 46.1%;
+		--accent: 240 4.8% 95.9%;
+		--accent-foreground: 240 5.9% 10%;
+		--destructive: 0 84.2% 60.2%;
 		--destructive-foreground: 0 0% 98%;
-		--border: 214 32% 91%;
-		--input: 214 32% 91%;
-		--ring: 217 91% 60%;
-		--radius: 0.5rem;
+		--border: 240 5.9% 90%;
+		--input: 240 5.9% 90%;
+		--ring: 234 89% 64%;
+		--radius: 0.75rem;
 
-		/* Status colors */
-		--status-pending: 217 91% 60%;
-		--status-in-progress: 38 92% 50%;
-		--status-done: 160 84% 39%;
+		/* Enhanced status colors */
+		--status-pending: 214 95% 64%;
+		--status-in-progress: 45 93% 58%;
+		--status-done: 142 76% 54%;
 		--status-blocked: 0 84% 60%;
 
 		/* Chart colors */
-		--chart-1: 217 91% 60%;
+		--chart-1: 234 89% 64%;
 		--chart-2: 160 84% 39%;
 		--chart-3: 38 92% 50%;
 		--chart-4: 0 84% 60%;
 		--chart-5: 262 83% 58%;
+
+		/* Shadows */
+		--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+		--shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+		--shadow-md:
+			0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+		--shadow-lg:
+			0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+		--shadow-xl:
+			0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 	}
 
 	.dark {
-		--primary: 217 91% 60%;
-		--primary-foreground: 210 20% 98%;
+		--primary: 234 89% 64%;
+		--primary-foreground: 240 10% 3.9%;
+		--primary-dark: 234 89% 54%;
+		--primary-light: 234 89% 74%;
 
-		--background: 224 71% 4%;
-		--foreground: 210 20% 98%;
-		--card: 224 71% 4%;
-		--card-foreground: 210 20% 98%;
-		--popover: 224 71% 4%;
-		--popover-foreground: 210 20% 98%;
-		--secondary: 217 33% 17%;
-		--secondary-foreground: 210 20% 98%;
-		--muted: 217 33% 17%;
-		--muted-foreground: 215 20% 65%;
-		--accent: 217 33% 17%;
-		--accent-foreground: 210 20% 98%;
-		--destructive: 0 63% 31%;
-		--destructive-foreground: 210 20% 98%;
-		--border: 217 33% 17%;
-		--input: 217 33% 17%;
-		--ring: 217 91% 60%;
+		--background: 240 10% 3.9%;
+		--foreground: 0 0% 98%;
+		--card: 240 10% 7%;
+		--card-foreground: 0 0% 98%;
+		--popover: 240 10% 7%;
+		--popover-foreground: 0 0% 98%;
+		--secondary: 240 3.7% 15.9%;
+		--secondary-foreground: 0 0% 98%;
+		--muted: 240 3.7% 15.9%;
+		--muted-foreground: 240 5% 64.9%;
+		--accent: 240 3.7% 15.9%;
+		--accent-foreground: 0 0% 98%;
+		--destructive: 0 63% 45%;
+		--destructive-foreground: 0 0% 98%;
+		--border: 240 3.7% 15.9%;
+		--input: 240 3.7% 15.9%;
+		--ring: 234 89% 64%;
+
+		/* Enhanced status colors for dark mode */
+		--status-pending: 214 95% 64%;
+		--status-in-progress: 45 93% 58%;
+		--status-done: 142 76% 54%;
+		--status-blocked: 0 84% 60%;
 
 		/* Chart colors for dark mode */
-		--chart-1: 217 91% 60%;
+		--chart-1: 234 89% 64%;
 		--chart-2: 160 60% 45%;
 		--chart-3: 38 80% 55%;
 		--chart-4: 0 65% 60%;
 		--chart-5: 262 75% 55%;
+
+		/* Dark mode shadows */
+		--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+		--shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.6), 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+		--shadow-md:
+			0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -1px rgba(0, 0, 0, 0.5);
+		--shadow-lg:
+			0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.5);
+		--shadow-xl:
+			0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.5);
 	}
 }
 
@@ -81,6 +112,7 @@
 	body {
 		@apply bg-background text-foreground;
 		font-family:
+			'Inter',
 			'Noto Sans JP',
 			-apple-system,
 			BlinkMacSystemFont,
@@ -93,40 +125,92 @@
 			'Droid Sans',
 			'Helvetica Neue',
 			sans-serif;
+		letter-spacing: -0.01em;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	/* Typography scale */
+	h1 {
+		@apply text-4xl font-bold tracking-tight lg:text-5xl;
+	}
+	h2 {
+		@apply text-3xl font-semibold tracking-tight;
+	}
+	h3 {
+		@apply text-2xl font-semibold tracking-tight;
+	}
+	h4 {
+		@apply text-xl font-semibold;
+	}
+	h5 {
+		@apply text-lg font-semibold;
+	}
+	h6 {
+		@apply text-base font-semibold;
 	}
 }
 
 /* Custom utility classes */
 @layer utilities {
-	/* Status badge styles */
+	/* Glass morphism effect */
+	.glass {
+		@apply backdrop-blur-md bg-white/70 dark:bg-gray-900/70 border border-white/20 dark:border-gray-800/20;
+	}
+
+	/* Gradient text */
+	.gradient-text {
+		@apply bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent;
+	}
+
+	/* Modern card styles */
+	.card-modern {
+		@apply bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 transition-all duration-300;
+	}
+
+	.card-hover {
+		@apply hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300;
+	}
+
+	/* Button effects */
+	.btn-gradient {
+		@apply bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary transition-all duration-300;
+	}
+
+	/* Input focus effects */
+	.input-focus {
+		@apply focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200;
+	}
+
+	/* Status badge styles with gradients */
 	.badge-pending {
-		@apply bg-blue-500 text-white;
+		@apply bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm;
 	}
 
 	.badge-in-progress {
-		@apply bg-yellow-500 text-white;
+		@apply bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-sm;
 	}
 
 	.badge-done {
-		@apply bg-green-500 text-white;
+		@apply bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-sm;
 	}
 
 	.badge-blocked {
-		@apply bg-red-500 text-white;
-	}
-
-	/* Card hover effect */
-	.card-hover {
-		@apply transition-all duration-200 hover:-translate-y-1 hover:shadow-xl;
+		@apply bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-sm;
 	}
 
 	/* Loading spinner */
 	.spinner {
-		@apply border-2 border-gray-200 rounded-full border-t-primary w-6 h-6 animate-spin;
+		@apply border-2 border-gray-200 dark:border-gray-700 rounded-full border-t-primary w-6 h-6 animate-spin;
+	}
+
+	/* Smooth scroll */
+	.smooth-scroll {
+		scroll-behavior: smooth;
 	}
 }
 
-/* Animations */
+/* Enhanced animations */
 @keyframes fade-in {
 	from {
 		opacity: 0;
@@ -149,6 +233,45 @@
 	}
 }
 
+@keyframes scale-in {
+	from {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes slide-in-right {
+	from {
+		opacity: 0;
+		transform: translateX(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes bounce-in {
+	0% {
+		opacity: 0;
+		transform: scale(0.3);
+	}
+	50% {
+		transform: scale(1.05);
+	}
+	70% {
+		transform: scale(0.9);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
 .animate-fade-in {
 	animation: fade-in 0.3s ease-out;
 }
@@ -157,18 +280,50 @@
 	animation: slide-up 0.3s ease-out;
 }
 
-/* Scrollbar styling */
+.animate-scale-in {
+	animation: scale-in 0.2s ease-out;
+}
+
+.animate-slide-in-right {
+	animation: slide-in-right 0.3s ease-out;
+}
+
+.animate-bounce-in {
+	animation: bounce-in 0.6s ease-out;
+}
+
+/* Transition utilities */
+.transition-smooth {
+	@apply transition-all duration-300 ease-in-out;
+}
+
+/* Modern scrollbar styling */
 ::-webkit-scrollbar {
-	width: 8px;
-	height: 8px;
+	width: 10px;
+	height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-	@apply bg-gray-100 rounded;
+	@apply bg-gray-100 dark:bg-gray-800;
 }
 
 ::-webkit-scrollbar-thumb {
-	@apply bg-gray-400 rounded hover:bg-gray-500;
+	@apply bg-gray-300 dark:bg-gray-600 rounded-full;
+	transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	@apply bg-gray-400 dark:bg-gray-500;
+}
+
+/* Firefox scrollbar */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: theme('colors.gray.300') theme('colors.gray.100');
+}
+
+.dark * {
+	scrollbar-color: theme('colors.gray.600') theme('colors.gray.800');
 }
 
 @theme inline {
@@ -283,10 +438,10 @@
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+	* {
+		@apply border-border outline-ring/50;
 	}
-  body {
-    @apply bg-background text-foreground;
+	body {
+		@apply bg-background text-foreground;
 	}
 }
