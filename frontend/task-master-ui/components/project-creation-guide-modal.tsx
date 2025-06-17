@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { 
@@ -138,6 +139,7 @@ export function ProjectCreationGuideModal({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
+        <DialogTitle className="sr-only">プロジェクト作成ガイド</DialogTitle>
         <div className="text-center pt-6">
           <div className="mb-6">
             {step.visual}
