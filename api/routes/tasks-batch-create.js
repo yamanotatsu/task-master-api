@@ -9,16 +9,11 @@ const router = express.Router();
 // POST /api/v1/tasks/batch-create - Create project and tasks in batch
 router.post('/', authMiddleware, async (req, res) => {
 	const client = supabase;
-	
+
 	try {
-		const {
-			projectName,
-			projectDescription,
-			prdContent,
-			deadline,
-			tasks
-		} = req.body;
-		
+		const { projectName, projectDescription, prdContent, deadline, tasks } =
+			req.body;
+
 		const userId = req.user.id;
 
 		// Validate required fields
@@ -109,7 +104,9 @@ router.post('/', authMiddleware, async (req, res) => {
 				} catch (taskError) {
 					logger.error(`Failed to create task: ${task.title}`, taskError);
 					rollbackNeeded = true;
-					throw new Error(`Failed to create task "${task.title}": ${taskError.message}`);
+					throw new Error(
+						`Failed to create task "${task.title}": ${taskError.message}`
+					);
 				}
 			}
 
@@ -131,31 +128,25 @@ router.post('/', authMiddleware, async (req, res) => {
 					}
 				}
 			});
-
 		} catch (error) {
 			// Rollback: Delete project and all associated tasks
 			if (projectId) {
-				logger.info(`Rolling back: Deleting project ${projectId} and associated tasks`);
-				
+				logger.info(
+					`Rolling back: Deleting project ${projectId} and associated tasks`
+				);
+
 				// Delete tasks first (due to foreign key constraint)
 				if (createdTasks.length > 0) {
-					const taskIds = createdTasks.map(t => t.id);
-					await client
-						.from('tasks')
-						.delete()
-						.in('id', taskIds);
+					const taskIds = createdTasks.map((t) => t.id);
+					await client.from('tasks').delete().in('id', taskIds);
 				}
 
 				// Delete project
-				await client
-					.from('projects')
-					.delete()
-					.eq('id', projectId);
+				await client.from('projects').delete().eq('id', projectId);
 			}
 
 			throw error;
 		}
-
 	} catch (error) {
 		logger.error('Error in batch create:', error);
 		res.status(500).json({

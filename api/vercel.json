@@ -1,18 +1,18 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "server-db.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/server-db.js"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+	"version": 2,
+	"builds": [
+		{
+			"src": "server-db.js",
+			"use": "@vercel/node"
+		}
+	],
+	"routes": [
+		{
+			"src": "/(.*)",
+			"dest": "/server-db.js"
+		}
+	],
+	"env": {
+		"NODE_ENV": "production"
+	}
 }
