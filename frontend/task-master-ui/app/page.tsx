@@ -32,7 +32,6 @@ function DashboardPage() {
 		}
 	};
 
-
 	const handleProjectClick = (projectId: string) => {
 		router.push(`/projects/${projectId}`);
 	};
@@ -46,23 +45,25 @@ function DashboardPage() {
 	}
 
 	return (
-		<div className="min-h-screen bg-white">
-			<div className="border-b">
-				<div className="max-w-5xl mx-auto px-8 py-6">
+		<div className="min-h-screen">
+			<div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 					<div className="flex items-center justify-between">
-						<h1 className="text-xl font-medium text-gray-900">
-							プロジェクト
-						</h1>
-						<Button asChild variant="ghost" size="sm">
+						<div>
+							<h1 className="text-3xl font-bold text-gray-900 dark:text-white">プロジェクト</h1>
+							<p className="mt-2 text-sm text-gray-600 dark:text-gray-400">タスクを管理し、チームの進捗を追跡しましょう</p>
+						</div>
+						<Button asChild variant="gradient" size="lg" className="shadow-md hover:shadow-lg transition-all duration-300">
 							<Link href="/projects/new">
-								<Plus className="h-4 w-4" />
+								<Plus className="h-5 w-5 mr-2" />
+								新規プロジェクト
 							</Link>
 						</Button>
 					</div>
 				</div>
 			</div>
 
-			<div className="max-w-5xl mx-auto px-8 py-8">
+			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 				{loading ? (
 					<div className="flex items-center justify-center h-64">
 						<Spinner size="lg" />
@@ -92,13 +93,14 @@ function DashboardPage() {
 						}}
 					/>
 				) : (
-					<div className="space-y-1">
+					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 						{projects.map((project) => (
-							<ProjectItem
-								key={project.id}
-								project={project}
-								onProjectClick={handleProjectClick}
-							/>
+							<div key={project.id} className="animate-fade-in">
+								<ProjectItem
+									project={project}
+									onProjectClick={handleProjectClick}
+								/>
+							</div>
 						))}
 					</div>
 				)}
