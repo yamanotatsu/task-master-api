@@ -26,12 +26,12 @@ export function debounce<T extends (...args: any[]) => any>(
 	wait: number
 ): (...args: Parameters<T>) => void {
 	let timeout: NodeJS.Timeout | null = null;
-	
+
 	return (...args: Parameters<T>) => {
 		if (timeout) {
 			clearTimeout(timeout);
 		}
-		
+
 		timeout = setTimeout(() => {
 			func(...args);
 		}, wait);
@@ -40,7 +40,10 @@ export function debounce<T extends (...args: any[]) => any>(
 
 export const taskCandidateStorage = {
 	// Save task candidates to localStorage (async to avoid blocking)
-	save(sessionId: string, data: Omit<TaskCandidateData, 'createdAt' | 'updatedAt'>): Promise<void> {
+	save(
+		sessionId: string,
+		data: Omit<TaskCandidateData, 'createdAt' | 'updatedAt'>
+	): Promise<void> {
 		return new Promise((resolve) => {
 			// Use setTimeout to make it async
 			setTimeout(() => {
@@ -50,7 +53,7 @@ export const taskCandidateStorage = {
 					createdAt: this.get(sessionId)?.createdAt || now,
 					updatedAt: now
 				};
-				
+
 				try {
 					localStorage.setItem(
 						`${STORAGE_PREFIX}${sessionId}`,
@@ -69,7 +72,7 @@ export const taskCandidateStorage = {
 		try {
 			const item = localStorage.getItem(`${STORAGE_PREFIX}${sessionId}`);
 			if (!item) return null;
-			
+
 			const data = JSON.parse(item) as TaskCandidateData;
 			return data;
 		} catch (error) {
@@ -92,9 +95,9 @@ export const taskCandidateStorage = {
 		try {
 			const keys = Object.keys(localStorage);
 			const now = Date.now();
-			const oneDayAgo = now - (24 * 60 * 60 * 1000);
+			const oneDayAgo = now - 24 * 60 * 60 * 1000;
 
-			keys.forEach(key => {
+			keys.forEach((key) => {
 				if (key.startsWith(STORAGE_PREFIX)) {
 					try {
 						const item = localStorage.getItem(key);

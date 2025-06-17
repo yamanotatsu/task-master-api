@@ -199,10 +199,13 @@ If you weren't expecting this invitation, you can safely ignore this email.
 				html: htmlContent,
 				text: textContent
 			};
-			
+
 			try {
 				await sgMail.send(msg);
-				logger.info('Invitation email sent successfully via SendGrid', { to, subject });
+				logger.info('Invitation email sent successfully via SendGrid', {
+					to,
+					subject
+				});
 			} catch (sendError) {
 				logger.error('Failed to send email via SendGrid:', sendError);
 				throw new Error('Failed to send invitation email');
@@ -318,10 +321,13 @@ Happy task managing!
 				html: htmlContent,
 				text: textContent
 			};
-			
+
 			try {
 				await sgMail.send(msg);
-				logger.info('Welcome email sent successfully via SendGrid', { to, subject });
+				logger.info('Welcome email sent successfully via SendGrid', {
+					to,
+					subject
+				});
 			} catch (sendError) {
 				logger.error('Failed to send email via SendGrid:', sendError);
 				throw new Error('Failed to send welcome email');
@@ -417,10 +423,13 @@ If you didn't request a password reset, you can safely ignore this email.
 				html: htmlContent,
 				text: textContent
 			};
-			
+
 			try {
 				await sgMail.send(msg);
-				logger.info('Password reset email sent successfully via SendGrid', { to, subject });
+				logger.info('Password reset email sent successfully via SendGrid', {
+					to,
+					subject
+				});
 			} catch (sendError) {
 				logger.error('Failed to send email via SendGrid:', sendError);
 				throw new Error('Failed to send password reset email');
@@ -538,10 +547,13 @@ ${newRole === 'admin' ? 'As an admin, you now have full permissions to manage th
 				html: htmlContent,
 				text: textContent
 			};
-			
+
 			try {
 				await sgMail.send(msg);
-				logger.info('Role change email sent successfully via SendGrid', { to, subject });
+				logger.info('Role change email sent successfully via SendGrid', {
+					to,
+					subject
+				});
 			} catch (sendError) {
 				logger.error('Failed to send email via SendGrid:', sendError);
 				throw new Error('Failed to send role change email');
@@ -642,10 +654,13 @@ If you believe this was done in error, please contact the organization administr
 				html: htmlContent,
 				text: textContent
 			};
-			
+
 			try {
 				await sgMail.send(msg);
-				logger.info('Removal email sent successfully via SendGrid', { to, subject });
+				logger.info('Removal email sent successfully via SendGrid', {
+					to,
+					subject
+				});
 			} catch (sendError) {
 				logger.error('Failed to send email via SendGrid:', sendError);
 				throw new Error('Failed to send removal email');

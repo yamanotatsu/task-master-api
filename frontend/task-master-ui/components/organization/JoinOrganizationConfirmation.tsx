@@ -56,7 +56,7 @@ export function JoinOrganizationConfirmation({
 			}
 
 			toast.success('組織に参加しました');
-			
+
 			if (onAccept) {
 				onAccept();
 			} else {
@@ -86,9 +86,7 @@ export function JoinOrganizationConfirmation({
 					<Building2 className="h-8 w-8 text-primary" />
 				</div>
 				<CardTitle className="text-2xl font-bold">組織への参加確認</CardTitle>
-				<CardDescription>
-					以下の組織に参加しようとしています
-				</CardDescription>
+				<CardDescription>以下の組織に参加しようとしています</CardDescription>
 			</CardHeader>
 			<CardContent>
 				<div className="p-4 rounded-lg bg-muted text-center">

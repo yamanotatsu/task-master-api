@@ -9,20 +9,24 @@ interface QueryProviderProps {
 }
 
 export const QueryProvider: React.FC<QueryProviderProps> = ({ children }) => {
-	const [queryClient] = useState(() => new QueryClient({
-		defaultOptions: {
-			queries: {
-				staleTime: 60 * 1000, // 1 minute
-				gcTime: 5 * 60 * 1000, // 5 minutes
-				retry: 3,
-				retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-				refetchOnWindowFocus: false
-			},
-			mutations: {
-				retry: 1
-			}
-		}
-	}));
+	const [queryClient] = useState(
+		() =>
+			new QueryClient({
+				defaultOptions: {
+					queries: {
+						staleTime: 60 * 1000, // 1 minute
+						gcTime: 5 * 60 * 1000, // 5 minutes
+						retry: 3,
+						retryDelay: (attemptIndex) =>
+							Math.min(1000 * 2 ** attemptIndex, 30000),
+						refetchOnWindowFocus: false
+					},
+					mutations: {
+						retry: 1
+					}
+				}
+			})
+	);
 
 	return (
 		<QueryClientProvider client={queryClient}>

@@ -11,7 +11,7 @@ export default function AuthResetPasswordPage() {
 	useEffect(() => {
 		// Get all search params
 		const params = new URLSearchParams(searchParams);
-		
+
 		// Redirect to the correct reset-password page with all params
 		router.replace(`/reset-password?${params.toString()}`);
 	}, [router, searchParams]);

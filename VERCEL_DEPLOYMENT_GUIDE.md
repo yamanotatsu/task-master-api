@@ -126,23 +126,29 @@ vercel
 ## 📝 重要な注意事項
 
 ### 1. CORS 設定
+
 API の `server-db.js` で CORS が正しく設定されていることを確認：
+
 ```javascript
-const allowedOrigins = process.env.FRONTEND_URL ? 
-  [process.env.FRONTEND_URL] : 
-  ['http://localhost:3000'];
+const allowedOrigins = process.env.FRONTEND_URL
+	? [process.env.FRONTEND_URL]
+	: ['http://localhost:3000'];
 ```
 
 ### 2. API エンドポイントの更新
+
 フロントエンドが正しい API URL を使用していることを確認：
+
 - 環境変数 `NEXT_PUBLIC_API_URL` が設定されている
 - API 呼び出しがこの環境変数を使用している
 
 ### 3. Supabase の設定
+
 - Supabase ダッシュボードで許可された URL に Vercel のドメインを追加
 - Authentication > URL Configuration で設定
 
 ### 4. 実行時間の制限
+
 - 無料プラン：10秒
 - Pro プラン：60秒
 - 長時間実行が必要な処理は別途対策が必要
@@ -150,29 +156,35 @@ const allowedOrigins = process.env.FRONTEND_URL ?
 ## 🐛 トラブルシューティング
 
 ### API が 404 を返す場合
+
 1. `vercel.json` の設定を確認
 2. `api/server-db.js` がデフォルトエクスポートを持つことを確認
 
 ### CORS エラーが発生する場合
+
 1. API の環境変数 `FRONTEND_URL` が正しく設定されているか確認
 2. API を再デプロイ
 
 ### 環境変数が反映されない場合
+
 1. `vercel env pull` で最新の環境変数を取得
 2. プロジェクトを再デプロイ
 
 ### ビルドエラーが発生する場合
+
 1. ローカルで `npm run build` が成功することを確認
 2. Node.js のバージョンを確認（package.json で指定可能）
 
 ## 🎯 デプロイ後の確認
 
 1. **API の動作確認**
+
    ```bash
    curl https://your-api-domain.vercel.app/api/health
    ```
 
 2. **フロントエンドの動作確認**
+
    - ブラウザで https://your-frontend-domain.vercel.app を開く
    - ログイン機能を試す
    - API との通信を確認
@@ -193,10 +205,12 @@ const allowedOrigins = process.env.FRONTEND_URL ?
 ## 📈 パフォーマンス最適化
 
 1. **キャッシュの設定**
+
    - `vercel.json` で静的アセットのキャッシュを設定
    - API レスポンスに適切なキャッシュヘッダーを設定
 
 2. **画像の最適化**
+
    - Next.js の Image コンポーネントを使用
    - 適切な画像フォーマットを選択
 

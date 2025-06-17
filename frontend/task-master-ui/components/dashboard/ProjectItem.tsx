@@ -24,9 +24,11 @@ export const ProjectItem: React.FC<ProjectItemProps> = React.memo(
 					<h3 className="text-base font-medium text-gray-900 group-hover:text-gray-700 transition-colors">
 						{project.name}
 					</h3>
-					<ArrowUpRight 
+					<ArrowUpRight
 						className={`h-4 w-4 text-gray-400 transition-all ${
-							isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2'
+							isHovered
+								? 'opacity-100 translate-x-0'
+								: 'opacity-0 -translate-x-2'
 						}`}
 					/>
 				</div>

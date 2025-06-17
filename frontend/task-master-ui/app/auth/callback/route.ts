@@ -11,10 +11,10 @@ export async function GET(request: NextRequest) {
 	if (code) {
 		const cookieStore = cookies();
 		const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-		
+
 		// Exchange the code for a session
 		const { error } = await supabase.auth.exchangeCodeForSession(code);
-		
+
 		if (!error) {
 			// Redirect to intended destination
 			return NextResponse.redirect(new URL(next, requestUrl.origin));
