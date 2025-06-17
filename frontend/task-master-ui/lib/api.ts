@@ -153,7 +153,10 @@ class ApiClient {
 				data: { session }
 			} = await supabase.auth.getSession();
 			const token = session?.access_token || null;
-			console.log('[API] getAuthToken result:', token ? 'token found' : 'no token');
+			console.log(
+				'[API] getAuthToken result:',
+				token ? 'token found' : 'no token'
+			);
 			return token;
 		} catch (error) {
 			console.error('[API] getAuthToken error:', error);
@@ -166,10 +169,10 @@ class ApiClient {
 		options?: RequestInit
 	): Promise<T> {
 		const url = `${API_BASE_URL}${endpoint}`;
-		
+
 		// デバッグログ追加
 		console.log('[API] Fetching:', url);
-		
+
 		const token = await this.getAuthToken();
 		console.log('[API] Auth token:', token ? 'present' : 'missing');
 
@@ -199,14 +202,14 @@ class ApiClient {
 		try {
 			console.log('[API] Request headers:', headers);
 			console.log('[API] Request body:', options?.body);
-			
+
 			const response = await fetch(url, {
 				...options,
 				headers
 			});
 
 			console.log('[API] Response status:', response.status);
-			
+
 			const data = await response.json();
 			console.log('[API] Response data:', data);
 
@@ -236,7 +239,8 @@ class ApiClient {
 			}
 
 			if (!response.ok || data.success === false) {
-				const errorMessage = data.error?.message || `API Error: ${response.statusText}`;
+				const errorMessage =
+					data.error?.message || `API Error: ${response.statusText}`;
 				console.error('[API] Error:', errorMessage);
 				throw new Error(errorMessage);
 			}

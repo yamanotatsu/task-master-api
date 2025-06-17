@@ -20,10 +20,11 @@
 ## プロジェクト構造
 
 ### ディレクトリ構成
+
 ```
 claude-task-master/
 ├── api/                    # バックエンドREST APIサーバー
-├── frontend/              
+├── frontend/
 │   └── task-master-ui/    # Next.js製のWebアプリケーション
 ├── mcp-server/            # MCPサーバー実装
 ├── scripts/               # CLIスクリプトとモジュール
@@ -36,6 +37,7 @@ claude-task-master/
 ```
 
 ### 技術スタック
+
 - **バックエンド**: Node.js (ESM), Express.js, Supabase
 - **フロントエンド**: Next.js 15.3.3, React 19.0.0, TypeScript, Tailwind CSS
 - **データベース**: PostgreSQL (Supabase)
@@ -48,22 +50,26 @@ claude-task-master/
 #### 完全に未使用のファイル
 
 **UIコンポーネント:**
+
 - `/components/ui/project-card.tsx` - どこからも参照されていない
 - `/components/ui/toaster.tsx` - sonnerで代替済み
 
 **ダッシュボード関連:**
+
 - `/components/dashboard/TaskSelectionProvider.tsx`
 - `/components/dashboard/DraggableTaskItem.tsx`
 - `/components/dashboard/DraggableTaskList.tsx`
 - `/components/dashboard/VirtualTaskList.tsx`
 
 **ビューコンポーネント:**
+
 - `/components/views/BoardView.tsx`
 - `/components/views/CalendarView.tsx`
 - `/components/views/GanttView.tsx`
 - `/components/views/ListView.tsx`
 
 **カスタムフック:**
+
 - `/hooks/useBatchOperations.ts`
 - `/hooks/useDependencies.ts`
 - `/hooks/useDragAndDrop.ts`
@@ -73,6 +79,7 @@ claude-task-master/
 - `/hooks/useViewPreference.ts`
 
 **ユーティリティ:**
+
 - `/utils/dndUtils.ts`
 - `/utils/performanceUtils.ts`
 - `/utils/searchUtils.ts`
@@ -81,11 +88,13 @@ claude-task-master/
 ### 削除候補ファイル（影響度別）
 
 #### 即削除可能（影響なし）
+
 1. `components/ui/project-card.tsx`
 2. `components/ui/toaster.tsx`
 3. すべての未使用ユーティリティファイル（utils/内の4ファイル）
 
 #### 開発中/将来実装予定の可能性
+
 1. ドラッグ&ドロップ関連（4ファイル）
 2. パフォーマンス最適化関連（3ファイル）
 3. バッチ操作関連（3ファイル）
@@ -111,12 +120,12 @@ claude-task-master/
 
 ### 重複しているエンドポイント
 
-| エンドポイント | 重複箇所 | 推奨アクション |
-|--------------|---------|--------------|
-| `POST /api/v1/tasks/analyze-complexity` | statistics.js, analysis.js | statistics.jsに統合 |
-| `GET /api/v1/tasks/complexity-report` | statistics.js, analysis.js | statistics.jsに統合 |
-| `POST /api/v1/tasks/:id/expand` | task-expansion.js, tasks-db.js | tasks-db.jsに統合 |
-| サブタスク管理全般 | subtasks.js, tasks-db.js | tasks-db.jsに統合 |
+| エンドポイント                          | 重複箇所                       | 推奨アクション      |
+| --------------------------------------- | ------------------------------ | ------------------- |
+| `POST /api/v1/tasks/analyze-complexity` | statistics.js, analysis.js     | statistics.jsに統合 |
+| `GET /api/v1/tasks/complexity-report`   | statistics.js, analysis.js     | statistics.jsに統合 |
+| `POST /api/v1/tasks/:id/expand`         | task-expansion.js, tasks-db.js | tasks-db.jsに統合   |
+| サブタスク管理全般                      | subtasks.js, tasks-db.js       | tasks-db.jsに統合   |
 
 **推定削減行数**: 約1,200行
 
@@ -125,27 +134,31 @@ claude-task-master/
 ### 完全に未使用のパッケージ
 
 **ルートpackage.json:**
+
 - `@ai-sdk/azure`
 - `@ai-sdk/mistral`
 - `inquirer`
 
 **frontend/task-master-ui/package.json:**
+
 - `@playwright/test`
 
 **devDependencies:**
+
 - `react` (ルートのdevDependencies内)
 
 ### 使用頻度が低いパッケージ
 
-| パッケージ | 使用箇所 | 削除判断 |
-|-----------|---------|---------|
-| `bcryptjs` | api/services/security.js のみ | 保持（セキュリティ重要） |
-| `geoip-lite` | 監査ログのみ | 削除検討 |
-| `ua-parser-js` | 監査ログのみ | 削除検討 |
-| `@tanstack/react-virtual` | VirtualTaskList.tsx のみ | 削除可能 |
-| `tw-animate-css` | globals.css のみ | 削除検討 |
+| パッケージ                | 使用箇所                      | 削除判断                 |
+| ------------------------- | ----------------------------- | ------------------------ |
+| `bcryptjs`                | api/services/security.js のみ | 保持（セキュリティ重要） |
+| `geoip-lite`              | 監査ログのみ                  | 削除検討                 |
+| `ua-parser-js`            | 監査ログのみ                  | 削除検討                 |
+| `@tanstack/react-virtual` | VirtualTaskList.tsx のみ      | 削除可能                 |
+| `tw-animate-css`          | globals.css のみ              | 削除検討                 |
 
 ### 削除コマンド
+
 ```bash
 # ルートディレクトリ
 npm uninstall @ai-sdk/azure @ai-sdk/mistral inquirer
@@ -159,25 +172,29 @@ cd frontend/task-master-ui && npm uninstall @playwright/test
 ### API層の重複
 
 #### タスク管理エンドポイント
+
 - **場所**: `/api/routes/tasks.js` と `/api/routes/tasks-db.js`
 - **重複内容**: 同じCRUD操作、エラーハンドリング、バリデーション
 - **推定削減行数**: 約400行
 
 #### プロジェクト管理エンドポイント
+
 - **場所**: `/api/routes/projects.js` と `/api/routes/projects-db.js`
 - **推定削減行数**: 約300行
 
 ### フロントエンドコンポーネントの重複
 
 #### TaskRowコンポーネント
-- **場所**: 
+
+- **場所**:
   - `/components/dashboard/TaskRow.tsx`
   - `/components/projects/ProjectTaskTable/TaskRow.tsx`
 - **重複内容**: タスク行の表示ロジック、状態管理、イベントハンドリング
 - **推定削減行数**: 約200行
 
 #### SubtaskRowコンポーネント
-- **場所**: 
+
+- **場所**:
   - `/components/dashboard/SubtaskRow.tsx`
   - `/components/projects/ProjectTaskTable/SubtaskRow.tsx`
 - **推定削減行数**: 約150行
@@ -185,6 +202,7 @@ cd frontend/task-master-ui && npm uninstall @playwright/test
 ### 型定義の重複
 
 複数箇所で同じエンティティの型が定義されている：
+
 - `/lib/api.ts`
 - `/types/project.ts`
 - 各コンポーネント内のローカル型定義
@@ -198,28 +216,31 @@ cd frontend/task-master-ui && npm uninstall @playwright/test
 ### 主な問題点
 
 #### 1. 命名規則の不一致
+
 ```typescript
 // フロントエンド（camelCase）
 interface Task {
-  createdAt: string;
-  updatedAt: string;
-  projectPath: string;
+	createdAt: string;
+	updatedAt: string;
+	projectPath: string;
 }
 
 // バックエンド/DB（snake_case）
 interface DBTask {
-  created_at: string;
-  updated_at: string;
-  project_path: string;
+	created_at: string;
+	updated_at: string;
+	project_path: string;
 }
 ```
 
 #### 2. ID型の不整合
+
 - Task ID: `number`
 - Subtask ID: `number | string`（APIでは）、`string`（コンポーネントでは）
 - Project ID: `string`（UUID）
 
 #### 3. ステータス値の不統一
+
 - 8種類のステータス値が定義されているが、使用は限定的
 - `todo` vs `pending`、`in_progress` vs `in-progress`などの表記揺れ
 
@@ -242,26 +263,30 @@ types/
 ### 命名規則の不一致（主要なもの）
 
 | API (camelCase) | DB (snake_case) |
-|----------------|-----------------|
-| projectId | project_id |
-| organizationId | organization_id |
-| createdAt | created_at |
-| updatedAt | updated_at |
-| assigneeId | assignee_id |
+| --------------- | --------------- |
+| projectId       | project_id      |
+| organizationId  | organization_id |
+| createdAt       | created_at      |
+| updatedAt       | updated_at      |
+| assigneeId      | assignee_id     |
 
 ### スキーマの不一致
 
 #### projectsテーブルに不足しているカラム
+
 - `start_date` / `end_date`
 - `budget`
 - `visibility`
 - `tags`
 
 #### 存在しないテーブル
+
 - `project_members`（ヘルパー関数で参照）
 
 #### ステータス値の不一致
+
 **tasksテーブル:**
+
 - DB: `'pending', 'in-progress', 'completed', 'done', 'blocked', 'review', 'deferred', 'cancelled', 'not-started'`
 - API: `'todo', 'in_progress', 'review', 'done', 'blocked', 'cancelled'`
 
@@ -269,7 +294,7 @@ types/
 
 ```sql
 -- プロジェクトテーブルの更新
-ALTER TABLE projects 
+ALTER TABLE projects
 ADD COLUMN start_date DATE,
 ADD COLUMN end_date DATE,
 ADD COLUMN budget DECIMAL(12,2),
@@ -283,10 +308,10 @@ ADD COLUMN tags JSONB DEFAULT '[]'::jsonb;
 
 ### 環境変数の重複
 
-| 重複している変数 | 統一案 |
-|----------------|--------|
+| 重複している変数                                  | 統一案                     |
+| ------------------------------------------------- | -------------------------- |
 | `TASK_MASTER_PROJECT_ROOT` と `TASK_PROJECT_ROOT` | `TASK_MASTER_PROJECT_ROOT` |
-| `APP_URL` と `FRONTEND_URL` | `FRONTEND_URL` |
+| `APP_URL` と `FRONTEND_URL`                       | `FRONTEND_URL`             |
 
 ### 未使用の環境変数
 
@@ -309,6 +334,7 @@ ADD COLUMN tags JSONB DEFAULT '[]'::jsonb;
 ### 削除可能なCSSクラス・変数
 
 **グローバルCSS（globals.css）:**
+
 - `.badge-pending`, `.badge-in-progress`, `.badge-done`, `.badge-blocked`
 - `--status-pending`, `--status-in-progress`, `--status-done`, `--status-blocked`
 - `.spinner`クラス
@@ -327,11 +353,13 @@ ADD COLUMN tags JSONB DEFAULT '[]'::jsonb;
 ### フェーズ1: 即座に実行可能（1-2日）
 
 1. **未使用ファイルの削除**
+
    - フロントエンドの未使用コンポーネント
    - レガシーAPIファイル
    - 未使用ユーティリティ
 
 2. **未使用パッケージの削除**
+
    ```bash
    # ルート
    npm uninstall @ai-sdk/azure @ai-sdk/mistral inquirer
@@ -345,10 +373,12 @@ ADD COLUMN tags JSONB DEFAULT '[]'::jsonb;
 ### フェーズ2: 短期的改善（1週間）
 
 1. **型定義の統合**
+
    - types/ディレクトリへの集約
    - 命名規則の統一
 
 2. **APIとDBの整合性改善**
+
    - 変換レイヤーの実装
    - マイグレーションファイルの作成
 
@@ -359,10 +389,12 @@ ADD COLUMN tags JSONB DEFAULT '[]'::jsonb;
 ### フェーズ3: 中期的改善（2-3週間）
 
 1. **重複コンポーネントの統合**
+
    - TaskRow/SubtaskRowの共通化
    - APIエンドポイントの統合
 
 2. **CSS最適化**
+
    - Tailwindへの完全移行
    - パフォーマンス改善
 

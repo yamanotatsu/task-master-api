@@ -17,7 +17,10 @@ export async function middleware(request: NextRequest) {
 	const { pathname, searchParams } = request.nextUrl;
 
 	// Special handling for Supabase auth callbacks
-	if (pathname === '/login' && searchParams.get('redirect')?.includes('reset-password')) {
+	if (
+		pathname === '/login' &&
+		searchParams.get('redirect')?.includes('reset-password')
+	) {
 		// This is likely a Supabase password reset callback
 		// Extract the hash fragment from the original URL and redirect properly
 		const redirectUrl = new URL('/auth/reset-password', request.url);
@@ -55,9 +58,15 @@ export async function middleware(request: NextRequest) {
 
 	// If the user is authenticated and trying to access auth pages
 	// Allow access to verify-email and reset-password pages even if authenticated
-	const allowedAuthPages = ['/verify-email', '/reset-password', '/auth/reset-password'];
-	const isAllowedAuthPage = allowedAuthPages.some(page => pathname.startsWith(page));
-	
+	const allowedAuthPages = [
+		'/verify-email',
+		'/reset-password',
+		'/auth/reset-password'
+	];
+	const isAllowedAuthPage = allowedAuthPages.some((page) =>
+		pathname.startsWith(page)
+	);
+
 	if (isPublicRoute && session && !isAllowedAuthPage) {
 		return NextResponse.redirect(new URL('/', request.url));
 	}
