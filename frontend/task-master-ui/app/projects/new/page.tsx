@@ -82,7 +82,6 @@ function NewProjectPage() {
 	// Step 3 State
 	const [taskCount, setTaskCount] = useState(10);
 	const [includeResearch, setIncludeResearch] = useState(false);
-	const [estimatedTime, setEstimatedTime] = useState('2-3週間');
 
 	// Step 4 State
 	const [taskCandidates, setTaskCandidates] = useState<TaskCandidate[]>([]);
@@ -93,12 +92,6 @@ function NewProjectPage() {
 		taskCandidateStorage.clearOldSessions();
 	}, []);
 
-	const updateEstimatedTime = (count: number) => {
-		if (count <= 5) setEstimatedTime('1週間');
-		else if (count <= 10) setEstimatedTime('2-3週間');
-		else if (count <= 15) setEstimatedTime('3-4週間');
-		else setEstimatedTime('1ヶ月以上');
-	};
 
 	const checkPRDQuality = (content: string) => {
 		const quality: PRDQuality = {
@@ -530,19 +523,12 @@ function NewProjectPage() {
 									value={[taskCount]}
 									onValueChange={(value) => {
 										setTaskCount(value[0]);
-										updateEstimatedTime(value[0]);
 									}}
 									min={5}
 									max={20}
 									step={1}
 									className="w-full"
 								/>
-							</div>
-							
-							{/* Estimated Time - Visual Display */}
-							<div className="bg-gradient-to-br from-primary/5 to-primary/10 p-6 rounded-xl text-center mb-6">
-								<p className="text-sm text-gray-600 mb-1">推定期間</p>
-								<p className="text-3xl font-bold text-primary">{estimatedTime}</p>
 							</div>
 							
 							{/* Research Option */}
