@@ -41,10 +41,13 @@ export function ResetPasswordForm() {
 	useEffect(() => {
 		const checkSession = async () => {
 			console.log('Checking for session...');
-			
+
 			// Check if user has an active session
-			const { data: { session }, error } = await supabase.auth.getSession();
-			
+			const {
+				data: { session },
+				error
+			} = await supabase.auth.getSession();
+
 			if (!session) {
 				console.error('No session found');
 				setIsTokenValid(false);
@@ -52,7 +55,7 @@ export function ResetPasswordForm() {
 				setIsCheckingToken(false);
 				return;
 			}
-			
+
 			console.log('Session found, user is logged in');
 			setIsTokenValid(true);
 			setIsCheckingToken(false);
@@ -137,7 +140,9 @@ export function ResetPasswordForm() {
 			await supabase.auth.signOut();
 
 			setIsSuccess(true);
-			toast.success('パスワードを更新しました。新しいパスワードでログインしてください。');
+			toast.success(
+				'パスワードを更新しました。新しいパスワードでログインしてください。'
+			);
 
 			// Redirect to login after 3 seconds
 			setTimeout(() => {

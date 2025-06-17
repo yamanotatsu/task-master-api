@@ -18,7 +18,14 @@ import {
 } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
-import { Building2, Users, Briefcase, Rocket, ArrowLeft, Mail } from 'lucide-react';
+import {
+	Building2,
+	Users,
+	Briefcase,
+	Rocket,
+	ArrowLeft,
+	Mail
+} from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface OrganizationSetupFormProps {
@@ -30,7 +37,9 @@ export function OrganizationSetupForm({
 	onComplete,
 	isFirstSetup = true
 }: OrganizationSetupFormProps) {
-	const [selectedOption, setSelectedOption] = useState<'create' | 'join' | null>(null);
+	const [selectedOption, setSelectedOption] = useState<
+		'create' | 'join' | null
+	>(null);
 	const [organizationName, setOrganizationName] = useState('');
 	const [description, setDescription] = useState('');
 	const [organizationType, setOrganizationType] = useState<

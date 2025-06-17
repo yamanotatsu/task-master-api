@@ -7,41 +7,41 @@ import 'nprogress/nprogress.css';
 import '@/app/nprogress.css';
 
 // Configure NProgress
-NProgress.configure({ 
-  showSpinner: false,
-  trickleSpeed: 200,
-  minimum: 0.3
+NProgress.configure({
+	showSpinner: false,
+	trickleSpeed: 200,
+	minimum: 0.3
 });
 
 export function NavigationProgress() {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [isNavigating, setIsNavigating] = useState(false);
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const [isNavigating, setIsNavigating] = useState(false);
 
-  useEffect(() => {
-    const handleStart = () => {
-      setIsNavigating(true);
-      NProgress.start();
-    };
+	useEffect(() => {
+		const handleStart = () => {
+			setIsNavigating(true);
+			NProgress.start();
+		};
 
-    const handleComplete = () => {
-      setIsNavigating(false);
-      NProgress.done();
-    };
+		const handleComplete = () => {
+			setIsNavigating(false);
+			NProgress.done();
+		};
 
-    // Start progress when pathname or search params change
-    handleStart();
+		// Start progress when pathname or search params change
+		handleStart();
 
-    // Complete progress after a short delay
-    const timer = setTimeout(() => {
-      handleComplete();
-    }, 100);
+		// Complete progress after a short delay
+		const timer = setTimeout(() => {
+			handleComplete();
+		}, 100);
 
-    return () => {
-      clearTimeout(timer);
-      handleComplete();
-    };
-  }, [pathname, searchParams]);
+		return () => {
+			clearTimeout(timer);
+			handleComplete();
+		};
+	}, [pathname, searchParams]);
 
-  return null;
+	return null;
 }
