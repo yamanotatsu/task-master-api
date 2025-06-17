@@ -3,9 +3,15 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import sgMail from '@sendgrid/mail';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Initialize SendGrid if API key is available
+if (process.env.SENDGRID_API_KEY) {
+	sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 /**
  * Email service for sending transactional emails
@@ -184,19 +190,25 @@ If you weren't expecting this invitation, you can safely ignore this email.
 © ${new Date().getFullYear()} Task Master. All rights reserved.
     `;
 
-		// TODO: Implement actual email sending
-		// Example with SendGrid:
-		// const msg = {
-		//   to,
-		//   from: process.env.EMAIL_FROM || 'noreply@taskmaster.com',
-		//   subject,
-		//   html: htmlContent,
-		//   text: textContent
-		// };
-		// await sgMail.send(msg);
-
-		// For development, save email to file and log details
-		if (process.env.NODE_ENV === 'development' || !process.env.EMAIL_PROVIDER) {
+		// Send email using SendGrid if configured
+		if (process.env.SENDGRID_API_KEY && process.env.NODE_ENV === 'production') {
+			const msg = {
+				to,
+				from: process.env.EMAIL_FROM || 'noreply@taskmaster.com',
+				subject,
+				html: htmlContent,
+				text: textContent
+			};
+			
+			try {
+				await sgMail.send(msg);
+				logger.info('Invitation email sent successfully via SendGrid', { to, subject });
+			} catch (sendError) {
+				logger.error('Failed to send email via SendGrid:', sendError);
+				throw new Error('Failed to send invitation email');
+			}
+		} else {
+			// For development, save email to file and log details
 			console.log('=== INVITATION EMAIL ===');
 			console.log('To:', to);
 			console.log('Subject:', subject);
@@ -281,7 +293,51 @@ export async function sendWelcomeEmail({ to, name }) {
       </html>
     `;
 
-		// TODO: Implement actual email sending
+		const textContent = `
+Welcome to Task Master!
+
+Hi ${name},
+
+Welcome to Task Master! We're excited to have you on board.
+
+Task Master helps you manage projects and tasks efficiently with your team.
+
+Go to Dashboard: ${process.env.FRONTEND_URL}/dashboard
+
+Happy task managing!
+
+© ${new Date().getFullYear()} Task Master. All rights reserved.
+		`;
+
+		// Send email using SendGrid if configured
+		if (process.env.SENDGRID_API_KEY && process.env.NODE_ENV === 'production') {
+			const msg = {
+				to,
+				from: process.env.EMAIL_FROM || 'noreply@taskmaster.com',
+				subject,
+				html: htmlContent,
+				text: textContent
+			};
+			
+			try {
+				await sgMail.send(msg);
+				logger.info('Welcome email sent successfully via SendGrid', { to, subject });
+			} catch (sendError) {
+				logger.error('Failed to send email via SendGrid:', sendError);
+				throw new Error('Failed to send welcome email');
+			}
+		} else {
+			// For development, save email to file
+			if (process.env.NODE_ENV === 'development') {
+				await saveEmailToFile({
+					type: 'welcome',
+					to,
+					subject,
+					html: htmlContent,
+					text: textContent
+				});
+			}
+		}
 	} catch (error) {
 		logger.error('Failed to send welcome email:', error);
 		throw error;
@@ -337,7 +393,50 @@ export async function sendPasswordResetEmail({ to, resetUrl }) {
       </html>
     `;
 
-		// TODO: Implement actual email sending
+		const textContent = `
+Password Reset Request
+
+We received a request to reset your Task Master password.
+
+Reset your password by visiting:
+${resetUrl}
+
+This link will expire in 1 hour for security reasons.
+
+If you didn't request a password reset, you can safely ignore this email.
+
+© ${new Date().getFullYear()} Task Master. All rights reserved.
+		`;
+
+		// Send email using SendGrid if configured
+		if (process.env.SENDGRID_API_KEY && process.env.NODE_ENV === 'production') {
+			const msg = {
+				to,
+				from: process.env.EMAIL_FROM || 'noreply@taskmaster.com',
+				subject,
+				html: htmlContent,
+				text: textContent
+			};
+			
+			try {
+				await sgMail.send(msg);
+				logger.info('Password reset email sent successfully via SendGrid', { to, subject });
+			} catch (sendError) {
+				logger.error('Failed to send email via SendGrid:', sendError);
+				throw new Error('Failed to send password reset email');
+			}
+		} else {
+			// For development, save email to file
+			if (process.env.NODE_ENV === 'development') {
+				await saveEmailToFile({
+					type: 'password-reset',
+					to,
+					subject,
+					html: htmlContent,
+					text: textContent
+				});
+			}
+		}
 	} catch (error) {
 		logger.error('Failed to send password reset email:', error);
 		throw error;
@@ -416,7 +515,49 @@ export async function sendRoleChangeEmail({
       </html>
     `;
 
-		// TODO: Implement actual email sending
+		const textContent = `
+Role Update Notification
+
+Hi ${name},
+
+Your role in ${organizationName} has been updated by ${changedBy}.
+
+Your new role is: ${newRole.toUpperCase()}
+
+${newRole === 'admin' ? 'As an admin, you now have full permissions to manage the organization.' : 'As a member, you can view and collaborate on all organization projects.'}
+
+© ${new Date().getFullYear()} Task Master. All rights reserved.
+		`;
+
+		// Send email using SendGrid if configured
+		if (process.env.SENDGRID_API_KEY && process.env.NODE_ENV === 'production') {
+			const msg = {
+				to,
+				from: process.env.EMAIL_FROM || 'noreply@taskmaster.com',
+				subject,
+				html: htmlContent,
+				text: textContent
+			};
+			
+			try {
+				await sgMail.send(msg);
+				logger.info('Role change email sent successfully via SendGrid', { to, subject });
+			} catch (sendError) {
+				logger.error('Failed to send email via SendGrid:', sendError);
+				throw new Error('Failed to send role change email');
+			}
+		} else {
+			// For development, save email to file
+			if (process.env.NODE_ENV === 'development') {
+				await saveEmailToFile({
+					type: 'role-change',
+					to,
+					subject,
+					html: htmlContent,
+					text: textContent
+				});
+			}
+		}
 	} catch (error) {
 		logger.error('Failed to send role change email:', error);
 		throw error;
@@ -478,7 +619,49 @@ export async function sendRemovalEmail({
       </html>
     `;
 
-		// TODO: Implement actual email sending
+		const textContent = `
+Organization Access Update
+
+Hi ${name},
+
+This is to inform you that you have been removed from ${organizationName} by ${removedBy}.
+
+You no longer have access to organization projects, tasks, and resources.
+
+If you believe this was done in error, please contact the organization administrator.
+
+© ${new Date().getFullYear()} Task Master. All rights reserved.
+		`;
+
+		// Send email using SendGrid if configured
+		if (process.env.SENDGRID_API_KEY && process.env.NODE_ENV === 'production') {
+			const msg = {
+				to,
+				from: process.env.EMAIL_FROM || 'noreply@taskmaster.com',
+				subject,
+				html: htmlContent,
+				text: textContent
+			};
+			
+			try {
+				await sgMail.send(msg);
+				logger.info('Removal email sent successfully via SendGrid', { to, subject });
+			} catch (sendError) {
+				logger.error('Failed to send email via SendGrid:', sendError);
+				throw new Error('Failed to send removal email');
+			}
+		} else {
+			// For development, save email to file
+			if (process.env.NODE_ENV === 'development') {
+				await saveEmailToFile({
+					type: 'removal',
+					to,
+					subject,
+					html: htmlContent,
+					text: textContent
+				});
+			}
+		}
 	} catch (error) {
 		logger.error('Failed to send removal email:', error);
 		throw error;
@@ -497,9 +680,7 @@ export async function initializeEmailService(config = {}) {
 		// Example: SendGrid, AWS SES, Resend, etc.
 
 		if (process.env.SENDGRID_API_KEY) {
-			// Example SendGrid initialization
-			// const sgMail = require('@sendgrid/mail');
-			// sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+			// SendGrid is already initialized at the top of the file
 			logger.info('Email service initialized with SendGrid');
 		} else if (process.env.AWS_SES_REGION) {
 			// Example AWS SES initialization

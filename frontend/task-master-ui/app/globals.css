@@ -187,6 +187,19 @@
 	animation: scaleIn 0.5s ease-out forwards;
 }
 
+@keyframes spin-slow {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.animate-spin-slow {
+	animation: spin-slow 3s linear infinite;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
 	width: 8px;

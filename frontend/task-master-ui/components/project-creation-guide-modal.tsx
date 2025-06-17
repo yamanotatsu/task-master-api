@@ -182,7 +182,7 @@ export function ProjectCreationGuideModal({
           </Button>
           
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleClose}>
+            <Button variant="outline" onClick={onContinue}>
               スキップ
             </Button>
             <Button onClick={handleNext} className="gap-1">

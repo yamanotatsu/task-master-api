@@ -115,7 +115,12 @@ function DashboardPage() {
 
 			<ProjectCreationGuideModal
 				open={showGuideModal}
-				onOpenChange={setShowGuideModal}
+				onOpenChange={(open) => {
+					if (!open) {
+						// モーダルが閉じられた時（×ボタンやESCキー）も/projects/newへ遷移
+						handleContinueFromModal();
+					}
+				}}
 				onContinue={handleContinueFromModal}
 			/>
 		</div>
