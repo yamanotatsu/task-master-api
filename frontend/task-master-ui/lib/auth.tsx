@@ -25,12 +25,19 @@ interface AuthContextType {
 	currentOrganization: Organization | null;
 	loading: boolean;
 	error: string | null;
-	login: (email: string, password: string, redirectTo?: string) => Promise<void>;
+	login: (
+		email: string,
+		password: string,
+		redirectTo?: string
+	) => Promise<void>;
 	signup: (email: string, password: string, fullName: string) => Promise<void>;
 	logout: () => Promise<void>;
 	resetPassword: (email: string) => Promise<void>;
 	updatePassword: (newPassword: string) => Promise<void>;
-	changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+	changePassword: (
+		currentPassword: string,
+		newPassword: string
+	) => Promise<void>;
 	deleteAccount: (password: string) => Promise<void>;
 	updateProfile: (updates: Partial<Profile>) => Promise<void>;
 	setCurrentOrganization: (org: Organization | null) => void;
@@ -180,7 +187,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	}, [loadProfile, loadOrganizations]);
 
 	// Login function with optional redirect
-	const login = async (email: string, password: string, redirectTo?: string) => {
+	const login = async (
+		email: string,
+		password: string,
+		redirectTo?: string
+	) => {
 		try {
 			setError(null);
 			const { data, error } = await supabase.auth.signInWithPassword({
@@ -311,7 +322,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	};
 
 	// Change password (with current password verification)
-	const changePassword = async (currentPassword: string, newPassword: string) => {
+	const changePassword = async (
+		currentPassword: string,
+		newPassword: string
+	) => {
 		try {
 			setError(null);
 			if (!user?.email) throw new Error('No user logged in');
@@ -371,9 +385,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			await logout();
 		} catch (err) {
 			console.error('Delete account error:', err);
-			setError(
-				err instanceof Error ? err.message : 'Failed to delete account'
-			);
+			setError(err instanceof Error ? err.message : 'Failed to delete account');
 			throw err;
 		}
 	};
