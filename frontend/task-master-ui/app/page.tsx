@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Spinner } from '@/components/ui/spinner';
 import { ProjectItem } from '@/components/dashboard/ProjectItem';
+import { ProjectCreationGuideModal } from '@/components/project-creation-guide-modal';
 import { api, Project } from '@/lib/api';
 import { withAuth } from '@/lib/auth';
 
@@ -15,6 +16,7 @@ function DashboardPage() {
 	const router = useRouter();
 	const [projects, setProjects] = useState<Project[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [showGuideModal, setShowGuideModal] = useState(false);
 
 	useEffect(() => {
 		loadProjects();
@@ -37,6 +39,15 @@ function DashboardPage() {
 		router.push(`/projects/${projectId}`);
 	};
 
+	const handleCreateProject = () => {
+		setShowGuideModal(true);
+	};
+
+	const handleContinueFromModal = () => {
+		setShowGuideModal(false);
+		router.push('/projects/new');
+	};
+
 	if (loading) {
 		return (
 			<div className="flex items-center justify-center min-h-[60vh]">
@@ -53,10 +64,8 @@ function DashboardPage() {
 						<h1 className="text-xl font-medium text-gray-900">
 							プロジェクト
 						</h1>
-						<Button asChild variant="ghost" size="sm">
-							<Link href="/projects/new">
-								<Plus className="h-4 w-4" />
-							</Link>
+						<Button variant="ghost" size="sm" onClick={handleCreateProject}>
+							<Plus className="h-4 w-4" />
 						</Button>
 					</div>
 				</div>
@@ -88,7 +97,7 @@ function DashboardPage() {
 						description="新規プロジェクトを作成して、タスク管理を始めましょう"
 						action={{
 							label: 'プロジェクトを作成',
-							onClick: () => router.push('/projects/new')
+							onClick: handleCreateProject
 						}}
 					/>
 				) : (
@@ -103,6 +112,12 @@ function DashboardPage() {
 					</div>
 				)}
 			</div>
+
+			<ProjectCreationGuideModal
+				open={showGuideModal}
+				onOpenChange={setShowGuideModal}
+				onContinue={handleContinueFromModal}
+			/>
 		</div>
 	);
 }
