@@ -87,3 +87,6 @@ dev-emails/
 
 /src/generated/prisma
 .vercel
+
+# Repomix output
+**/repomix-output.xml
