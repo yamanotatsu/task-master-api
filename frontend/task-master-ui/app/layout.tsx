@@ -57,7 +57,7 @@ export default function RootLayout({
 								<ToastProvider>
 									{/* <NavigationProgress /> */}
 									<div className="relative flex min-h-screen flex-col">
-										<header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
+										<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur shadow-sm">
 											<div className="max-w-screen-2xl mx-auto flex h-16 items-center px-4 sm:px-6 lg:px-8">
 												<Link
 													href="/"
@@ -73,19 +73,19 @@ export default function RootLayout({
 												<nav className="flex items-center space-x-8 flex-1 justify-center">
 													<Link
 														href="/"
-														className="transition-colors hover:text-primary text-gray-700 font-medium"
+														className="transition-colors hover:text-primary text-foreground/80 font-medium"
 													>
 														ダッシュボード
 													</Link>
 													<Link
 														href="/settings/members"
-														className="transition-colors hover:text-primary text-gray-700 font-medium"
+														className="transition-colors hover:text-primary text-foreground/80 font-medium"
 													>
 														担当者管理
 													</Link>
 													<Link
 														href="/settings"
-														className="transition-colors hover:text-primary text-gray-700 font-medium"
+														className="transition-colors hover:text-primary text-foreground/80 font-medium"
 													>
 														設定
 													</Link>
@@ -95,7 +95,7 @@ export default function RootLayout({
 												</div>
 											</div>
 										</header>
-										<main className="flex-1 bg-gray-50">{children}</main>
+										<main className="flex-1 bg-background">{children}</main>
 									</div>
 								</ToastProvider>
 							</AuthProvider>

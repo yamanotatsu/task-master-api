@@ -19,39 +19,39 @@ interface StatusBadgeProps {
 const statusConfig: Record<StatusType, { label: string; className: string }> = {
 	'not-started': {
 		label: '未着手',
-		className: 'bg-blue-500 text-white'
+		className: 'bg-primary text-primary-foreground'
 	},
 	pending: {
 		label: '未着手',
-		className: 'bg-blue-500 text-white'
+		className: 'bg-primary text-primary-foreground'
 	},
 	'in-progress': {
 		label: '進行中',
-		className: 'bg-yellow-500 text-white'
+		className: 'bg-chart-3 text-white'
 	},
 	done: {
 		label: '完了',
-		className: 'bg-green-500 text-white'
+		className: 'bg-chart-2 text-white'
 	},
 	completed: {
 		label: '完了',
-		className: 'bg-green-500 text-white'
+		className: 'bg-chart-2 text-white'
 	},
 	blocked: {
 		label: 'ブロック中',
-		className: 'bg-red-500 text-white'
+		className: 'bg-destructive text-destructive-foreground'
 	},
 	review: {
 		label: 'レビュー中',
-		className: 'bg-purple-500 text-white'
+		className: 'bg-chart-5 text-white'
 	},
 	deferred: {
 		label: '延期',
-		className: 'bg-gray-500 text-white'
+		className: 'bg-muted text-muted-foreground'
 	},
 	cancelled: {
 		label: 'キャンセル',
-		className: 'bg-gray-600 text-white'
+		className: 'bg-muted text-muted-foreground'
 	}
 };
 
