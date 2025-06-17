@@ -115,9 +115,10 @@ router.get('/', authMiddleware, async (req, res) => {
 		if (assignee) filteredBy.assignee = assignee;
 
 		// Transform dependencies to simple array
-		const transformedTasks = tasks.map(task => ({
+		const transformedTasks = tasks.map((task) => ({
 			...task,
-			dependencies: task.dependencies?.map(dep => dep.depends_on_task_id) || []
+			dependencies:
+				task.dependencies?.map((dep) => dep.depends_on_task_id) || []
 		}));
 
 		res.json({
@@ -213,7 +214,8 @@ router.get('/:id', authMiddleware, async (req, res) => {
 		// Transform dependencies to simple array
 		const transformedTask = {
 			...task,
-			dependencies: task.dependencies?.map(dep => dep.depends_on_task_id) || []
+			dependencies:
+				task.dependencies?.map((dep) => dep.depends_on_task_id) || []
 		};
 
 		res.json({
@@ -719,28 +721,26 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 });
 
 // POST /api/v1/tasks/:id/subtasks - Add subtask (project members only)
-router.post(
-	'/:id/subtasks',
-	authMiddleware,
-	async (req, res) => {
-		try {
-			const taskId = req.params.id;
-			const { title, description, status } = req.body;
+router.post('/:id/subtasks', authMiddleware, async (req, res) => {
+	try {
+		const taskId = req.params.id;
+		const { title, description, status } = req.body;
 
-			if (!title) {
-				return res.status(400).json({
-					success: false,
-					error: {
-						code: 'MISSING_TITLE',
-						message: 'Title is required'
-					}
-				});
-			}
+		if (!title) {
+			return res.status(400).json({
+				success: false,
+				error: {
+					code: 'MISSING_TITLE',
+					message: 'Title is required'
+				}
+			});
+		}
 
-			// Get task with project details to verify access
-			const { data: task, error: taskError } = await supabase
-				.from('tasks')
-				.select(`
+		// Get task with project details to verify access
+		const { data: task, error: taskError } = await supabase
+			.from('tasks')
+			.select(
+				`
 					id,
 					project_id,
 					project:projects!inner(
@@ -751,60 +751,60 @@ router.post(
 							)
 						)
 					)
-				`)
-				.eq('id', taskId)
-				.single();
+				`
+			)
+			.eq('id', taskId)
+			.single();
 
-			if (taskError || !task) {
-				return res.status(404).json({
-					success: false,
-					error: {
-						code: 'TASK_NOT_FOUND',
-						message: 'Task not found'
-					}
-				});
-			}
-
-			// Check if user is a member of the organization
-			const isMember = task.project.organization.members.some(
-				member => member.user_id === req.user.id
-			);
-
-			if (!isMember) {
-				return res.status(403).json({
-					success: false,
-					error: {
-						code: 'ACCESS_DENIED',
-						message: 'You do not have access to this task'
-					}
-				});
-			}
-
-			// Add subtask with status support
-			const subtaskData = { title, description };
-			if (status) {
-				subtaskData.status = status;
-			}
-
-			await addSubtask(taskId, subtaskData);
-
-			res.json({
-				success: true,
-				data: {}
-			});
-		} catch (error) {
-			console.error('Error adding subtask:', error);
-			res.status(500).json({
+		if (taskError || !task) {
+			return res.status(404).json({
 				success: false,
 				error: {
-					code: 'ADD_SUBTASK_ERROR',
-					message: 'Failed to add subtask',
-					details: error.message
+					code: 'TASK_NOT_FOUND',
+					message: 'Task not found'
 				}
 			});
 		}
+
+		// Check if user is a member of the organization
+		const isMember = task.project.organization.members.some(
+			(member) => member.user_id === req.user.id
+		);
+
+		if (!isMember) {
+			return res.status(403).json({
+				success: false,
+				error: {
+					code: 'ACCESS_DENIED',
+					message: 'You do not have access to this task'
+				}
+			});
+		}
+
+		// Add subtask with status support
+		const subtaskData = { title, description };
+		if (status) {
+			subtaskData.status = status;
+		}
+
+		await addSubtask(taskId, subtaskData);
+
+		res.json({
+			success: true,
+			data: {}
+		});
+	} catch (error) {
+		console.error('Error adding subtask:', error);
+		res.status(500).json({
+			success: false,
+			error: {
+				code: 'ADD_SUBTASK_ERROR',
+				message: 'Failed to add subtask',
+				details: error.message
+			}
+		});
 	}
-);
+});
 
 // PUT /api/v1/tasks/:taskId/subtasks/:subtaskId - Update subtask (project members only)
 router.put('/:taskId/subtasks/:subtaskId', authMiddleware, async (req, res) => {
@@ -863,17 +863,15 @@ router.delete(
 );
 
 // DELETE /api/v1/tasks/:id/subtasks - Clear all subtasks (project members only)
-router.delete(
-	'/:id/subtasks',
-	authMiddleware,
-	async (req, res) => {
-		try {
-			const taskId = req.params.id;
+router.delete('/:id/subtasks', authMiddleware, async (req, res) => {
+	try {
+		const taskId = req.params.id;
 
-			// Get task with project details to verify access
-			const { data: task, error: taskError } = await supabase
-				.from('tasks')
-				.select(`
+		// Get task with project details to verify access
+		const { data: task, error: taskError } = await supabase
+			.from('tasks')
+			.select(
+				`
 					id,
 					project_id,
 					project:projects!inner(
@@ -884,78 +882,76 @@ router.delete(
 							)
 						)
 					)
-				`)
-				.eq('id', taskId)
-				.single();
+				`
+			)
+			.eq('id', taskId)
+			.single();
 
-			if (taskError || !task) {
-				return res.status(404).json({
-					success: false,
-					error: {
-						code: 'TASK_NOT_FOUND',
-						message: 'Task not found'
-					}
-				});
-			}
-
-			// Check if user is a member of the organization
-			const isMember = task.project.organization.members.some(
-				member => member.user_id === req.user.id
-			);
-
-			if (!isMember) {
-				return res.status(403).json({
-					success: false,
-					error: {
-						code: 'ACCESS_DENIED',
-						message: 'You do not have access to this task'
-					}
-				});
-			}
-
-			const updatedTask = await clearSubtasks(taskId);
-
-			res.json({
-				success: true,
-				data: updatedTask
-			});
-		} catch (error) {
-			console.error('Error clearing subtasks:', error);
-			res.status(500).json({
+		if (taskError || !task) {
+			return res.status(404).json({
 				success: false,
 				error: {
-					code: 'CLEAR_SUBTASKS_ERROR',
-					message: 'Failed to clear subtasks',
-					details: error.message
+					code: 'TASK_NOT_FOUND',
+					message: 'Task not found'
 				}
 			});
 		}
+
+		// Check if user is a member of the organization
+		const isMember = task.project.organization.members.some(
+			(member) => member.user_id === req.user.id
+		);
+
+		if (!isMember) {
+			return res.status(403).json({
+				success: false,
+				error: {
+					code: 'ACCESS_DENIED',
+					message: 'You do not have access to this task'
+				}
+			});
+		}
+
+		const updatedTask = await clearSubtasks(taskId);
+
+		res.json({
+			success: true,
+			data: updatedTask
+		});
+	} catch (error) {
+		console.error('Error clearing subtasks:', error);
+		res.status(500).json({
+			success: false,
+			error: {
+				code: 'CLEAR_SUBTASKS_ERROR',
+				message: 'Failed to clear subtasks',
+				details: error.message
+			}
+		});
 	}
-);
+});
 
 // POST /api/v1/tasks/:id/dependencies - Add dependency (project members only)
-router.post(
-	'/:id/dependencies',
-	authMiddleware,
-	async (req, res) => {
-		try {
-			const taskId = req.params.id;
-			const { dependencyId } = req.body;
+router.post('/:id/dependencies', authMiddleware, async (req, res) => {
+	try {
+		const taskId = req.params.id;
+		const { dependencyId } = req.body;
 
-			if (!dependencyId) {
-				return res.status(400).json({
-					success: false,
-					error: {
-						code: 'MISSING_DEPENDENCY_ID',
-						message: 'dependencyId is required'
-					}
-				});
-			}
+		if (!dependencyId) {
+			return res.status(400).json({
+				success: false,
+				error: {
+					code: 'MISSING_DEPENDENCY_ID',
+					message: 'dependencyId is required'
+				}
+			});
+		}
 
-			// Get task with project details to verify access
-			const { data: task, error: taskError } = await supabase
-				.from('tasks')
-				.select(`
+		// Get task with project details to verify access
+		const { data: task, error: taskError } = await supabase
+			.from('tasks')
+			.select(
+				`
 					id,
 					project_id,
 					project:projects!inner(
@@ -966,54 +962,54 @@ router.post(
 							)
 						)
 					)
-				`)
-				.eq('id', taskId)
-				.single();
+				`
+			)
+			.eq('id', taskId)
+			.single();
 
-			if (taskError || !task) {
-				return res.status(404).json({
-					success: false,
-					error: {
-						code: 'TASK_NOT_FOUND',
-						message: 'Task not found'
-					}
-				});
-			}
-
-			// Check if user is a member of the organization
-			const isMember = task.project.organization.members.some(
-				member => member.user_id === req.user.id
-			);
-
-			if (!isMember) {
-				return res.status(403).json({
-					success: false,
-					error: {
-						code: 'ACCESS_DENIED',
-						message: 'You do not have access to this task'
-					}
-				});
-			}
-
-			const updatedTask = await addTaskDependency(taskId, dependencyId);
-
-			res.json({
-				success: true,
-				data: updatedTask
-			});
-		} catch (error) {
-			console.error('Error adding dependency:', error);
-			res.status(500).json({
+		if (taskError || !task) {
+			return res.status(404).json({
 				success: false,
 				error: {
-					code: 'ADD_DEPENDENCY_ERROR',
-					message: 'Failed to add dependency',
-					details: error.message
+					code: 'TASK_NOT_FOUND',
+					message: 'Task not found'
 				}
 			});
 		}
+
+		// Check if user is a member of the organization
+		const isMember = task.project.organization.members.some(
+			(member) => member.user_id === req.user.id
+		);
+
+		if (!isMember) {
+			return res.status(403).json({
+				success: false,
+				error: {
+					code: 'ACCESS_DENIED',
+					message: 'You do not have access to this task'
+				}
+			});
+		}
+
+		const updatedTask = await addTaskDependency(taskId, dependencyId);
+
+		res.json({
+			success: true,
+			data: updatedTask
+		});
+	} catch (error) {
+		console.error('Error adding dependency:', error);
+		res.status(500).json({
+			success: false,
+			error: {
+				code: 'ADD_DEPENDENCY_ERROR',
+				message: 'Failed to add dependency',
+				details: error.message
+			}
+		});
 	}
-);
+});
 
 // DELETE /api/v1/tasks/:id/dependencies/:dependencyId - Remove dependency (project members only)
 router.delete(
@@ -1027,7 +1023,8 @@ router.delete(
 			// Get task with project details to verify access
 			const { data: task, error: taskError } = await supabase
 				.from('tasks')
-				.select(`
+				.select(
+					`
 					id,
 					project_id,
 					project:projects!inner(
@@ -1038,7 +1035,8 @@ router.delete(
 							)
 						)
 					)
-				`)
+				`
+				)
 				.eq('id', taskId)
 				.single();
 
@@ -1054,7 +1052,7 @@ router.delete(
 
 			// Check if user is a member of the organization
 			const isMember = task.project.organization.members.some(
-				member => member.user_id === req.user.id
+				(member) => member.user_id === req.user.id
 			);
 
 			if (!isMember) {
