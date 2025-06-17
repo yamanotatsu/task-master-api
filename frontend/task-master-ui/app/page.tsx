@@ -34,7 +34,6 @@ function DashboardPage() {
 		}
 	};
 
-
 	const handleProjectClick = (projectId: string) => {
 		router.push(`/projects/${projectId}`);
 	};
@@ -61,9 +60,7 @@ function DashboardPage() {
 			<div className="border-b">
 				<div className="max-w-5xl mx-auto px-8 py-6">
 					<div className="flex items-center justify-between">
-						<h1 className="text-xl font-medium text-gray-900">
-							プロジェクト
-						</h1>
+						<h1 className="text-xl font-medium text-gray-900">プロジェクト</h1>
 						<Button variant="ghost" size="sm" onClick={handleCreateProject}>
 							<Plus className="h-4 w-4" />
 						</Button>

@@ -20,7 +20,8 @@ import { User, Lock, Trash2 } from 'lucide-react';
 
 function ProfilePage() {
 	const router = useRouter();
-	const { user, profile, updateProfile, changePassword, deleteAccount } = useAuth();
+	const { user, profile, updateProfile, changePassword, deleteAccount } =
+		useAuth();
 	const [loading, setLoading] = useState(false);
 	const [profileData, setProfileData] = useState({
 		fullName: '',
@@ -96,8 +97,8 @@ function ProfilePage() {
 		} catch (error) {
 			console.error('Password change error:', error);
 			toast.error(
-				error instanceof Error 
-					? error.message 
+				error instanceof Error
+					? error.message
 					: 'パスワードの変更に失敗しました。現在のパスワードを確認してください。'
 			);
 		} finally {
@@ -122,8 +123,8 @@ function ProfilePage() {
 		} catch (error) {
 			console.error('Account deletion error:', error);
 			toast.error(
-				error instanceof Error 
-					? error.message 
+				error instanceof Error
+					? error.message
 					: 'アカウントの削除に失敗しました'
 			);
 		} finally {

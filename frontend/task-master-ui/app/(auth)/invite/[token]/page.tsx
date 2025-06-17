@@ -119,7 +119,9 @@ export default function InvitationAcceptPage() {
 			if (invitation.isExistingUser) {
 				router.push(`/login?invite=${token}`);
 			} else {
-				router.push(`/signup?invite=${token}&email=${encodeURIComponent(invitation.email)}`);
+				router.push(
+					`/signup?invite=${token}&email=${encodeURIComponent(invitation.email)}`
+				);
 			}
 			return;
 		}
@@ -209,7 +211,9 @@ export default function InvitationAcceptPage() {
 									</div>
 									<div>
 										<p className="text-sm text-gray-500">役割</p>
-										<p className="font-medium">{invitation.role === 'admin' ? '管理者' : 'メンバー'}</p>
+										<p className="font-medium">
+											{invitation.role === 'admin' ? '管理者' : 'メンバー'}
+										</p>
 									</div>
 									{!user && (
 										<div>
@@ -223,12 +227,13 @@ export default function InvitationAcceptPage() {
 
 								{/* Action Buttons */}
 								<div className="space-y-3">
-									<Button
-										onClick={handleAccept}
-										className="w-full"
-									>
+									<Button onClick={handleAccept} className="w-full">
 										<CheckCircle className="mr-2 h-4 w-4" />
-										{user ? '招待を承認する' : invitation.isExistingUser ? 'ログインして参加' : 'アカウントを作成して参加'}
+										{user
+											? '招待を承認する'
+											: invitation.isExistingUser
+												? 'ログインして参加'
+												: 'アカウントを作成して参加'}
 									</Button>
 								</div>
 							</CardContent>

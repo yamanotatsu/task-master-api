@@ -92,7 +92,6 @@ function NewProjectPage() {
 		taskCandidateStorage.clearOldSessions();
 	}, []);
 
-
 	const checkPRDQuality = (content: string) => {
 		const quality: PRDQuality = {
 			hasOverview: /概要|overview|背景|background/i.test(content),
@@ -363,10 +362,12 @@ function NewProjectPage() {
 						);
 					})}
 				</div>
-				
+
 				{/* Current Step Title */}
 				<div className="text-center mb-8">
-					<h2 className="text-2xl font-bold mb-2">{stepConfig[currentStep].title}</h2>
+					<h2 className="text-2xl font-bold mb-2">
+						{stepConfig[currentStep].title}
+					</h2>
 					<p className="text-gray-500">{stepConfig[currentStep].description}</p>
 				</div>
 			</div>
@@ -382,7 +383,7 @@ function NewProjectPage() {
 									<FileText className="w-10 h-10 text-primary" />
 								</div>
 							</div>
-							
+
 							<div>
 								<label className="block text-sm font-medium mb-2">
 									プロジェクト名
@@ -431,7 +432,7 @@ function NewProjectPage() {
 									<MessageSquare className="w-10 h-10 text-primary" />
 								</div>
 							</div>
-							
+
 							{/* Chat Interface */}
 							<div className="space-y-4">
 								<div className="h-[400px] overflow-y-auto space-y-3 p-4 bg-gray-50 rounded-lg">
@@ -446,7 +447,9 @@ function NewProjectPage() {
 												key={message.id}
 												className={cn(
 													'flex',
-													message.role === 'user' ? 'justify-end' : 'justify-start'
+													message.role === 'user'
+														? 'justify-end'
+														: 'justify-start'
 												)}
 											>
 												<div
@@ -457,13 +460,15 @@ function NewProjectPage() {
 															: 'bg-white border shadow-sm'
 													)}
 												>
-													<p className="text-sm whitespace-pre-wrap">{message.content}</p>
+													<p className="text-sm whitespace-pre-wrap">
+														{message.content}
+													</p>
 												</div>
 											</div>
 										))
 									)}
 								</div>
-								
+
 								<div className="flex gap-2">
 									<Input
 										value={inputMessage}
@@ -476,20 +481,25 @@ function NewProjectPage() {
 										<ArrowRight className="h-4 w-4" />
 									</Button>
 								</div>
-								
+
 								{/* Simple Quality Indicator */}
 								{prdQuality.score > 0 && (
 									<div className="mt-4 p-3 bg-gray-50 rounded-lg">
 										<div className="flex items-center justify-between mb-2">
 											<span className="text-sm text-gray-600">PRD品質</span>
-											<span className="text-sm font-bold text-primary">{prdQuality.score}%</span>
+											<span className="text-sm font-bold text-primary">
+												{prdQuality.score}%
+											</span>
 										</div>
 										<div className="w-full bg-gray-200 rounded-full h-2">
 											<div
 												className={cn(
 													'h-2 rounded-full transition-all duration-500',
-													prdQuality.score >= 75 ? 'bg-green-500' :
-													prdQuality.score >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+													prdQuality.score >= 75
+														? 'bg-green-500'
+														: prdQuality.score >= 50
+															? 'bg-yellow-500'
+															: 'bg-red-500'
 												)}
 												style={{ width: `${prdQuality.score}%` }}
 											/>
@@ -512,7 +522,7 @@ function NewProjectPage() {
 									<Settings2 className="w-10 h-10 text-primary animate-spin-slow" />
 								</div>
 							</div>
-							
+
 							{/* Task Count - Big Visual */}
 							<div className="text-center mb-8">
 								<p className="text-sm text-gray-500 mb-2">タスク数</p>
@@ -530,13 +540,15 @@ function NewProjectPage() {
 									className="w-full"
 								/>
 							</div>
-							
+
 							{/* Research Option */}
 							<div className="flex items-center justify-center space-x-2">
 								<Checkbox
 									id="research"
 									checked={includeResearch}
-									onCheckedChange={(checked) => setIncludeResearch(checked as boolean)}
+									onCheckedChange={(checked) =>
+										setIncludeResearch(checked as boolean)
+									}
 								/>
 								<label htmlFor="research" className="text-sm cursor-pointer">
 									最新技術を調査

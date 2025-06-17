@@ -48,7 +48,9 @@ export default function ProjectDetailPage() {
 	const [project, setProject] = useState<Project | null>(null);
 	const [tasks, setTasks] = useState<Task[]>([]);
 	const [subtasks, setSubtasks] = useState<Subtask[]>([]);
-	const [users, setUsers] = useState<Array<{ id: string; name: string; avatar?: string }>>([]);
+	const [users, setUsers] = useState<
+		Array<{ id: string; name: string; avatar?: string }>
+	>([]);
 	const [loading, setLoading] = useState(true);
 	const { error, handleError, clearError, withErrorHandling } =
 		useErrorHandler();
@@ -74,16 +76,16 @@ export default function ProjectDetailPage() {
 
 				setProject(projectData);
 				setTasks(tasksData.tasks);
-				
+
 				// サブタスクをすべてのタスクから取得し、taskIdを付与
-				const allSubtasks = tasksData.tasks.flatMap(task => 
-					(task.subtasks || []).map(subtask => ({
+				const allSubtasks = tasksData.tasks.flatMap((task) =>
+					(task.subtasks || []).map((subtask) => ({
 						...subtask,
 						taskId: task.id
 					}))
 				);
 				setSubtasks(allSubtasks);
-				
+
 				// プロジェクトのassigneesからユーザーリストを作成
 				const usersList = projectData.assignees || [];
 				setUsers(usersList);
@@ -99,7 +101,7 @@ export default function ProjectDetailPage() {
 	const handleTaskClick = (taskId: string) => {
 		router.push(`/projects/${projectId}/tasks/${taskId}`);
 	};
-	
+
 	const handleSubtaskClick = (taskId: string, subtaskId: string) => {
 		router.push(`/projects/${projectId}/tasks/${taskId}/subtasks/${subtaskId}`);
 	};
@@ -109,7 +111,7 @@ export default function ProjectDetailPage() {
 			async () => {
 				await api.updateTask(taskId, updates);
 				setTasks(
-					tasks.map((task) => 
+					tasks.map((task) =>
 						task.id === taskId ? { ...task, ...updates } : task
 					)
 				);
@@ -121,18 +123,19 @@ export default function ProjectDetailPage() {
 		);
 	};
 
-	const handleSubtaskUpdate = async (subtaskId: string, updates: Partial<Subtask>) => {
+	const handleSubtaskUpdate = async (
+		subtaskId: string,
+		updates: Partial<Subtask>
+	) => {
 		await withErrorHandling(
 			async () => {
 				// 対象のサブタスクを見つける
-				const subtask = subtasks.find(s => s.id === subtaskId);
+				const subtask = subtasks.find((s) => s.id === subtaskId);
 				if (!subtask) return;
-				
+
 				await api.updateSubtask(subtask.taskId, subtaskId, updates);
 				setSubtasks(
-					subtasks.map((s) => 
-						s.id === subtaskId ? { ...s, ...updates } : s
-					)
+					subtasks.map((s) => (s.id === subtaskId ? { ...s, ...updates } : s))
 				);
 				toast.success('サブタスクを更新しました');
 			},
@@ -206,7 +209,7 @@ export default function ProjectDetailPage() {
 	};
 
 	// Final filtered tasks with string IDs for the table
-	const filteredTasks = filteredResults.map(task => ({
+	const filteredTasks = filteredResults.map((task) => ({
 		...task,
 		id: task.id.toString(),
 		title: task.title,
@@ -215,9 +218,9 @@ export default function ProjectDetailPage() {
 		deadline: task.deadline,
 		priority: task.priority
 	}));
-	
+
 	// サブタスクもstring IDに変換
-	const mappedSubtasks = subtasks.map(subtask => ({
+	const mappedSubtasks = subtasks.map((subtask) => ({
 		id: subtask.id.toString(),
 		taskId: subtask.taskId ? subtask.taskId.toString() : '',
 		title: subtask.title,
@@ -468,7 +471,6 @@ export default function ProjectDetailPage() {
 					)}
 				</div>
 			</div>
-
 		</div>
 	);
 }

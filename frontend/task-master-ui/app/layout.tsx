@@ -44,11 +44,13 @@ export default function RootLayout({
 		<html lang="ja" suppressHydrationWarning>
 			<body
 				className={`${geistSans.className} ${notoSansJP.className} antialiased min-h-screen bg-background`}
-				style={{
-					'--font-geist-sans': geistSans.style.fontFamily,
-					'--font-geist-mono': geistMono.style.fontFamily,
-					'--font-noto-sans-jp': notoSansJP.style.fontFamily
-				} as React.CSSProperties}
+				style={
+					{
+						'--font-geist-sans': geistSans.style.fontFamily,
+						'--font-geist-mono': geistMono.style.fontFamily,
+						'--font-noto-sans-jp': notoSansJP.style.fontFamily
+					} as React.CSSProperties
+				}
 			>
 				<ErrorBoundary>
 					<ThemeProvider defaultTheme="light" storageKey="task-master-theme">
