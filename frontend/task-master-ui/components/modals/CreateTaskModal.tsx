@@ -82,10 +82,10 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
 			const response = await api.createTask(taskData);
 			console.log('Created task response:', response); // デバッグ用ログ
-			
+
 			// APIレスポンスがTaskオブジェクトそのものか、taskIdを含むオブジェクトかを判定
 			let createdTask: Task;
-			
+
 			if (response && typeof response === 'object') {
 				if ('id' in response && 'title' in response) {
 					// レスポンスが完全なTaskオブジェクトの場合
@@ -117,7 +117,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 						updatedAt: new Date().toISOString()
 					};
 				}
-				
+
 				toast.success('タスクを作成しました');
 				onTaskCreated(createdTask);
 				onClose();
@@ -207,7 +207,10 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 								<StatusSelect
 									value={formData.status}
 									onChange={(value) =>
-										setFormData({ ...formData, status: value as Task['status'] })
+										setFormData({
+											...formData,
+											status: value as Task['status']
+										})
 									}
 								/>
 							</div>
