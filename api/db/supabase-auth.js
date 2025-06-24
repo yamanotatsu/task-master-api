@@ -3,9 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-// Get current directory and load .env from api directory
+// Get current directory and load .env files from api directory
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+// 優先順位: .env.local → .env → 環境変数
+dotenv.config({ path: join(__dirname, '..', '.env.local') });
 dotenv.config({ path: join(__dirname, '..', '.env') });
 
 const supabaseUrl = process.env.SUPABASE_URL;
