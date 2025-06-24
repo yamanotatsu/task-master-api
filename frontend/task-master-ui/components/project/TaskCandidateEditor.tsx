@@ -178,7 +178,7 @@ export const TaskCandidateEditor: React.FC<TaskCandidateEditorProps> = ({
 	const handleConfirm = useCallback(async () => {
 		console.log('TaskCandidateEditor handleConfirm called');
 		console.log('Current tasks:', tasks);
-		
+
 		// Validate tasks
 		const invalidTasks = tasks.filter((task) => !task.title.trim());
 		if (invalidTasks.length > 0) {
