@@ -111,7 +111,7 @@ const statusOptions = [
 	{ value: 'review', label: 'レビュー', color: notionColors.status.review }
 ];
 
-export const StatusSelect: React.FC<StatusSelectProps> = ({
+const StatusSelect: React.FC<StatusSelectProps> = ({
 	value,
 	onValueChange,
 	disabled
@@ -160,7 +160,7 @@ const priorityOptions = [
 	{ value: 'low', label: '低', icon: '🟢' }
 ];
 
-export const PrioritySelect: React.FC<PrioritySelectProps> = ({
+const PrioritySelect: React.FC<PrioritySelectProps> = ({
 	value,
 	onValueChange,
 	disabled
