@@ -453,7 +453,7 @@ router.post('/ai-dialogue/stream', authMiddleware, async (req, res) => {
 		res.setHeader('Cache-Control', 'no-cache');
 		res.setHeader('Connection', 'keep-alive');
 		res.setHeader('X-Accel-Buffering', 'no');
-		
+
 		// CORS headers for SSE
 		res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
 		res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -500,7 +500,9 @@ router.post('/ai-dialogue/stream', authMiddleware, async (req, res) => {
 		for await (const chunk of stream) {
 			if (chunk.type === 'content') {
 				fullResponse += chunk.content;
-				res.write(`data: ${JSON.stringify({ type: 'content', content: chunk.content })}\n\n`);
+				res.write(
+					`data: ${JSON.stringify({ type: 'content', content: chunk.content })}\n\n`
+				);
 			}
 		}
 
@@ -514,11 +516,12 @@ router.post('/ai-dialogue/stream', authMiddleware, async (req, res) => {
 		// Send completion event
 		res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
 		res.end();
-		
 	} catch (error) {
 		console.error('AI dialogue stream error:', error);
 		if (!res.headersSent) {
-			res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+			res.write(
+				`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`
+			);
 		}
 		res.end();
 	}

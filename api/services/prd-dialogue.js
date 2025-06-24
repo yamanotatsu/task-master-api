@@ -298,12 +298,12 @@ ${message}`;
 		// Simulate streaming by chunking the response
 		const text = response.mainResult;
 		const chunkSize = 20; // Characters per chunk
-		
+
 		for (let i = 0; i < text.length; i += chunkSize) {
 			const chunk = text.slice(i, i + chunkSize);
 			yield { type: 'content', content: chunk };
 			// Add a small delay to simulate streaming
-			await new Promise(resolve => setTimeout(resolve, 50));
+			await new Promise((resolve) => setTimeout(resolve, 50));
 		}
 	} catch (error) {
 		console.error('Error in generatePRDDialogueResponseStream:', error);

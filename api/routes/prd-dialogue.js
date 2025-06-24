@@ -22,7 +22,7 @@ router.post('/analyze', async (req, res) => {
 
 		// Analyze current PRD
 		const analysis = PRDAnalyzer.analyze(prdContent);
-		
+
 		// Build conversation context
 		const conversationContext = messages
 			.map((msg) => `${msg.role === 'user' ? 'User' : 'AI'}: ${msg.content}`)
@@ -113,7 +113,6 @@ ${userMessage}
 				}
 			}
 		});
-
 	} catch (error) {
 		logger.error('PRD dialogue error:', error);
 		res.status(500).json({
@@ -226,7 +225,6 @@ MVP（最小実行可能製品）の要件と段階的な開発計画
 				finalPrd: response.mainResult
 			}
 		});
-
 	} catch (error) {
 		logger.error('PRD finalize error:', error);
 		res.status(500).json({
