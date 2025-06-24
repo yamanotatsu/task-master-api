@@ -50,7 +50,8 @@ export const SubtaskRow: React.FC<SubtaskRowProps> = ({
 		opacity: isDragging ? 0.5 : 1
 	};
 
-	const isCompleted = subtask.status === 'completed' || subtask.status === 'done';
+	const isCompleted =
+		subtask.status === 'completed' || subtask.status === 'done';
 
 	return (
 		<tr
