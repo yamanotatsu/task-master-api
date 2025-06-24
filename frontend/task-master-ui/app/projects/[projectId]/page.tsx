@@ -106,10 +106,15 @@ export default function ProjectDetailPage() {
 		router.push(`/projects/${projectId}/tasks/${taskId}/subtasks/${subtaskId}`);
 	};
 
-	const handleTaskUpdate = async (taskId: string, updates: Partial<Task>) => {
+	const handleTaskUpdate = async (taskId: string, updates: any) => {
 		await withErrorHandling(
 			async () => {
-				await api.updateTask(taskId, updates);
+				// Convert status from generic string to specific union type if needed
+				const apiUpdates: Partial<Task> = {
+					...updates,
+					status: updates.status as Task['status']
+				};
+				await api.updateTask(taskId, apiUpdates);
 				setTasks(
 					tasks.map((task) =>
 						task.id === taskId ? { ...task, ...updates } : task
@@ -125,7 +130,7 @@ export default function ProjectDetailPage() {
 
 	const handleSubtaskUpdate = async (
 		subtaskId: string,
-		updates: Partial<Subtask>
+		updates: any
 	) => {
 		await withErrorHandling(
 			async () => {
@@ -133,7 +138,14 @@ export default function ProjectDetailPage() {
 				const subtask = subtasks.find((s) => s.id === subtaskId);
 				if (!subtask) return;
 
-				await api.updateSubtask(subtask.taskId, subtaskId, updates);
+				if (subtask.taskId) {
+					// Convert updates to API format
+					const apiUpdates: Partial<Subtask> = {
+						...updates,
+						status: updates.status as Subtask['status']
+					};
+					await api.updateSubtask(subtask.taskId, subtaskId, apiUpdates);
+				}
 				setSubtasks(
 					subtasks.map((s) => (s.id === subtaskId ? { ...s, ...updates } : s))
 				);
@@ -167,11 +179,15 @@ export default function ProjectDetailPage() {
 	const handleAddSubtask = async (taskId: string) => {
 		await withErrorHandling(
 			async () => {
-				const newSubtask = await api.addSubtask(taskId, {
+				const updatedTask = await api.addSubtask(taskId, {
 					title: '新しいサブタスク',
 					status: 'pending'
 				});
-				setSubtasks([...subtasks, { ...newSubtask, taskId: taskId }]);
+				// Extract the newly added subtask (it should be the last one)
+				const newSubtask = updatedTask.subtasks[updatedTask.subtasks.length - 1];
+				if (newSubtask) {
+					setSubtasks([...subtasks, { ...newSubtask, taskId: taskId }]);
+				}
 				toast.success('サブタスクを作成しました');
 			},
 			{
@@ -180,9 +196,20 @@ export default function ProjectDetailPage() {
 		);
 	};
 
-	const handleTasksReorder = async (reorderedTasks: Task[]) => {
+	const handleTasksReorder = async (reorderedTasks: any[]) => {
+		// Map the reordered tasks back to the API Task format
+		const updatedApiTasks = tasks.map(apiTask => {
+			const reorderedTask = reorderedTasks.find(t => t.id === apiTask.id);
+			if (reorderedTask) {
+				// Update the order based on the new position
+				const newOrder = reorderedTasks.findIndex(t => t.id === apiTask.id);
+				return { ...apiTask, order: newOrder };
+			}
+			return apiTask;
+		});
+		
 		// ローカルで即座に更新
-		setTasks(reorderedTasks);
+		setTasks(updatedApiTasks);
 		// APIコールは非同期で実行（エラーは通知のみ）
 		try {
 			// await api.updateTasksOrder(reorderedTasks.map(t => t.id));
@@ -215,7 +242,6 @@ export default function ProjectDetailPage() {
 		title: task.title,
 		status: task.status,
 		assignee: undefined, // TODO: assignee情報の変換
-		deadline: task.deadline,
 		priority: task.priority
 	}));
 
