@@ -59,12 +59,11 @@ export const TaskRow: React.FC<TaskRowProps> = React.memo(
 			label: string;
 			color: string;
 		}> = [
-			{ value: 'not-started', label: '未着手', color: 'gray' },
-			{ value: 'pending', label: '保留中', color: 'yellow' },
+			{ value: 'pending', label: '未着手', color: 'gray' },
 			{ value: 'in-progress', label: '進行中', color: 'blue' },
 			{ value: 'review', label: 'レビュー中', color: 'purple' },
-			{ value: 'completed', label: '完了', color: 'green' },
-			{ value: 'blocked', label: 'ブロック', color: 'red' },
+			{ value: 'done', label: '完了', color: 'green' },
+			{ value: 'deferred', label: '延期', color: 'yellow' },
 			{ value: 'cancelled', label: 'キャンセル', color: 'gray' }
 		];
 

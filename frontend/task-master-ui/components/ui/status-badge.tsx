@@ -4,9 +4,6 @@ type StatusType =
 	| 'pending'
 	| 'in-progress'
 	| 'done'
-	| 'blocked'
-	| 'not-started'
-	| 'completed'
 	| 'deferred'
 	| 'cancelled'
 	| 'review';
@@ -17,10 +14,6 @@ interface StatusBadgeProps {
 }
 
 const statusConfig: Record<StatusType, { label: string; className: string }> = {
-	'not-started': {
-		label: '未着手',
-		className: 'bg-primary text-primary-foreground'
-	},
 	pending: {
 		label: '未着手',
 		className: 'bg-primary text-primary-foreground'
@@ -32,14 +25,6 @@ const statusConfig: Record<StatusType, { label: string; className: string }> = {
 	done: {
 		label: '完了',
 		className: 'bg-chart-2 text-white'
-	},
-	completed: {
-		label: '完了',
-		className: 'bg-chart-2 text-white'
-	},
-	blocked: {
-		label: 'ブロック中',
-		className: 'bg-destructive text-destructive-foreground'
 	},
 	review: {
 		label: 'レビュー中',

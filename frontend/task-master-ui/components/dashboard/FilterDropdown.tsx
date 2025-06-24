@@ -34,12 +34,11 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
 	members = []
 }) => {
 	const statusOptions: Array<{ value: Task['status']; label: string }> = [
-		{ value: 'not-started', label: '未着手' },
-		{ value: 'pending', label: '保留中' },
+		{ value: 'pending', label: '未着手' },
 		{ value: 'in-progress', label: '進行中' },
 		{ value: 'review', label: 'レビュー中' },
-		{ value: 'completed', label: '完了' },
-		{ value: 'blocked', label: 'ブロック' },
+		{ value: 'done', label: '完了' },
+		{ value: 'deferred', label: '延期' },
 		{ value: 'cancelled', label: 'キャンセル' }
 	];
 

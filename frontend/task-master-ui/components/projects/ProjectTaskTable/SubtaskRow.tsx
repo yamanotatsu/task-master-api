@@ -50,7 +50,7 @@ export const SubtaskRow: React.FC<SubtaskRowProps> = ({
 		opacity: isDragging ? 0.5 : 1
 	};
 
-	const isCompleted = subtask.status === 'completed';
+	const isCompleted = subtask.status === 'completed' || subtask.status === 'done';
 
 	return (
 		<tr
@@ -75,7 +75,7 @@ export const SubtaskRow: React.FC<SubtaskRowProps> = ({
 					<button
 						onClick={() =>
 							onSubtaskUpdate(subtask.id, {
-								status: isCompleted ? 'pending' : 'completed'
+								status: isCompleted ? 'pending' : 'done'
 							})
 						}
 						className="text-gray-400 hover:text-gray-600 transition-colors"

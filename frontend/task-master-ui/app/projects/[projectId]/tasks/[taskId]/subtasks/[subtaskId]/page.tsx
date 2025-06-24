@@ -41,14 +41,14 @@ export default function SubtaskDetailPage() {
           api.getTasks({ projectId })
         ]);
 
-        // 特定のタスクを探す
-        const targetTask = tasksData.tasks.find(t => t.id === taskId);
+        // 特定のタスクを探す（IDを数値に変換して比較）
+        const targetTask = tasksData.tasks.find(t => t.id === parseInt(taskId, 10));
         if (!targetTask) {
           throw new Error('タスクが見つかりません');
         }
 
-        // 特定のサブタスクを探す
-        const targetSubtask = targetTask.subtasks?.find(s => s.id === subtaskId);
+        // 特定のサブタスクを探す（IDを数値に変換して比較）
+        const targetSubtask = targetTask.subtasks?.find(s => s.id === parseInt(subtaskId, 10));
         if (!targetSubtask) {
           throw new Error('サブタスクが見つかりません');
         }

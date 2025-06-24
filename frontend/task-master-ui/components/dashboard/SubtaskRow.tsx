@@ -25,7 +25,7 @@ export const SubtaskRow: React.FC<SubtaskRowProps> = React.memo(
 		onSubtaskStatusChange,
 		depth
 	}) => {
-		const isCompleted = subtask.completed || subtask.status === 'completed';
+		const isCompleted = subtask.completed || subtask.status === 'completed' || subtask.status === 'done';
 
 		return (
 			<tr className="group hover:bg-gray-50 transition-colors border-b">

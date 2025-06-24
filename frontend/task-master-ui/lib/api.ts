@@ -33,9 +33,6 @@ export interface Task {
 	status:
 		| 'pending'
 		| 'in-progress'
-		| 'completed'
-		| 'blocked'
-		| 'not-started'
 		| 'done'
 		| 'review'
 		| 'deferred'
@@ -48,6 +45,7 @@ export interface Task {
 	testStrategy?: string;
 	details?: string;
 	assignee?: string;
+	deadline?: string;
 	createdAt?: string;
 	updatedAt?: string;
 }

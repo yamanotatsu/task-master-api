@@ -163,7 +163,7 @@ export default function ProjectDetailPage() {
 				const newTask = await api.createTask({
 					projectId: projectId,
 					title: '新しいタスク',
-					description: '',
+					description: '新しいタスクの説明',
 					status: 'not-started',
 					priority: 'medium'
 				});
