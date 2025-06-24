@@ -11,8 +11,14 @@ router.post('/', authMiddleware, async (req, res) => {
 	const client = supabase;
 
 	try {
-		const { projectName, projectDescription, prdContent, deadline, tasks } =
-			req.body;
+		const {
+			projectName,
+			projectPath,
+			projectDescription,
+			prdContent,
+			deadline,
+			tasks
+		} = req.body;
 
 		const userId = req.user.id;
 
@@ -26,6 +32,10 @@ router.post('/', authMiddleware, async (req, res) => {
 				}
 			});
 		}
+
+		// Generate project_path if not provided
+		const finalProjectPath =
+			projectPath || projectName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
 		// Get user's organization
 		const { data: orgMember, error: orgError } = await client
@@ -57,6 +67,7 @@ router.post('/', authMiddleware, async (req, res) => {
 				.from('projects')
 				.insert({
 					name: projectName,
+					project_path: finalProjectPath,
 					description: projectDescription || '',
 					prd_content: prdContent || '',
 					deadline: deadline || null,
@@ -84,8 +95,7 @@ router.post('/', authMiddleware, async (req, res) => {
 					priority: task.priority || 'medium',
 					status: 'pending',
 					organization_id: organizationId,
-					created_by: userId,
-					order_index: task.order || index + 1
+					created_by: userId
 				};
 
 				try {

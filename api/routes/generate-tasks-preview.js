@@ -12,7 +12,8 @@ router.post('/', authMiddleware, async (req, res) => {
 			prd_content,
 			target_task_count = 10,
 			use_research_mode = false,
-			projectName
+			projectName,
+			conversation_history = []
 		} = req.body;
 
 		if (!prd_content) {
@@ -25,9 +26,18 @@ router.post('/', authMiddleware, async (req, res) => {
 			});
 		}
 
+		// Combine PRD with conversation history for enhanced context
+		let enhancedPRDContent = prd_content;
+		if (conversation_history && conversation_history.length > 0) {
+			const conversationText = conversation_history
+				.map(msg => `${msg.role === 'user' ? 'User' : 'AI'}: ${msg.content}`)
+				.join('\n\n');
+			enhancedPRDContent = `${prd_content}\n\n--- 対話による追加情報 ---\n\n${conversationText}`;
+		}
+
 		// Generate tasks from PRD without saving to database
 		const startTime = Date.now();
-		const result = await parsePRDContent(prd_content, {
+		const result = await parsePRDContent(enhancedPRDContent, {
 			targetTaskCount: target_task_count,
 			researchMode: use_research_mode,
 			projectName: projectName || 'Generated Project'

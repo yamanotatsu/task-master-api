@@ -3,12 +3,16 @@ import { supabase } from '../db/supabase.js';
 import { getProjectById, getAllProjects } from '../db/helpers.js';
 import {
 	generatePRDDialogueResponse,
+	generatePRDDialogueResponseStream,
 	generateFinalPRD
 } from '../services/prd-dialogue.js';
 import { authMiddleware, requireProjectAccess } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
 
 const router = express.Router();
+
+// Debug log
+console.log('Projects DB router loaded');
 
 // GET /api/v1/projects - Get all projects for user's organizations
 router.get('/', authMiddleware, async (req, res) => {
@@ -424,6 +428,99 @@ router.post('/ai-dialogue', authMiddleware, async (req, res) => {
 				details: error.message
 			}
 		});
+	}
+});
+
+// POST /api/v1/projects/ai-dialogue/stream - Stream AI dialogue response
+console.log('Registering /ai-dialogue/stream endpoint');
+router.post('/ai-dialogue/stream', authMiddleware, async (req, res) => {
+	console.log('AI dialogue stream endpoint hit');
+	try {
+		const { sessionId, message } = req.body;
+
+		if (!sessionId || !message) {
+			return res.status(400).json({
+				success: false,
+				error: {
+					code: 'MISSING_REQUIRED_FIELDS',
+					message: 'sessionId and message are required'
+				}
+			});
+		}
+
+		// Set SSE headers
+		res.setHeader('Content-Type', 'text/event-stream');
+		res.setHeader('Cache-Control', 'no-cache');
+		res.setHeader('Connection', 'keep-alive');
+		res.setHeader('X-Accel-Buffering', 'no');
+		
+		// CORS headers for SSE
+		res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+		res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+		// Store user message
+		await supabase.from('ai_dialogue_messages').insert({
+			session_id: sessionId,
+			role: 'user',
+			content: message
+		});
+
+		// Get session data
+		const { data: session, error: sessionError } = await supabase
+			.from('ai_dialogue_sessions')
+			.select('*, project:projects(*)')
+			.eq('id', sessionId)
+			.single();
+
+		if (sessionError) throw sessionError;
+
+		// Get initial PRD from session
+		const { data: initialPRDData } = await supabase
+			.from('projects')
+			.select('prd_content')
+			.eq('id', session.project.id)
+			.single();
+
+		// Get conversation history
+		const { data: messageHistory } = await supabase
+			.from('ai_dialogue_messages')
+			.select('*')
+			.eq('session_id', sessionId)
+			.order('created_at', { ascending: true });
+
+		// Generate AI response with streaming
+		let fullResponse = '';
+		const stream = await generatePRDDialogueResponseStream({
+			message,
+			sessionData: session,
+			messages: messageHistory || [],
+			initialPRD: initialPRDData?.prd_content || ''
+		});
+
+		for await (const chunk of stream) {
+			if (chunk.type === 'content') {
+				fullResponse += chunk.content;
+				res.write(`data: ${JSON.stringify({ type: 'content', content: chunk.content })}\n\n`);
+			}
+		}
+
+		// Store complete AI response
+		await supabase.from('ai_dialogue_messages').insert({
+			session_id: sessionId,
+			role: 'ai',
+			content: fullResponse
+		});
+
+		// Send completion event
+		res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+		res.end();
+		
+	} catch (error) {
+		console.error('AI dialogue stream error:', error);
+		if (!res.headersSent) {
+			res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+		}
+		res.end();
 	}
 });
 
