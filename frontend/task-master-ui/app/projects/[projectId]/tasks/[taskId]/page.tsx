@@ -41,8 +41,8 @@ export default function TaskDetailPage() {
           api.getTasks({ projectId })
         ]);
 
-        // 特定のタスクを探す
-        const targetTask = tasksData.tasks.find(t => t.id === taskId);
+        // 特定のタスクを探す（IDを文字列に変換して比較）
+        const targetTask = tasksData.tasks.find(t => t.id.toString() === taskId);
         if (!targetTask) {
           throw new Error('タスクが見つかりません');
         }
@@ -68,7 +68,12 @@ export default function TaskDetailPage() {
 
     await withErrorHandling(
       async () => {
-        await api.updateTask(task.id, updates);
+        // ステータス更新の場合は専用のAPIを使用
+        if (updates.status && Object.keys(updates).length === 1) {
+          await api.updateTaskStatus(task.id, updates.status);
+        } else {
+          await api.updateTask(task.id, updates);
+        }
         setTask({ ...task, ...updates });
         toast.success('タスクを更新しました');
       },
@@ -195,6 +200,7 @@ export default function TaskDetailPage() {
       avatar: users.find(u => u.id === task.assignee)?.avatar
     } : undefined,
     priority: task.priority,
+    deadline: task.deadline,
     projectId: projectId,
     projectName: project.name
   };
