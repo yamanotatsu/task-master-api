@@ -9,8 +9,17 @@ export class PRDAnalyzer {
 			name: '概要',
 			description: 'プロジェクトの目的、問題、ターゲットユーザー',
 			keywords: [
-				'目的', '目標', 'ゴール', '背景', '問題', '課題', 
-				'ターゲット', 'ユーザー', '対象', '価値', 'バリュー'
+				'目的',
+				'目標',
+				'ゴール',
+				'背景',
+				'問題',
+				'課題',
+				'ターゲット',
+				'ユーザー',
+				'対象',
+				'価値',
+				'バリュー'
 			],
 			weight: 0.2
 		},
@@ -18,8 +27,16 @@ export class PRDAnalyzer {
 			name: '機能要件',
 			description: '主要機能、ユーザーストーリー、受け入れ基準',
 			keywords: [
-				'機能', '要件', 'ストーリー', '基準', 'フィーチャー',
-				'動作', '仕様', 'できる', '可能', '実装'
+				'機能',
+				'要件',
+				'ストーリー',
+				'基準',
+				'フィーチャー',
+				'動作',
+				'仕様',
+				'できる',
+				'可能',
+				'実装'
 			],
 			weight: 0.25
 		},
@@ -27,8 +44,16 @@ export class PRDAnalyzer {
 			name: '技術仕様',
 			description: '技術スタック、アーキテクチャ、統合要件',
 			keywords: [
-				'技術', 'スタック', 'アーキテクチャ', 'API', 'データベース',
-				'フレームワーク', 'ライブラリ', '統合', 'インフラ', 'セキュリティ'
+				'技術',
+				'スタック',
+				'アーキテクチャ',
+				'API',
+				'データベース',
+				'フレームワーク',
+				'ライブラリ',
+				'統合',
+				'インフラ',
+				'セキュリティ'
 			],
 			weight: 0.2
 		},
@@ -36,8 +61,16 @@ export class PRDAnalyzer {
 			name: '成功指標',
 			description: 'KPI、成功の定義、評価基準',
 			keywords: [
-				'KPI', '指標', '成功', '評価', '測定',
-				'メトリクス', '目標値', 'ベンチマーク', '効果', '成果'
+				'KPI',
+				'指標',
+				'成功',
+				'評価',
+				'測定',
+				'メトリクス',
+				'目標値',
+				'ベンチマーク',
+				'効果',
+				'成果'
 			],
 			weight: 0.2
 		},
@@ -45,8 +78,16 @@ export class PRDAnalyzer {
 			name: 'タイムライン',
 			description: 'マイルストーン、リリース計画、スケジュール',
 			keywords: [
-				'スケジュール', 'タイムライン', 'マイルストーン', 'リリース', '期限',
-				'工程', 'フェーズ', '計画', '日程', '期間'
+				'スケジュール',
+				'タイムライン',
+				'マイルストーン',
+				'リリース',
+				'期限',
+				'工程',
+				'フェーズ',
+				'計画',
+				'日程',
+				'期間'
 			],
 			weight: 0.15
 		}
@@ -76,7 +117,9 @@ export class PRDAnalyzer {
 			if (sectionResult.isComplete) {
 				totalScore += section.weight;
 			} else {
-				result.missingRequirements.push(`${section.name}: ${sectionResult.missingItems?.join(', ') || '詳細が不足'}`);
+				result.missingRequirements.push(
+					`${section.name}: ${sectionResult.missingItems?.join(', ') || '詳細が不足'}`
+				);
 			}
 		}
 
@@ -91,7 +134,7 @@ export class PRDAnalyzer {
 	 */
 	static analyzeSection(content, section) {
 		const lowerContent = content.toLowerCase();
-		const foundKeywords = section.keywords.filter(keyword => 
+		const foundKeywords = section.keywords.filter((keyword) =>
 			lowerContent.includes(keyword)
 		);
 
@@ -99,8 +142,9 @@ export class PRDAnalyzer {
 		const completionRatio = foundKeywords.length / section.keywords.length;
 		const isComplete = completionRatio >= 0.4;
 
-		const missingItems = isComplete ? undefined : 
-			[`${section.description}についての詳細が不足しています`];
+		const missingItems = isComplete
+			? undefined
+			: [`${section.description}についての詳細が不足しています`];
 
 		return { isComplete, missingItems };
 	}
@@ -112,15 +156,21 @@ export class PRDAnalyzer {
 		const suggestions = [];
 
 		if (!analysis.sections.overview.isComplete) {
-			suggestions.push('プロジェクトの目的とターゲットユーザーを明確に記載してください');
+			suggestions.push(
+				'プロジェクトの目的とターゲットユーザーを明確に記載してください'
+			);
 		}
 
 		if (!analysis.sections.features.isComplete) {
-			suggestions.push('主要機能とユーザーストーリーを具体的に列挙してください');
+			suggestions.push(
+				'主要機能とユーザーストーリーを具体的に列挙してください'
+			);
 		}
 
 		if (!analysis.sections.technical.isComplete) {
-			suggestions.push('使用する技術スタックとアーキテクチャを記載してください');
+			suggestions.push(
+				'使用する技術スタックとアーキテクチャを記載してください'
+			);
 		}
 
 		if (!analysis.sections.metrics.isComplete) {
@@ -128,7 +178,9 @@ export class PRDAnalyzer {
 		}
 
 		if (!analysis.sections.timeline.isComplete) {
-			suggestions.push('プロジェクトのマイルストーンとリリース計画を追加してください');
+			suggestions.push(
+				'プロジェクトのマイルストーンとリリース計画を追加してください'
+			);
 		}
 
 		return suggestions;

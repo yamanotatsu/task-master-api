@@ -1,6 +1,21 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
-export const supabase = createClientComponentClient();
+// Check if required environment variables are present
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+// Create client only if environment variables are available
+let supabase: ReturnType<typeof createClientComponentClient> | null = null;
+
+if (typeof window !== 'undefined' && supabaseUrl && supabaseAnonKey) {
+	// Client-side: create the Supabase client
+	supabase = createClientComponentClient({
+		supabaseUrl,
+		supabaseKey: supabaseAnonKey
+	});
+}
+
+export { supabase };
 
 // Types for authentication
 export interface AuthUser {

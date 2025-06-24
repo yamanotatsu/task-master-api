@@ -30,7 +30,7 @@ router.post('/', authMiddleware, async (req, res) => {
 		let enhancedPRDContent = prd_content;
 		if (conversation_history && conversation_history.length > 0) {
 			const conversationText = conversation_history
-				.map(msg => `${msg.role === 'user' ? 'User' : 'AI'}: ${msg.content}`)
+				.map((msg) => `${msg.role === 'user' ? 'User' : 'AI'}: ${msg.content}`)
 				.join('\n\n');
 			enhancedPRDContent = `${prd_content}\n\n--- 対話による追加情報 ---\n\n${conversationText}`;
 		}

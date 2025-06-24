@@ -54,7 +54,7 @@ export const SubtaskDetail: React.FC<SubtaskDetailProps> = ({
 		status: subtask.status,
 		assignee: subtask.assignee,
 		deadline: undefined, // サブタスクには期限なし
-		priority: 'medium', // サブタスクには優先度なし（デフォルト値）
+		priority: undefined, // サブタスクには優先度なし
 		projectId: project.id,
 		projectName: project.name
 	};
@@ -67,6 +67,7 @@ export const SubtaskDetail: React.FC<SubtaskDetailProps> = ({
 				users={users}
 				onPropertyChange={handlePropertyChange}
 				disabled={disabled}
+				isSubtask={true}
 			/>
 
 			{/* メインコンテンツエリア */}

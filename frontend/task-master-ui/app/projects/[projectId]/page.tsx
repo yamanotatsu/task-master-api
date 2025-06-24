@@ -123,7 +123,7 @@ export default function ProjectDetailPage() {
 					await api.updateTask(taskId, apiUpdates);
 				}
 				// ローカルで更新
-				setTasks(prevTasks =>
+				setTasks((prevTasks) =>
 					prevTasks.map((task) => {
 						if (task && task.id && task.id.toString() === taskId) {
 							return { ...task, ...updates };
@@ -139,14 +139,13 @@ export default function ProjectDetailPage() {
 		);
 	};
 
-	const handleSubtaskUpdate = async (
-		subtaskId: string,
-		updates: any
-	) => {
+	const handleSubtaskUpdate = async (subtaskId: string, updates: any) => {
 		await withErrorHandling(
 			async () => {
 				// 対象のサブタスクを見つける
-				const subtask = subtasks.find((s) => s && s.id && s.id.toString() === subtaskId);
+				const subtask = subtasks.find(
+					(s) => s && s.id && s.id.toString() === subtaskId
+				);
 				if (!subtask) return;
 
 				if (subtask.taskId) {
@@ -157,7 +156,7 @@ export default function ProjectDetailPage() {
 					};
 					await api.updateSubtask(subtask.taskId, subtaskId, apiUpdates);
 				}
-				setSubtasks(prevSubtasks =>
+				setSubtasks((prevSubtasks) =>
 					prevSubtasks.map((s) => {
 						if (s && s.id && s.id.toString() === subtaskId) {
 							return { ...s, ...updates };
@@ -191,20 +190,20 @@ export default function ProjectDetailPage() {
 			id: String(newTask.id)
 		};
 		console.log('Adding normalized task to state:', normalizedTask);
-		
+
 		// 方法1: 直接tasksを更新
-		setTasks(prevTasks => {
+		setTasks((prevTasks) => {
 			const updatedTasks = [...prevTasks, normalizedTask];
 			console.log('Updated tasks array:', updatedTasks);
 			return updatedTasks;
 		});
-		
+
 		// 方法2: 念のため少し遅延してからデータを再読み込み
 		// これにより、APIサーバー側でデータが確実に保存された後に取得できる
 		setTimeout(() => {
 			loadProjectData();
 		}, 500);
-		
+
 		// 検索をリセットして新しいタスクが表示されるようにする
 		if (searchQuery) {
 			setSearchQuery('');
@@ -219,7 +218,8 @@ export default function ProjectDetailPage() {
 					status: 'pending'
 				});
 				// Extract the newly added subtask (it should be the last one)
-				const newSubtask = updatedTask.subtasks[updatedTask.subtasks.length - 1];
+				const newSubtask =
+					updatedTask.subtasks[updatedTask.subtasks.length - 1];
 				if (newSubtask) {
 					setSubtasks([...subtasks, { ...newSubtask, taskId: taskId }]);
 				}
@@ -233,16 +233,16 @@ export default function ProjectDetailPage() {
 
 	const handleTasksReorder = async (reorderedTasks: any[]) => {
 		// Map the reordered tasks back to the API Task format
-		const updatedApiTasks = tasks.map(apiTask => {
-			const reorderedTask = reorderedTasks.find(t => t.id === apiTask.id);
+		const updatedApiTasks = tasks.map((apiTask) => {
+			const reorderedTask = reorderedTasks.find((t) => t.id === apiTask.id);
 			if (reorderedTask) {
 				// Update the order based on the new position
-				const newOrder = reorderedTasks.findIndex(t => t.id === apiTask.id);
+				const newOrder = reorderedTasks.findIndex((t) => t.id === apiTask.id);
 				return { ...apiTask, order: newOrder };
 			}
 			return apiTask;
 		});
-		
+
 		// ローカルで即座に更新
 		setTasks(updatedApiTasks);
 		// APIコールは非同期で実行（エラーは通知のみ）
@@ -259,12 +259,16 @@ export default function ProjectDetailPage() {
 		await withErrorHandling(
 			async () => {
 				await api.deleteTask(taskId);
-				setTasks(prevTasks => 
-					prevTasks.filter((task) => task && task.id && task.id.toString() !== taskId)
+				setTasks((prevTasks) =>
+					prevTasks.filter(
+						(task) => task && task.id && task.id.toString() !== taskId
+					)
 				);
 				// 関連するサブタスクも削除
-				setSubtasks(prevSubtasks => 
-					prevSubtasks.filter((s) => s && s.taskId && s.taskId.toString() !== taskId)
+				setSubtasks((prevSubtasks) =>
+					prevSubtasks.filter(
+						(s) => s && s.taskId && s.taskId.toString() !== taskId
+					)
 				);
 				toast.success('タスクを削除しました');
 			},
@@ -276,7 +280,7 @@ export default function ProjectDetailPage() {
 
 	// Final filtered tasks with string IDs for the table
 	const filteredTasks = filteredResults
-		.filter(task => task && task.id) // null/undefinedのタスクを除外
+		.filter((task) => task && task.id) // null/undefinedのタスクを除外
 		.map((task) => ({
 			...task,
 			id: String(task.id), // toString()の代わりにString()を使用
@@ -288,7 +292,7 @@ export default function ProjectDetailPage() {
 
 	// サブタスクもstring IDに変換
 	const mappedSubtasks = subtasks
-		.filter(subtask => subtask && subtask.id) // null/undefinedのサブタスクを除外
+		.filter((subtask) => subtask && subtask.id) // null/undefinedのサブタスクを除外
 		.map((subtask) => ({
 			id: String(subtask.id),
 			taskId: subtask.taskId ? String(subtask.taskId) : '',

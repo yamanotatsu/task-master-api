@@ -66,7 +66,7 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
 
 			const response = await api.addSubtask(taskId, subtaskData);
 			console.log('Created subtask response:', response); // デバッグ用ログ
-			
+
 			// APIレスポンスから新しく作成されたサブタスクを取得
 			if (response && response.subtasks && response.subtasks.length > 0) {
 				// 最後のサブタスクが新しく作成されたもの
@@ -75,7 +75,7 @@ export const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
 					...newSubtask,
 					taskId: taskId
 				};
-				
+
 				toast.success('サブタスクを作成しました');
 				onSubtaskCreated(subtaskWithTaskId);
 				onClose();

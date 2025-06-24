@@ -16,6 +16,7 @@ interface PropertyItemProps {
 	users?: Array<{ id: string; name: string; avatar?: string }>;
 	onChange?: (value: any) => void;
 	disabled?: boolean;
+	isSubtask?: boolean;
 }
 
 export const PropertyItem: React.FC<PropertyItemProps> = ({
@@ -25,7 +26,8 @@ export const PropertyItem: React.FC<PropertyItemProps> = ({
 	value,
 	users,
 	onChange,
-	disabled
+	disabled,
+	isSubtask = false
 }) => {
 	const renderValue = () => {
 		switch (type) {

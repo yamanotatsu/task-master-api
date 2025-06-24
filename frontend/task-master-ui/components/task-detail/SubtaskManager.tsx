@@ -58,7 +58,10 @@ export const SubtaskManager: React.FC<SubtaskManagerProps> = ({
 	};
 
 	const toggleSubtaskCompletion = (subtask: Subtask) => {
-		const isCompleted = subtask.completed || subtask.status === 'completed' || subtask.status === 'done';
+		const isCompleted =
+			subtask.completed ||
+			subtask.status === 'completed' ||
+			subtask.status === 'done';
 		onSubtaskUpdate(subtask.id, {
 			completed: !isCompleted,
 			status: !isCompleted ? 'done' : 'pending'
@@ -67,8 +70,10 @@ export const SubtaskManager: React.FC<SubtaskManagerProps> = ({
 
 	// Sort subtasks: incomplete first, then completed
 	const sortedSubtasks = [...subtasks].sort((a, b) => {
-		const aCompleted = a.completed || a.status === 'completed' || a.status === 'done';
-		const bCompleted = b.completed || b.status === 'completed' || b.status === 'done';
+		const aCompleted =
+			a.completed || a.status === 'completed' || a.status === 'done';
+		const bCompleted =
+			b.completed || b.status === 'completed' || b.status === 'done';
 		if (aCompleted === bCompleted) return 0;
 		return aCompleted ? 1 : -1;
 	});
@@ -92,7 +97,9 @@ export const SubtaskManager: React.FC<SubtaskManagerProps> = ({
 			<div className="space-y-1">
 				{sortedSubtasks.map((subtask) => {
 					const isCompleted =
-						subtask.completed || subtask.status === 'completed' || subtask.status === 'done';
+						subtask.completed ||
+						subtask.status === 'completed' ||
+						subtask.status === 'done';
 					const isEditing = editingSubtaskId === subtask.id;
 
 					return (
