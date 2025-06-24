@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 import {
 	Card,
 	CardContent,
@@ -13,7 +14,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
-import { api } from '@/lib/api';
 
 export default function VerifyEmailPage() {
 	const searchParams = useSearchParams();
@@ -39,25 +39,29 @@ export default function VerifyEmailPage() {
 
 		setIsResending(true);
 		try {
-			const response = await api.post('/auth/resend-verification', { email });
+			// Use Supabase to resend verification email
+			const { error } = await supabase.auth.resend({
+				type: 'signup',
+				email: email
+			});
 
-			if (response.data.success) {
+			if (!error) {
 				toast.success('確認メールを再送信しました');
 				setResendDisabled(true);
 				setCountdown(60); // 60秒間は再送信を無効化
+			} else {
+				throw error;
 			}
 		} catch (error: any) {
 			console.error('Resend verification error:', error);
 
-			if (error.response?.data?.error?.code === 'RATE_LIMIT_EXCEEDED') {
+			if (error.message?.includes('rate limit')) {
 				toast.error(
 					'送信回数の制限に達しました。しばらく待ってから再度お試しください。'
 				);
 				setResendDisabled(true);
 				setCountdown(300); // 5分間待機
-			} else if (
-				error.response?.data?.error?.code === 'EMAIL_ALREADY_VERIFIED'
-			) {
+			} else if (error.message?.includes('already confirmed')) {
 				toast.success(
 					'このメールアドレスは既に確認済みです。ログインしてください。'
 				);

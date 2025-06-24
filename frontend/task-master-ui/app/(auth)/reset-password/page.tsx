@@ -28,7 +28,7 @@ function ResetPasswordContent() {
 		);
 	}
 
-	return <ResetPasswordForm token={token} />;
+	return <ResetPasswordForm />;
 }
 
 export default function ResetPasswordPage() {

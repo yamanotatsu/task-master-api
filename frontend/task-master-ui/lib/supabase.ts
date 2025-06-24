@@ -1,19 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
-// Supabase URL and Anon Key should be set in environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-	throw new Error('Missing Supabase environment variables');
-}
-
-// Create a supabase client configured for client-side use with cookies
-export const supabase = createClientComponentClient({
-	supabaseUrl,
-	supabaseKey: supabaseAnonKey
-});
+export const supabase = createClientComponentClient();
 
 // Types for authentication
 export interface AuthUser {

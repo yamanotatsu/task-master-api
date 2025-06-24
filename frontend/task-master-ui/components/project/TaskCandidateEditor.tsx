@@ -176,6 +176,9 @@ export const TaskCandidateEditor: React.FC<TaskCandidateEditorProps> = ({
 	}, [tasks.length]);
 
 	const handleConfirm = useCallback(async () => {
+		console.log('TaskCandidateEditor handleConfirm called');
+		console.log('Current tasks:', tasks);
+		
 		// Validate tasks
 		const invalidTasks = tasks.filter((task) => !task.title.trim());
 		if (invalidTasks.length > 0) {
@@ -192,13 +195,19 @@ export const TaskCandidateEditor: React.FC<TaskCandidateEditorProps> = ({
 
 		setIsValidating(true);
 		try {
+			console.log('Calling onConfirm with tasks:', tasks);
 			// Remove session data after confirming
 			taskCandidateStorage.remove(sessionId);
 			onConfirm(tasks);
 		} catch (error) {
-			console.error('Failed to confirm tasks:', error);
+			console.error('Failed to confirm tasks - full error:', error);
+			console.error('Error details:', {
+				message: error instanceof Error ? error.message : 'Unknown error',
+				stack: error instanceof Error ? error.stack : 'No stack trace'
+			});
 			toast.error('タスクの確認中にエラーが発生しました。');
 		} finally {
+			console.log('handleConfirm finally block, setting isValidating to false');
 			setIsValidating(false);
 		}
 	}, [tasks, sessionId, onConfirm]);
@@ -250,7 +259,13 @@ export const TaskCandidateEditor: React.FC<TaskCandidateEditorProps> = ({
 					戻る
 				</Button>
 				<Button
-					onClick={handleConfirm}
+					onClick={() => {
+						console.log('Button clicked!');
+						console.log('isValidating:', isValidating);
+						console.log('tasks.length:', tasks.length);
+						console.log('Button disabled:', isValidating || tasks.length === 0);
+						handleConfirm();
+					}}
 					disabled={isValidating || tasks.length === 0}
 				>
 					{isValidating ? (

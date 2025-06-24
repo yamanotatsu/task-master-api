@@ -68,8 +68,8 @@ export const DraggableTaskList: React.FC<DraggableTaskListProps> = ({
 		const { active, over } = event;
 
 		if (active.id !== over?.id) {
-			const oldIndex = tasks.findIndex((task) => task.id === Number(active.id));
-			const newIndex = tasks.findIndex((task) => task.id === Number(over?.id));
+			const oldIndex = tasks.findIndex((task) => task.id === String(active.id));
+			const newIndex = tasks.findIndex((task) => task.id === String(over?.id));
 
 			if (oldIndex !== -1 && newIndex !== -1) {
 				const newTasks = arrayMove(tasks, oldIndex, newIndex);
