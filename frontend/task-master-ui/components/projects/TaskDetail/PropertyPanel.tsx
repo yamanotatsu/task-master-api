@@ -23,6 +23,7 @@ interface PropertyPanelProps {
 	onPropertyChange: (key: string, value: any) => void;
 	onAddSubtask?: () => void;
 	disabled?: boolean;
+	isSubtask?: boolean;
 }
 
 export const PropertyPanel: React.FC<PropertyPanelProps> = ({
@@ -30,7 +31,8 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
 	users,
 	onPropertyChange,
 	onAddSubtask,
-	disabled
+	disabled,
+	isSubtask = false
 }) => {
 	const properties = [
 		{
@@ -47,20 +49,30 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
 			type: 'status' as const,
 			value: task.status
 		},
-		{
-			icon: '📅',
-			label: '期限',
-			key: 'deadline',
-			type: 'date' as const,
-			value: task.deadline
-		},
-		{
-			icon: '🏳️',
-			label: '優先度',
-			key: 'priority',
-			type: 'priority' as const,
-			value: task.priority
-		},
+		// deadlineがundefinedの場合（サブタスクの場合）は表示しない
+		...(task.deadline !== undefined
+			? [
+					{
+						icon: '📅',
+						label: '期限',
+						key: 'deadline',
+						type: 'date' as const,
+						value: task.deadline
+					}
+				]
+			: []),
+		// priorityがundefinedの場合（サブタスクの場合）は表示しない
+		...(task.priority !== undefined
+			? [
+					{
+						icon: '🏳️',
+						label: '優先度',
+						key: 'priority',
+						type: 'priority' as const,
+						value: task.priority
+					}
+				]
+			: []),
 		{
 			icon: '🔗',
 			label: 'プロジェクト',
@@ -83,6 +95,7 @@ export const PropertyPanel: React.FC<PropertyPanelProps> = ({
 							users={property.type === 'person' ? users : undefined}
 							onChange={(value) => onPropertyChange(key, value)}
 							disabled={disabled || property.disabled}
+							isSubtask={isSubtask}
 						/>
 					);
 				})}
