@@ -41,6 +41,16 @@ export async function middleware(request: NextRequest) {
 	// Create a response object that we can mutate
 	const res = NextResponse.next();
 
+	// Check if Supabase is configured
+	const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+	const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+	
+	// If Supabase is not configured, allow all requests
+	if (!supabaseUrl || !supabaseAnonKey) {
+		console.warn('Supabase environment variables not configured');
+		return res;
+	}
+
 	// Create a Supabase client configured to use cookies
 	const supabase = createMiddlewareClient({ req: request, res });
 
