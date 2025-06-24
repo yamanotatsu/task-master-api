@@ -3,7 +3,9 @@ import { supabase } from './supabase';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 // デバッグモードの設定（開発環境でのみ有効）
-const DEBUG_MODE = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DEBUG === 'true';
+const DEBUG_MODE =
+	process.env.NODE_ENV === 'development' &&
+	process.env.NEXT_PUBLIC_DEBUG === 'true';
 
 // ログ出力のヘルパー関数
 const debugLog = (...args: any[]) => {
@@ -156,7 +158,8 @@ export interface ExpandTaskRequest {
 
 class ApiClient {
 	// セッションキャッシュ（30分間有効）
-	private sessionCache: { token: string | null; timestamp: number } | null = null;
+	private sessionCache: { token: string | null; timestamp: number } | null =
+		null;
 	private readonly SESSION_CACHE_DURATION = 30 * 60 * 1000; // 30分
 
 	// Skip auth in development if env var is set
@@ -173,8 +176,10 @@ class ApiClient {
 		}
 
 		// キャッシュをチェック
-		if (this.sessionCache &&
-			Date.now() - this.sessionCache.timestamp < this.SESSION_CACHE_DURATION) {
+		if (
+			this.sessionCache &&
+			Date.now() - this.sessionCache.timestamp < this.SESSION_CACHE_DURATION
+		) {
 			debugLog('Using cached auth token');
 			return this.sessionCache.token;
 		}
@@ -186,7 +191,10 @@ class ApiClient {
 			}
 
 			// Supabaseのデフォルトタイムアウトに任せる（Promise.raceを削除）
-			const { data: { session }, error } = await supabase.auth.getSession();
+			const {
+				data: { session },
+				error
+			} = await supabase.auth.getSession();
 
 			if (error) {
 				console.error('Failed to get session:', error.message);
@@ -276,7 +284,7 @@ class ApiClient {
 						if (!retryResponse.ok || retryData.success === false) {
 							throw new Error(
 								retryData.error?.message ||
-								`API Error: ${retryResponse.statusText}`
+									`API Error: ${retryResponse.statusText}`
 							);
 						}
 						return retryData.data || retryData;
@@ -286,7 +294,8 @@ class ApiClient {
 
 			// エラーレスポンスの処理
 			if (!response.ok || data.success === false) {
-				const errorMessage = data.error?.message || `API Error: ${response.statusText}`;
+				const errorMessage =
+					data.error?.message || `API Error: ${response.statusText}`;
 				debugLog('API Error:', errorMessage);
 				throw new Error(errorMessage);
 			}
@@ -973,7 +982,9 @@ class ApiClient {
 		};
 	}> {
 		// Generate project_path if not provided
-		const projectPath = data.projectPath || data.projectName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+		const projectPath =
+			data.projectPath ||
+			data.projectName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
 		return this.fetchAPI('/api/v1/tasks/batch-create', {
 			method: 'POST',
