@@ -8,11 +8,11 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 let supabase: ReturnType<typeof createClientComponentClient> | null = null;
 
 if (typeof window !== 'undefined' && supabaseUrl && supabaseAnonKey) {
-  // Client-side: create the Supabase client
-  supabase = createClientComponentClient({
-    supabaseUrl,
-    supabaseKey: supabaseAnonKey
-  });
+	// Client-side: create the Supabase client
+	supabase = createClientComponentClient({
+		supabaseUrl,
+		supabaseKey: supabaseAnonKey
+	});
 }
 
 export { supabase };

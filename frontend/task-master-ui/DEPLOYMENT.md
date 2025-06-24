@@ -7,14 +7,17 @@
 Before deploying to Vercel, make sure to set the following environment variables in your Vercel project settings:
 
 1. **NEXT_PUBLIC_SUPABASE_URL** (Required)
+
    - Your Supabase project URL
    - Example: `https://your-project.supabase.co`
 
 2. **NEXT_PUBLIC_SUPABASE_ANON_KEY** (Required)
+
    - Your Supabase anonymous key
    - Found in your Supabase project settings
 
 3. **NEXT_PUBLIC_API_URL** (Required)
+
    - Your backend API URL
    - Production example: `https://your-api.com`
    - Development: `http://localhost:8080`
