@@ -53,7 +53,19 @@ jobs:
           path: node_modules
           key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
 
-      - name: Format Check
-        run: npm run format-check
+      - name: Auto Format (Fix formatting if needed)
+        run: |
+          echo "🔧 フォーマットチェック & 自動修正実行中..."
+          npm run format
+          if ! git diff --quiet; then
+            echo "❌ フォーマットエラーが見つかりました。"
+            echo "💡 ローカルで 'npm run format' を実行してコミットしてください。"
+            echo ""
+            echo "📋 変更が必要なファイル："
+            git diff --name-only
+            exit 1
+          else
+            echo "✅ フォーマットOK"
+          fi
         env:
           FORCE_COLOR: 1

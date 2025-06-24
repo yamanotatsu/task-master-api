@@ -14,11 +14,13 @@ AI駆動開発のためのタスク管理システム。Claude、Cursor AIとシ
 ## 🚀 セットアップ（5分）
 
 ### 前提条件
+
 - Node.js 14+
 - AI APIキー（Anthropic/OpenAI/Google等のいずれか1つ以上）
 - Supabaseアカウント
 
 ### インストール
+
 ```bash
 git clone <repository-url>
 cd task-master
@@ -26,6 +28,7 @@ npm install
 ```
 
 ### 環境設定
+
 ```bash
 # 環境設定ファイルをコピー
 cp api/.env.example api/.env.local
@@ -35,6 +38,7 @@ cp frontend/task-master-ui/.env.example frontend/task-master-ui/.env.local
 ```
 
 ### 開発サーバー起動
+
 ```bash
 # ターミナル1: APIサーバー起動
 npm run dev:api
@@ -44,12 +48,14 @@ npm run dev:frontend
 ```
 
 ### アクセス
+
 - **フロントエンド**: http://localhost:3000
 - **API**: http://localhost:8080
 
 ## 🔧 利用可能なスクリプト
 
 ### 開発用スクリプト
+
 ```bash
 npm run dev              # 開発セットアップ手順を表示
 npm run dev:api          # APIサーバーのみ起動
@@ -59,6 +65,7 @@ npm run format           # コード整形
 ```
 
 ### Task Masterコマンド
+
 ```bash
 # プロジェクト初期化
 task-master init
@@ -81,6 +88,7 @@ task-master add-dependency --id=2 --depends-on=1  # 依存関係追加
 ## 🔑 環境変数設定
 
 ### API設定（api/.env.local）
+
 ```bash
 # Supabase設定
 SUPABASE_URL="your_supabase_url"
@@ -101,6 +109,7 @@ FRONTEND_URL="http://localhost:3000"
 ```
 
 ### フロントエンド設定（frontend/task-master-ui/.env.local）
+
 ```bash
 # API接続
 NEXT_PUBLIC_API_URL="http://localhost:8080"
@@ -114,9 +123,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key"
 ## 📚 使用方法
 
 ### 1. PRD作成
+
 `scripts/prd.txt`にプロジェクト要件を記述。`scripts/example_prd.txt`を参考にしてください。
 
 ### 2. タスク生成と管理
+
 ```bash
 # PRDからタスク生成
 task-master parse-prd scripts/prd.txt
@@ -133,6 +144,7 @@ task-master update --from=5 --prompt="新しい要件"  # 複数タスク更新
 ```
 
 ### 3. AI モデル設定
+
 ```bash
 # 利用可能モデル確認
 task-master models
@@ -149,6 +161,7 @@ task-master models --setup
 ## 🌐 本番環境
 
 **デプロイ済みURL:**
+
 - **フロントエンド**: https://task-master-ui-nine.vercel.app
 - **API**: https://api-gamma-henna-77.vercel.app
 

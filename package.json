@@ -26,7 +26,11 @@
 		"api:db": "node api/server-db.js",
 		"api:db:dev": "node --watch api/server-db.js",
 		"format-check": "prettier --check .",
-		"format": "prettier --write ."
+		"format": "prettier --write .",
+		"pre-commit": "npm run format",
+		"dev": "echo '🚀 開発環境セットアップ手順:\n\n1. APIサーバー起動: npm run dev:api\n2. フロントエンド起動: npm run dev:frontend\n\n詳細は README.md を参照してください。'",
+		"dev:api": "cd api && node index.js",
+		"dev:frontend": "cd frontend/task-master-ui && npm run dev"
 	},
 	"keywords": [
 		"claude",
