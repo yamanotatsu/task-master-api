@@ -11,6 +11,7 @@ import { TaskDetail } from '@/components/projects/TaskDetail';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { api, Task, Subtask, Project } from '@/lib/api';
 import { toast } from 'sonner';
+import { CreateSubtaskModal } from '@/components/modals/CreateSubtaskModal';
 
 export default function TaskDetailPage() {
   const params = useParams();
@@ -24,6 +25,7 @@ export default function TaskDetailPage() {
   const [users, setUsers] = useState<Array<{ id: string; name: string; avatar?: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [expandingTask, setExpandingTask] = useState(false);
+  const [isCreateSubtaskModalOpen, setIsCreateSubtaskModalOpen] = useState(false);
   const { error, handleError, clearError, withErrorHandling } = useErrorHandler();
 
   useEffect(() => {
@@ -102,26 +104,19 @@ export default function TaskDetailPage() {
     );
   };
 
-  const handleAddSubtask = async () => {
-    if (!task) return;
+  const handleAddSubtask = () => {
+    setIsCreateSubtaskModalOpen(true);
+  };
 
-    await withErrorHandling(
-      async () => {
-        const updatedTask = await api.addSubtask(task.id, {
-          title: '新しいサブタスク',
-          status: 'pending'
-        });
-        // Extract the newly added subtask (it should be the last one)
-        const newSubtask = updatedTask.subtasks[updatedTask.subtasks.length - 1];
-        if (newSubtask) {
-          setSubtasks([...subtasks, { ...newSubtask, taskId: task.id }]);
-        }
-        toast.success('サブタスクを作成しました');
-      },
-      {
-        customMessage: 'サブタスクの作成に失敗しました'
-      }
-    );
+  const handleSubtaskCreated = (newSubtask: Subtask) => {
+    console.log('Received new subtask:', newSubtask);
+    // idを文字列として統一
+    const normalizedSubtask = {
+      ...newSubtask,
+      id: String(newSubtask.id),
+      taskId: task?.id || ''
+    };
+    setSubtasks([...subtasks, normalizedSubtask]);
   };
   
   const handleSubtaskClick = (subtaskId: string) => {
@@ -260,6 +255,17 @@ export default function TaskDetailPage() {
           expandingTask={expandingTask}
         />
       </div>
+
+      {/* Subtask Creation Modal */}
+      {task && (
+        <CreateSubtaskModal
+          isOpen={isCreateSubtaskModalOpen}
+          onClose={() => setIsCreateSubtaskModalOpen(false)}
+          onSubtaskCreated={handleSubtaskCreated}
+          taskId={task.id}
+          users={users}
+        />
+      )}
     </div>
   );
 }

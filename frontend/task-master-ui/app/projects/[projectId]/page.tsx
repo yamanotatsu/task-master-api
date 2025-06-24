@@ -37,6 +37,7 @@ import {
 import { api, Project, Task, Subtask } from '@/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { CreateTaskModal } from '@/components/modals/CreateTaskModal';
 
 type ViewMode = 'list' | 'dependencies' | 'gantt' | 'stats';
 
@@ -55,6 +56,7 @@ export default function ProjectDetailPage() {
 	const { error, handleError, clearError, withErrorHandling } =
 		useErrorHandler();
 	const [viewMode, setViewMode] = useState<ViewMode>('list');
+	const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
 	const { searchQuery, setSearchQuery, searchResults } = useSearch(tasks);
 	const { filters, setFilters, filteredResults, activeFilterCount } =
 		useFilter(searchResults);
@@ -109,16 +111,25 @@ export default function ProjectDetailPage() {
 	const handleTaskUpdate = async (taskId: string, updates: any) => {
 		await withErrorHandling(
 			async () => {
-				// Convert status from generic string to specific union type if needed
-				const apiUpdates: Partial<Task> = {
-					...updates,
-					status: updates.status as Task['status']
-				};
-				await api.updateTask(taskId, apiUpdates);
-				setTasks(
-					tasks.map((task) =>
-						task.id === taskId ? { ...task, ...updates } : task
-					)
+				// ステータス更新の場合は専用のAPIを使用
+				if (updates.status && Object.keys(updates).length === 1) {
+					await api.updateTaskStatus(taskId, updates.status);
+				} else {
+					// Convert status from generic string to specific union type if needed
+					const apiUpdates: Partial<Task> = {
+						...updates,
+						status: updates.status as Task['status']
+					};
+					await api.updateTask(taskId, apiUpdates);
+				}
+				// ローカルで更新
+				setTasks(prevTasks =>
+					prevTasks.map((task) => {
+						if (task && task.id && task.id.toString() === taskId) {
+							return { ...task, ...updates };
+						}
+						return task;
+					})
 				);
 				toast.success('タスクを更新しました');
 			},
@@ -135,7 +146,7 @@ export default function ProjectDetailPage() {
 		await withErrorHandling(
 			async () => {
 				// 対象のサブタスクを見つける
-				const subtask = subtasks.find((s) => s.id === subtaskId);
+				const subtask = subtasks.find((s) => s && s.id && s.id.toString() === subtaskId);
 				if (!subtask) return;
 
 				if (subtask.taskId) {
@@ -146,8 +157,13 @@ export default function ProjectDetailPage() {
 					};
 					await api.updateSubtask(subtask.taskId, subtaskId, apiUpdates);
 				}
-				setSubtasks(
-					subtasks.map((s) => (s.id === subtaskId ? { ...s, ...updates } : s))
+				setSubtasks(prevSubtasks =>
+					prevSubtasks.map((s) => {
+						if (s && s.id && s.id.toString() === subtaskId) {
+							return { ...s, ...updates };
+						}
+						return s;
+					})
 				);
 				toast.success('サブタスクを更新しました');
 			},
@@ -157,23 +173,42 @@ export default function ProjectDetailPage() {
 		);
 	};
 
-	const handleAddTask = async () => {
-		await withErrorHandling(
-			async () => {
-				const newTask = await api.createTask({
-					projectId: projectId,
-					title: '新しいタスク',
-					description: '新しいタスクの説明',
-					status: 'not-started',
-					priority: 'medium'
-				});
-				setTasks([...tasks, newTask]);
-				toast.success('タスクを作成しました');
-			},
-			{
-				customMessage: 'タスクの作成に失敗しました'
-			}
-		);
+	const handleAddTask = () => {
+		setIsCreateTaskModalOpen(true);
+	};
+
+	const handleTaskCreated = (newTask: Task) => {
+		console.log('Received new task in handleTaskCreated:', newTask);
+		// idが存在することを確認
+		if (!newTask || !newTask.id) {
+			console.error('Invalid task received:', newTask);
+			toast.error('タスクの作成に失敗しました（無効なレスポンス）');
+			return;
+		}
+		// idを文字列として統一
+		const normalizedTask = {
+			...newTask,
+			id: String(newTask.id)
+		};
+		console.log('Adding normalized task to state:', normalizedTask);
+		
+		// 方法1: 直接tasksを更新
+		setTasks(prevTasks => {
+			const updatedTasks = [...prevTasks, normalizedTask];
+			console.log('Updated tasks array:', updatedTasks);
+			return updatedTasks;
+		});
+		
+		// 方法2: 念のため少し遅延してからデータを再読み込み
+		// これにより、APIサーバー側でデータが確実に保存された後に取得できる
+		setTimeout(() => {
+			loadProjectData();
+		}, 500);
+		
+		// 検索をリセットして新しいタスクが表示されるようにする
+		if (searchQuery) {
+			setSearchQuery('');
+		}
 	};
 
 	const handleAddSubtask = async (taskId: string) => {
@@ -224,9 +259,13 @@ export default function ProjectDetailPage() {
 		await withErrorHandling(
 			async () => {
 				await api.deleteTask(taskId);
-				setTasks(tasks.filter((task) => task.id !== taskId));
+				setTasks(prevTasks => 
+					prevTasks.filter((task) => task && task.id && task.id.toString() !== taskId)
+				);
 				// 関連するサブタスクも削除
-				setSubtasks(subtasks.filter((s) => s.taskId !== taskId));
+				setSubtasks(prevSubtasks => 
+					prevSubtasks.filter((s) => s && s.taskId && s.taskId.toString() !== taskId)
+				);
 				toast.success('タスクを削除しました');
 			},
 			{
@@ -236,23 +275,27 @@ export default function ProjectDetailPage() {
 	};
 
 	// Final filtered tasks with string IDs for the table
-	const filteredTasks = filteredResults.map((task) => ({
-		...task,
-		id: task.id.toString(),
-		title: task.title,
-		status: task.status,
-		assignee: undefined, // TODO: assignee情報の変換
-		priority: task.priority
-	}));
+	const filteredTasks = filteredResults
+		.filter(task => task && task.id) // null/undefinedのタスクを除外
+		.map((task) => ({
+			...task,
+			id: String(task.id), // toString()の代わりにString()を使用
+			title: task.title,
+			status: task.status,
+			assignee: undefined, // TODO: assignee情報の変換
+			priority: task.priority
+		}));
 
 	// サブタスクもstring IDに変換
-	const mappedSubtasks = subtasks.map((subtask) => ({
-		id: subtask.id.toString(),
-		taskId: subtask.taskId ? subtask.taskId.toString() : '',
-		title: subtask.title,
-		status: subtask.status || 'pending',
-		assignee: undefined // TODO: assignee情報の変換
-	}));
+	const mappedSubtasks = subtasks
+		.filter(subtask => subtask && subtask.id) // null/undefinedのサブタスクを除外
+		.map((subtask) => ({
+			id: String(subtask.id),
+			taskId: subtask.taskId ? String(subtask.taskId) : '',
+			title: subtask.title,
+			status: subtask.status || 'pending',
+			assignee: undefined // TODO: assignee情報の変換
+		}));
 
 	const calculateProgress = () => {
 		if (tasks.length === 0) return 0;
@@ -497,6 +540,15 @@ export default function ProjectDetailPage() {
 					)}
 				</div>
 			</div>
+
+			{/* Task Creation Modal */}
+			<CreateTaskModal
+				isOpen={isCreateTaskModalOpen}
+				onClose={() => setIsCreateTaskModalOpen(false)}
+				onTaskCreated={handleTaskCreated}
+				projectId={projectId}
+				users={users}
+			/>
 		</div>
 	);
 }
