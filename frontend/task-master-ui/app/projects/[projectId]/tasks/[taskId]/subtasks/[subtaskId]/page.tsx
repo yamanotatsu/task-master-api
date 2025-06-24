@@ -42,13 +42,13 @@ export default function SubtaskDetailPage() {
         ]);
 
         // 特定のタスクを探す
-        const targetTask = tasksData.tasks.find(t => t.id === parseInt(taskId));
+        const targetTask = tasksData.tasks.find(t => t.id === taskId);
         if (!targetTask) {
           throw new Error('タスクが見つかりません');
         }
 
         // 特定のサブタスクを探す
-        const targetSubtask = targetTask.subtasks?.find(s => s.id === parseInt(subtaskId));
+        const targetSubtask = targetTask.subtasks?.find(s => s.id === subtaskId);
         if (!targetSubtask) {
           throw new Error('サブタスクが見つかりません');
         }
@@ -74,7 +74,7 @@ export default function SubtaskDetailPage() {
 
     await withErrorHandling(
       async () => {
-        await api.updateSubtask(task.id, parseInt(subtaskId), updates);
+        await api.updateSubtask(task.id, subtaskId, updates);
         setSubtask({ ...subtask, ...updates });
         toast.success('サブタスクを更新しました');
       },

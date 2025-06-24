@@ -42,7 +42,7 @@ export default function TaskDetailPage() {
         ]);
 
         // 特定のタスクを探す
-        const targetTask = tasksData.tasks.find(t => t.id === parseInt(taskId));
+        const targetTask = tasksData.tasks.find(t => t.id === taskId);
         if (!targetTask) {
           throw new Error('タスクが見つかりません');
         }
@@ -83,10 +83,10 @@ export default function TaskDetailPage() {
 
     await withErrorHandling(
       async () => {
-        await api.updateSubtask(task.id, parseInt(subtaskId), updates);
+        await api.updateSubtask(task.id, subtaskId, updates);
         setSubtasks(
           subtasks.map((s) => 
-            s.id === parseInt(subtaskId) ? { ...s, ...updates } : s
+            s.id === subtaskId ? { ...s, ...updates } : s
           )
         );
         toast.success('サブタスクを更新しました');
@@ -102,11 +102,15 @@ export default function TaskDetailPage() {
 
     await withErrorHandling(
       async () => {
-        const newSubtask = await api.addSubtask(task.id, {
+        const updatedTask = await api.addSubtask(task.id, {
           title: '新しいサブタスク',
           status: 'pending'
         });
-        setSubtasks([...subtasks, { ...newSubtask, taskId: task.id }]);
+        // Extract the newly added subtask (it should be the last one)
+        const newSubtask = updatedTask.subtasks[updatedTask.subtasks.length - 1];
+        if (newSubtask) {
+          setSubtasks([...subtasks, { ...newSubtask, taskId: task.id }]);
+        }
         toast.success('サブタスクを作成しました');
       },
       {
@@ -126,7 +130,7 @@ export default function TaskDetailPage() {
     
     await withErrorHandling(
       async () => {
-        const updatedTask = await api.expandTask(task.id, {
+        const updatedTask = await api.expandTask(parseInt(task.id), {
           numSubtasks: 5,
           useResearch: false
         });
@@ -190,7 +194,6 @@ export default function TaskDetailPage() {
       name: users.find(u => u.id === task.assignee)?.name || task.assignee,
       avatar: users.find(u => u.id === task.assignee)?.avatar
     } : undefined,
-    deadline: task.deadline,
     priority: task.priority,
     projectId: projectId,
     projectName: project.name
