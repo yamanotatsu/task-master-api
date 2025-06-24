@@ -45,16 +45,15 @@ export const TaskDetailHeader: React.FC<TaskDetailHeaderProps> = ({
 	};
 
 	const statusOptions: Array<{ value: Task['status']; label: string }> = [
-		{ value: 'not-started', label: '未着手' },
-		{ value: 'pending', label: '保留中' },
+		{ value: 'pending', label: '未着手' },
 		{ value: 'in-progress', label: '進行中' },
 		{ value: 'review', label: 'レビュー中' },
-		{ value: 'completed', label: '完了' },
-		{ value: 'blocked', label: 'ブロック' },
+		{ value: 'done', label: '完了' },
+		{ value: 'deferred', label: '延期' },
 		{ value: 'cancelled', label: 'キャンセル' }
 	];
 
-	const isCompleted = task?.status === 'completed' || task?.status === 'done';
+	const isCompleted = task?.status === 'done';
 
 	return (
 		<div className="border-b px-6 py-4">
@@ -86,7 +85,7 @@ export const TaskDetailHeader: React.FC<TaskDetailHeaderProps> = ({
 								<button
 									onClick={() =>
 										onTaskUpdate({
-											status: isCompleted ? 'in-progress' : 'completed'
+											status: isCompleted ? 'in-progress' : 'done'
 										})
 									}
 									className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-900"
