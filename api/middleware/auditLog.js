@@ -110,6 +110,11 @@ export const auditMiddleware = (options = {}) => {
 		if (shouldSkipAudit(req)) {
 			return next();
 		}
+		
+		// Skip SSE endpoints
+		if (req.path && req.path.includes('/stream')) {
+			return next();
+		}
 
 		const startTime = performance.now();
 		const requestId = req.id || generateRequestId();

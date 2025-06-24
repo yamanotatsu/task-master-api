@@ -59,9 +59,12 @@ export const securityMiddleware = (req, res, next) => {
 	// Override res.end to calculate response time
 	const originalEnd = res.end;
 	res.end = function (...args) {
-		const endTime = process.hrtime.bigint();
-		const responseTime = Number(endTime - startTime) / 1000000; // Convert to ms
-		res.setHeader('X-Response-Time', `${responseTime.toFixed(2)}ms`);
+		// Skip header setting for SSE responses
+		if (res.getHeader('Content-Type') !== 'text/event-stream') {
+			const endTime = process.hrtime.bigint();
+			const responseTime = Number(endTime - startTime) / 1000000; // Convert to ms
+			res.setHeader('X-Response-Time', `${responseTime.toFixed(2)}ms`);
+		}
 		originalEnd.apply(res, args);
 	};
 
