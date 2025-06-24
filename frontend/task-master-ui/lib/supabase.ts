@@ -1,6 +1,13 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
-export const supabase = createClientComponentClient();
+// Check if required environment variables are present
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+// Create client with optional parameters to avoid build errors
+export const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClientComponentClient()
+  : null;
 
 // Types for authentication
 export interface AuthUser {
