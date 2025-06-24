@@ -225,6 +225,93 @@ ${conversationContext}
 }
 
 /**
+ * Generate PRD dialogue response with streaming support
+ * @param {Object} params - Parameters for generating dialogue response
+ * @returns {AsyncGenerator} Stream of response chunks
+ */
+export async function* generatePRDDialogueResponseStream({
+	message,
+	sessionData,
+	messages = [],
+	initialPRD = ''
+}) {
+	const conversationContext = messages
+		.map((msg) => `${msg.role === 'user' ? 'User' : 'AI'}: ${msg.content}`)
+		.join('\n\n');
+
+	const systemPrompt = `あなたは、プロダクト要件定義書（PRD）の作成を支援するAIアシスタントです。
+	
+初期PRD:
+${initialPRD}
+
+これまでの会話:
+${conversationContext}
+
+以下の要素がPRDに含まれるよう、自然な会話形式でユーザーから情報を引き出してください：
+
+1. **概要**
+   - プロジェクトの目的
+   - 解決する問題
+   - ターゲットユーザー
+   - 主要な価値提案
+
+2. **機能要件**
+   - 主要機能の詳細
+   - ユーザーストーリー
+   - 受け入れ基準
+
+3. **非機能要件**
+   - パフォーマンス要件
+   - セキュリティ要件
+   - スケーラビリティ
+
+4. **技術的仕様**
+   - 技術スタック
+   - アーキテクチャ
+   - 統合要件
+
+5. **成功指標**
+   - KPI
+   - 成功の定義
+
+6. **タイムライン**
+   - マイルストーン
+   - リリース計画
+
+不足している情報について、具体的で答えやすい質問を1つずつしてください。
+ユーザーの回答に対しては、理解を示し、必要に応じて詳細を掘り下げてください。`;
+
+	const userPrompt = `ユーザーの新しい質問/回答:
+${message}`;
+
+	try {
+		// For now, use generateTextService instead of streaming
+		// TODO: Implement proper streaming support
+		const response = await generateTextService({
+			role: 'chat',
+			systemPrompt,
+			prompt: userPrompt,
+			commandName: 'prd-dialogue-stream',
+			outputType: 'api'
+		});
+
+		// Simulate streaming by chunking the response
+		const text = response.mainResult;
+		const chunkSize = 20; // Characters per chunk
+		
+		for (let i = 0; i < text.length; i += chunkSize) {
+			const chunk = text.slice(i, i + chunkSize);
+			yield { type: 'content', content: chunk };
+			// Add a small delay to simulate streaming
+			await new Promise(resolve => setTimeout(resolve, 50));
+		}
+	} catch (error) {
+		console.error('Error in generatePRDDialogueResponseStream:', error);
+		yield { type: 'error', error: error.message };
+	}
+}
+
+/**
  * Generate final PRD in Markdown format
  * @param {string} initialPRD - Initial PRD content
  * @param {Array} messages - Conversation history
