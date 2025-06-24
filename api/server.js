@@ -41,6 +41,8 @@ import userRoutes from './routes/users.js';
 import { rateLimiters } from './middleware/rateLimiter.js';
 import generateTasksPreviewRouter from './routes/generate-tasks-preview.js';
 import tasksBatchCreateRouter from './routes/tasks-batch-create.js';
+import projectsDBRouter from './routes/projects-db.js';
+import prdDialogueRouter from './routes/prd-dialogue.js';
 
 dotenv.config();
 
@@ -101,6 +103,13 @@ app.post('/api/v1/tasks/fix-dependencies', fixDependenciesHandler);
 // Project management endpoints
 app.post('/api/v1/projects/initialize', initializeProjectHandler);
 app.post('/api/v1/projects/generate-task-files', generateTaskFilesHandler);
+
+// Projects DB router (includes AI dialogue endpoints)
+console.log('Registering projects DB router at /api/v1/projects');
+app.use('/api/v1/projects', projectsDBRouter);
+
+// PRD dialogue router (stateless)
+app.use('/api/v1/prd-dialogue', prdDialogueRouter);
 
 // Analysis endpoints
 app.post('/api/v1/tasks/analyze-complexity', analyzeTaskComplexityHandler);

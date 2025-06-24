@@ -25,6 +25,7 @@ import tasksBatchCreateRouter from './routes/tasks-batch-create.js';
 import statisticsRouter from './routes/statistics.js';
 import organizationsRouter from './routes/organizations.js';
 import auditRouter from './routes/audit.js';
+import prdDialogueRouter from './routes/prd-dialogue.js';
 
 // Import audit middleware
 import {
@@ -104,6 +105,7 @@ app.use('/api/v1/generate-tasks-preview', generateTasksPreviewRouter);
 app.use('/api/v1/tasks/batch-create', tasksBatchCreateRouter);
 app.use('/api/v1/audit', auditRouter);
 app.use('/api/v1', statisticsRouter);
+app.use('/api/v1/prd-dialogue', prdDialogueRouter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
