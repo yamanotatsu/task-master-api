@@ -20,6 +20,7 @@ import Cookies from 'js-cookie';
 
 interface AuthContextType {
 	user: User | null;
+	session: Session | null;
 	profile: Profile | null;
 	organizations: Organization[];
 	currentOrganization: Organization | null;
@@ -48,6 +49,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState<User | null>(null);
+	const [session, setSession] = useState<Session | null>(null);
 	const [profile, setProfile] = useState<Profile | null>(null);
 	const [organizations, setOrganizations] = useState<Organization[]>([]);
 	const [currentOrganization, setCurrentOrganization] =
@@ -147,6 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 				if (session?.user) {
 					setUser(session.user);
+					setSession(session);
 					await loadProfile(session.user.id);
 					await loadOrganizations(session.user.id);
 				}
@@ -170,16 +173,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		} = supabase.auth.onAuthStateChange(async (event, session) => {
 			if (event === 'SIGNED_IN' && session?.user) {
 				setUser(session.user);
+				setSession(session);
 				await loadProfile(session.user.id);
 				await loadOrganizations(session.user.id);
 			} else if (event === 'SIGNED_OUT') {
 				setUser(null);
+				setSession(null);
 				setProfile(null);
 				setOrganizations([]);
 				setCurrentOrganization(null);
 				Cookies.remove('current_organization');
 			} else if (event === 'TOKEN_REFRESHED' && session?.user) {
 				setUser(session.user);
+				setSession(session);
 			}
 		});
 
@@ -444,6 +450,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 	const value: AuthContextType = {
 		user,
+		session,
 		profile,
 		organizations,
 		currentOrganization,

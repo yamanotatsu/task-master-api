@@ -94,24 +94,10 @@ export const taskCandidateStorage = {
 	clearOldSessions(): void {
 		try {
 			const keys = Object.keys(localStorage);
-			const now = Date.now();
-			const oneDayAgo = now - 24 * 60 * 60 * 1000;
-
+			// Remove ALL task candidate sessions, not just old ones
 			keys.forEach((key) => {
 				if (key.startsWith(STORAGE_PREFIX)) {
-					try {
-						const item = localStorage.getItem(key);
-						if (item) {
-							const data = JSON.parse(item) as TaskCandidateData;
-							// Remove if older than 24 hours
-							if (data.createdAt < oneDayAgo) {
-								localStorage.removeItem(key);
-							}
-						}
-					} catch {
-						// If parsing fails, remove the item
-						localStorage.removeItem(key);
-					}
+					localStorage.removeItem(key);
 				}
 			});
 		} catch (error) {

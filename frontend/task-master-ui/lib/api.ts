@@ -2,6 +2,16 @@ import { supabase } from './supabase';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
+// デバッグモードの設定（開発環境でのみ有効）
+const DEBUG_MODE = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DEBUG === 'true';
+
+// ログ出力のヘルパー関数
+const debugLog = (...args: any[]) => {
+	if (DEBUG_MODE) {
+		console.log('🐛 DEBUG:', ...args);
+	}
+};
+
 export interface Project {
 	id: string;
 	name: string;
@@ -147,40 +157,78 @@ export interface ExpandTaskRequest {
 }
 
 class ApiClient {
+	// セッションキャッシュ（30分間有効）
+	private sessionCache: { token: string | null; timestamp: number } | null = null;
+	private readonly SESSION_CACHE_DURATION = 30 * 60 * 1000; // 30分
+
+	// Skip auth in development if env var is set
+	private skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true';
+
+	/**
+	 * 認証トークンを取得（キャッシュ付き）
+	 */
 	private async getAuthToken(): Promise<string | null> {
+		// 開発環境で認証をスキップする設定の場合
+		if (this.skipAuth) {
+			debugLog('Auth skipped (NEXT_PUBLIC_SKIP_AUTH=true)');
+			return null;
+		}
+
+		// キャッシュをチェック
+		if (this.sessionCache &&
+			Date.now() - this.sessionCache.timestamp < this.SESSION_CACHE_DURATION) {
+			debugLog('Using cached auth token');
+			return this.sessionCache.token;
+		}
+
 		try {
-			const {
-				data: { session }
-			} = await supabase.auth.getSession();
+			if (!supabase) {
+				console.warn('Supabase client not initialized');
+				return null;
+			}
+
+			// Supabaseのデフォルトタイムアウトに任せる（Promise.raceを削除）
+			const { data: { session }, error } = await supabase.auth.getSession();
+
+			if (error) {
+				console.error('Failed to get session:', error.message);
+				return null;
+			}
+
 			const token = session?.access_token || null;
-			console.log(
-				'[API] getAuthToken result:',
-				token ? 'token found' : 'no token'
-			);
+
+			// キャッシュを更新
+			this.sessionCache = {
+				token,
+				timestamp: Date.now()
+			};
+
+			debugLog('Auth token retrieved:', token ? 'exists' : 'none');
 			return token;
 		} catch (error) {
-			console.error('[API] getAuthToken error:', error);
+			console.error('Auth error:', error);
 			return null;
 		}
 	}
 
+	/**
+	 * APIリクエストの共通処理
+	 */
 	private async fetchAPI<T>(
 		endpoint: string,
 		options?: RequestInit
 	): Promise<T> {
 		const url = `${API_BASE_URL}${endpoint}`;
 
-		// デバッグログ追加
-		console.log('[API] Fetching:', url);
+		debugLog(`API call: ${options?.method || 'GET'} ${endpoint}`);
 
 		const token = await this.getAuthToken();
-		console.log('[API] Auth token:', token ? 'present' : 'missing');
 
 		const headers: Record<string, string> = {
 			'Content-Type': 'application/json'
 		};
 
-		// Add existing headers if they are in the correct format
+		// 既存のヘッダーをマージ
 		if (options?.headers) {
 			if (options.headers instanceof Headers) {
 				options.headers.forEach((value, key) => {
@@ -195,30 +243,29 @@ class ApiClient {
 			}
 		}
 
+		// 認証トークンを追加
 		if (token) {
 			headers['Authorization'] = `Bearer ${token}`;
 		}
 
 		try {
-			console.log('[API] Request headers:', headers);
-			console.log('[API] Request body:', options?.body);
-
 			const response = await fetch(url, {
 				...options,
 				headers
 			});
 
-			console.log('[API] Response status:', response.status);
-
 			const data = await response.json();
-			console.log('[API] Response data:', data);
 
-			// Handle token refresh if needed
-			if (response.status === 401) {
-				console.log('[API] 401 Unauthorized, attempting token refresh...');
+			// 401エラーの場合、トークンをリフレッシュして再試行
+			if (response.status === 401 && supabase) {
+				debugLog('401 Unauthorized - attempting token refresh');
+
+				// キャッシュをクリア
+				this.sessionCache = null;
+
 				const { error } = await supabase.auth.refreshSession();
 				if (!error) {
-					// Retry the request with new token
+					// 新しいトークンで再試行
 					const newToken = await this.getAuthToken();
 					if (newToken) {
 						headers['Authorization'] = `Bearer ${newToken}`;
@@ -227,10 +274,11 @@ class ApiClient {
 							headers
 						});
 						const retryData = await retryResponse.json();
+
 						if (!retryResponse.ok || retryData.success === false) {
 							throw new Error(
 								retryData.error?.message ||
-									`API Error: ${retryResponse.statusText}`
+								`API Error: ${retryResponse.statusText}`
 							);
 						}
 						return retryData.data || retryData;
@@ -238,19 +286,31 @@ class ApiClient {
 				}
 			}
 
+			// エラーレスポンスの処理
 			if (!response.ok || data.success === false) {
-				const errorMessage =
-					data.error?.message || `API Error: ${response.statusText}`;
-				console.error('[API] Error:', errorMessage);
+				const errorMessage = data.error?.message || `API Error: ${response.statusText}`;
+				debugLog('API Error:', errorMessage);
 				throw new Error(errorMessage);
 			}
 
-			// API returns data wrapped in { success: true, data: {...} }
+			// 成功レスポンス
 			return data.data || data;
 		} catch (error) {
-			console.error('[API] Fetch error:', error);
-			throw error;
+			// ネットワークエラーなどの処理
+			if (error instanceof Error) {
+				console.error(`API Error (${endpoint}):`, error.message);
+				throw error;
+			}
+			throw new Error('Unknown API error');
 		}
+	}
+
+	/**
+	 * セッションキャッシュをクリア（ログアウト時などに使用）
+	 */
+	clearSessionCache(): void {
+		this.sessionCache = null;
+		debugLog('Session cache cleared');
 	}
 
 	// Task endpoints
@@ -561,16 +621,6 @@ class ApiClient {
 		);
 	}
 
-	// Note: Authentication is now handled directly via Supabase
-	// The following methods have been removed and replaced with direct Supabase calls:
-	// - login() -> use supabase.auth.signInWithPassword()
-	// - signup() -> use supabase.auth.signUp()
-	// - logout() -> use supabase.auth.signOut()
-	// - forgotPassword() -> use supabase.auth.resetPasswordForEmail()
-	// - resetPassword() -> use supabase.auth.updateUser()
-	// - updatePassword() -> use auth context's changePassword()
-	// - deleteAccount() -> use auth context's deleteAccount()
-
 	// User profile endpoints
 	async getUserProfile(): Promise<Member> {
 		const response = await this.fetchAPI<{ profile: Member }>(
@@ -852,6 +902,10 @@ class ApiClient {
 		target_task_count?: number;
 		use_research_mode?: boolean;
 		projectName?: string;
+		conversation_history?: Array<{
+			role: 'user' | 'ai';
+			content: string;
+		}>;
 	}): Promise<{
 		tasks: Array<{
 			tempId: string;
@@ -883,6 +937,7 @@ class ApiClient {
 
 	async createProjectWithTasks(data: {
 		projectName: string;
+		projectPath?: string;
 		projectDescription?: string;
 		prdContent?: string;
 		deadline?: string;
@@ -919,9 +974,15 @@ class ApiClient {
 			createdAt: string;
 		};
 	}> {
+		// Generate project_path if not provided
+		const projectPath = data.projectPath || data.projectName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
 		return this.fetchAPI('/api/v1/tasks/batch-create', {
 			method: 'POST',
-			body: JSON.stringify(data)
+			body: JSON.stringify({
+				...data,
+				projectPath
+			})
 		});
 	}
 }
