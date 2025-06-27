@@ -53,44 +53,42 @@ router.post('/', authMiddleware, async (req, res) => {
 		let organization;
 		let useDirectApproach = false;
 
+		// Generate unique slug
+		const baseSlug = name
+			.trim()
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-+|-+$/g, '');
+
+		// Add timestamp to make it unique
+		const slug = `${baseSlug}-${Date.now()}`;
+
 		// First try the RPC function
 		const { data, error } = await supabase.rpc(
 			'create_organization_with_admin',
 			{
 				org_name: name.trim(),
 				org_description: description?.trim() || null,
-				admin_id: userId
+				admin_id: userId,
+				org_slug: slug
 			}
 		);
 
 		// Log the error for debugging
 		if (error) {
-			logger.error('RPC error details:', {
-				message: error.message,
-				details: error.details,
-				hint: error.hint,
-				code: error.code,
-				userId: userId
-			});
+			logger.error('RPC error details:', error);
 
 			// Fallback to direct insertion
 			useDirectApproach = true;
 		}
 
 		if (useDirectApproach) {
-			// Generate slug from name
-			const slug = name
-				.trim()
-				.toLowerCase()
-				.replace(/[^a-z0-9]+/g, '-')
-				.replace(/^-+|-+$/g, '');
-
-			// Try direct insertion with slug if required
+			// Try direct insertion with unique slug
 			const { data: orgData, error: orgError } = await supabase
 				.from('organizations')
 				.insert({
 					name: name.trim(),
-					slug: slug, // Add slug in case it's required
+					slug: slug, // Use the unique slug generated above
 					description: description?.trim() || null
 				})
 				.select()
